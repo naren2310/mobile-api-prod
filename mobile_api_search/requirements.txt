@@ -1,0 +1,9 @@
+# Function dependencies, for example:
+# package>=version
+google-cloud==0.34.0
+google-cloud-spanner==3.9.0
+spanner==1.0.2
+PyJWT==2.1.0
+Pytz
+google-cloud-logging==2.6.0
+protobuf==3.19.0

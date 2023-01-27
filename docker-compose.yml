@@ -1,0 +1,14 @@
+version: "3.3"
+services:
+  mobile_api_sendotp:
+    image: tnphr/mobileapisendotp
+    ports:
+      - "9000:5000"
+  mobile_api_validateOTP:
+    image: tnphr/mobileapivalidateOTP
+    ports:
+      - "9001:5000"
+  mobile_api_resendOTP:
+    image: tnphr/mobileapiresendotp
+    ports:
+      - "9002:5000"

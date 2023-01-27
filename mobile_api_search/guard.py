@@ -1,0 +1,247 @@
+from pytz import timezone
+from google.cloud import spanner
+from google.cloud.spanner_v1 import param_types
+from google.cloud import logging as cloudlogging
+
+import logging
+import config
+import json
+import jwt
+import os
+import re
+
+log_client = cloudlogging.Client()
+log_handler = log_client.get_default_handler()
+cloud_logger = logging.getLogger("cloudLogger")
+cloud_logger.setLevel(logging.INFO)
+cloud_logger.setLevel(logging.DEBUG)
+cloud_logger.addHandler(log_handler)
+
+instance_id = os.environ.get('instance_id')
+database_id = os.environ.get('database_id')
+
+client = spanner.Client()
+instance = client.instance(instance_id)
+spnDB = instance.database(database_id)
+
+parameters = config.getParameters()
+
+current_appversion = 'Prior V_3.1.4'
+current_userId = ''
+
+def setApp_Version(appVersion):
+    global current_appversion 
+    current_appversion = appVersion
+    
+def set_current_user(userId):
+    global current_userId
+    current_userId = userId
+
+
+def validate_id(*ids):
+    """
+    This method will validate the Id attributes pattern 
+    and formats using regular expression module.
+    Input Arg: Ids (userId)
+    Return: Boolean (True or False)
+    """
+    
+    try:
+        valid_ids = []
+        for id in ids:
+            if id != None and isinstance(id, str) and id != "" and id != " ":
+                #id is composed of alphanumeric and hyphen characters
+                #id pattern is compiled with alphanumeric and hyphen character in regex.
+                id_pattern = re.compile(parameters['ID_PATTERN'])
+
+                #id format is compiled below using regex.
+                #sample id = "54cd29b1-ffad-46bb-8390-25a435b6a264"
+                id_format = re.compile(parameters['ID_FORMAT'])
+                # Checks whether the whole string matches the re.pattern or not
+                if re.fullmatch(id_pattern, id) and id_format.match(id) and \
+                        id != None and id != "" and len(id) == parameters['ID_LENGTH']:                    
+                    valid_ids.append(True)
+                else:
+                    cloud_logger.critical("ID is not valid %s", str(id))
+                    valid_ids.append(False)
+            else:
+                cloud_logger.critical("Supplied ID is empty or not valid %s", str(id))
+                valid_ids.append(False)
+        if all(item == True for item in valid_ids) and len(valid_ids) != 0:
+            return True
+        else:
+            cloud_logger.info("One or more supplied ID not valid.")            
+            return False
+    except Exception as error:
+        cloud_logger.error("Error validating Id attribute format : %s | %s | %s ", str(error), current_userId, current_appversion)
+        return False
+
+def user_token_validation(userId, mobile):
+    """
+    This method will validate token data belongs to 
+    the registered user.
+    Input args: mobile number, user id
+    Return: Boolean
+    """ 
+    spnDB_userId = 0
+    try:
+        query = "select user_id from user_master where mobile_number=@mobile and user_id=@user_id"
+        with spnDB.snapshot() as snapshot: 
+            results = snapshot.execute_sql(
+                query,
+                params={
+                    "mobile": mobile,
+                    "user_id": userId
+                },
+                param_types={
+                    "mobile": param_types.INT64,
+                    "user_id": param_types.STRING
+                },                   
+            )
+        for row in results:
+            spnDB_userId = row[0]       #user ID fetched from spannerDB using the mobile number
+        if (spnDB_userId != 0):         #Condition to validate userId exist in spannerDB
+            if (spnDB_userId == userId):
+                return True
+            else:
+                cloud_logger.info("Token is not valid for this user.")  
+                return False
+        else:
+            cloud_logger.info("Unregistered User/Token-User mismatch.")            
+            return False
+    except Exception as error:
+        cloud_logger.error("Error validating user token: %s | %s | %s ", str(error), current_userId, current_appversion)
+        return False
+
+def validate_mobile_no(mobile_number):
+    """
+    Method will validate the supplied mobile number using regex
+    to find any irrevelant characters exist.
+    Input arg: mobile number (Integer)
+    Return: Boolean 
+    """
+    try:
+        is_valid_mobile = False
+        if re.fullmatch(parameters['MOBILE_NUMBER_FORMAT'], str(mobile_number)) and isinstance(mobile_number, int):
+            return True        
+        return is_valid_mobile
+    except Exception as error:
+        cloud_logger.error("Error in validating mobile number : %s | %s | %s ", str(error), current_userId, current_appversion)
+        return False
+
+def validate_unique_health_id(unique_health_id):
+    """
+    Method will validate the supplied unique health Id using regex
+    to find any irrevelant characters exist.
+    Input arg: unique health id (String)
+    Return: Boolean
+    """
+    try:
+        is_valid_UHID = False
+        if re.fullmatch(parameters['UNIQUE_HEALTH_ID_FORMAT'], unique_health_id) and isinstance(unique_health_id, str):
+            return True        
+        return is_valid_UHID
+    except Exception as error:
+        cloud_logger.error("Error in validating unique health Id: %s | %s | %s ", str(error), current_userId, current_appversion)
+        return False
+
+def validate_pds_smart_card_id(pds_smart_card_id):
+    """
+    Method will validate the supplied pds smart card Id using regex
+    to find any irrevelant characters exist.
+    Input arg: pds smart card id (Integer)
+    Return: Boolean
+    """
+    try:
+        is_valid_PDSID = False
+        if re.fullmatch(parameters['PDS_SMART_CARD_ID_FORMAT'], str(pds_smart_card_id)):
+            return True        
+        return is_valid_PDSID
+    except Exception as error:
+        cloud_logger.error("Error in validating pds smart card Id: %s | %s | %s ", str(error), current_userId, current_appversion)
+        return False
+
+def validate_member_name_inputs(**kwargs):
+    """
+    Method will validate the supplied inputs using regex
+    to find any irrevelant characters exist.
+    Input arg: member name (string), district Id (string), 
+                block id (string), village id (string)
+    Return: Boolean
+    """
+    try:
+        is_valid_inputs = True
+        message = "Supplied Inputs are valid"
+        for key, value in kwargs.items():
+            if key == 'member_name':
+                if not (re.fullmatch(parameters['NAME_FORMAT'], value) or not isinstance(value, str) 
+                        or value == " " or value == ""):
+                    message = "Member name is not valid. Please contact the Administrator."
+                    return False, message
+            elif key == 'district_id':
+                if not validate_id(value):
+                    message = "District id is empty or not valid. Please contact the Administrator."
+                    return False, message
+            elif key == 'block_id':
+                if not validate_id(value):
+                    message = "Block id is empty or not valid. Please contact the Administrator."
+                    return False, message
+            elif key == 'village_id' and value != "" and value != None:
+                if not validate_id(value):
+                    message = "Village id is empty or not valid. Please contact the Administrator."
+                    return False, message
+        return is_valid_inputs, message
+    except Exception as error:
+        cloud_logger.error("Error in validating member name inputs: %s | %s | %s ", str(error), current_userId, current_appversion)
+        return False
+
+def check_id_registered(districtId, blockId, villageId):
+    """
+    This method will check the district Id, block Id and village Id are registered.
+    Input Args: district_id, block_id and village_id
+    Return: Boolean
+    """
+    try:
+        query = 'SELECT EXISTS(select district_id from address_village_master'
+        param = {}
+        types = {}
+
+        if districtId != "" and blockId != "" and villageId != "" and villageId != None: #When all the IDs are not empty
+            query += ' where district_id=@district_id and block_id=@block_id and village_id=@village_id)'                    
+            param['district_id'] = districtId
+            param['block_id'] = blockId
+            param['village_id'] = villageId
+            types['district_id'] = param_types.STRING
+            types['block_id'] = param_types.STRING
+            types['village_id'] = param_types.STRING
+
+        elif districtId != "" and blockId != "" and (villageId == "" or villageId == None): #when district and block Ids are not empty
+            query += ' where district_id=@district_id and block_id=@block_id)'
+            param['district_id'] = districtId
+            param['block_id'] = blockId
+            types['district_id'] = param_types.STRING
+            types['block_id'] = param_types.STRING
+
+        with spnDB.snapshot() as snapshot: 
+            result = snapshot.execute_sql(query, params= param, param_types=types)
+        for row in result:
+            id_exist = row[0]
+        return id_exist
+    except Exception as error:
+        cloud_logger.error("Error occurred in check id registered : %s | %s | %s ", str(error), current_userId, current_appversion)
+        return False
+
+def validate_search_parameter(search_parameter):
+    """
+    Method to validate the search parameter format.
+    Input arg: search parameter
+    Return: Boolean
+    """
+    try:
+        is_valid_search_param = False
+        if re.fullmatch(parameters['SEARCH_PARAMETER_FORMAT'], search_parameter) and isinstance(search_parameter, str):
+            return True        
+        return is_valid_search_param
+    except Exception as error:
+        cloud_logger.error("Error in validating search parameter : %s | %s | %s ", str(error), current_userId, current_appversion)
+        return False
