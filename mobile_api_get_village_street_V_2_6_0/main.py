@@ -28,17 +28,20 @@ def token_required(request):
         token = request.headers['x-access-token']
     if not token:
         if (str(request.headers['User-Agent']).count("UptimeChecks")!=0):
-            cloud_logger.info("Uptime check trigger.")
+            print("Uptime check trigger.")
+            # cloud_logger.info("Uptime check trigger.")
             return False, json.dumps({"status":"API-ACTIVE", "status_code":"200","message":'Uptime check trigger.'})
         else:
-            cloud_logger.critical("Invalid Token.")
+            print("Invalid Token.")
+            # cloud_logger.critical("Invalid Token.")
             return False, json.dumps({'status':'FAILURE', "status_code":"401", 'message' : 'Invalid Token.'})
 
     try:
         token = token.strip() #Remove spaces at the beginning and at the end of the token
         token_format = re.compile(parameters['TOKEN_FORMAT'])
         if not token_format.match(token):
-            cloud_logger.critical("Invalid Token format.")
+            print("Invalid Token format.")
+            # cloud_logger.critical("Invalid Token format.")
             return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token format.'})
         else:
             # decoding the payload to fetch the stored details
@@ -46,11 +49,13 @@ def token_required(request):
             return True, data
 
     except jwt.ExpiredSignatureError as e:
-        cloud_logger.critical("Token Expired: %s", str(e))
+        print("Token Expired: %s", str(e))
+        # cloud_logger.critical("Token Expired: %s", str(e))
         return False, json.dumps({'status':'FAILURE', "status_code":"401", 'message' : 'Token Expired.'})
 
     except Exception as e:
-        cloud_logger.critical("Invalid Token: %s", str(e))
+        print("Invalid Token: %s", str(e))
+        # cloud_logger.critical("Invalid Token: %s", str(e))
         return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token.'})
 
 @app.route('/mobile_api_get_village_street', methods=['POST'])
@@ -63,7 +68,8 @@ def get_village_street():
     response = None
 
     try:
-        cloud_logger.info("*********Get Village Street**********")
+        print("*********Get Village Street**********")
+        # cloud_logger.info("*********Get Village Street**********")
         villages_list=[]
         # Check the request data for JSON
         if (request.is_json):
@@ -81,7 +87,8 @@ def get_village_street():
                             "status_code":"401",
                             "data": []
                             })
-                cloud_logger.error("Provided User ID is not valid. | %s | %s", guard.current_userId, guard.current_appversion)
+                print("Provided User ID is not valid. | %s | %s", guard.current_userId, guard.current_appversion)
+                # cloud_logger.error("Provided User ID is not valid. | %s | %s", guard.current_userId, guard.current_appversion)
                 return response
             else:
                 is_token_valid = user_token_validation(userId, token_data["mobile_number"])
@@ -91,19 +98,24 @@ def get_village_street():
                             "status": "FAILURE",
                             "status_code":"401"
                             })
-                    cloud_logger.error("Unregistered User/Token-User mismatch. | %s | %s", guard.current_userId, guard.current_appversion)
+                    print("Unregistered User/Token-User mismatch. | %s | %s", guard.current_userId, guard.current_appversion)
+                    # cloud_logger.error("Unregistered User/Token-User mismatch. | %s | %s", guard.current_userId, guard.current_appversion)
                     return response
                 else:
-                    cloud_logger.info("Token Validated.")
+                    print("Token Validated.")
+                    # cloud_logger.info("Token Validated.")
                     userId = content["USER_ID"]
-                    with spnDB.snapshot() as snapshot:   
-                        query = "SELECT facility_id,facility_level,country_id,state_id,region_id,district_id,hud_id,block_id FROM facility_registry WHERE facility_id = (SELECT facility_id FROM user_master WHERE user_id =@userId)"
-                        results = snapshot.execute_sql(
-                                        query,
-                                        params={"userId": userId},
-                                        param_types={"userId": param_types.STRING},                   
-                                        )
-                        for row in results:
+                    # with spnDB.snapshot() as snapshot:   
+                    query = "SELECT facility_id,facility_level,country_id,state_id,region_id,district_id,hud_id,block_id FROM public.facility_registry WHERE facility_id = (SELECT facility_id FROM public.user_master WHERE user_id =%s)"
+                        # results = snapshot.execute_sql(
+                        #                 query,
+                        #                 params={"userId": userId},
+                        #                 param_types={"userId": param_types.STRING},                   
+                        #                 )
+                    value = (userId,)
+                    cursor.execute(query,value)
+                    results = cursor.fetchall()
+                    for row in results:
                             facility_details = {
                                 "country_id": row[2] if row[2] is not None else '',
                                 "state_id": row[3] if row[3] is not None else '',
@@ -134,7 +146,8 @@ def get_village_street():
                                     "status_code": 401,
                                     "data": []
                                     })
-            cloud_logger.error("The Request Format must be in JSON.")
+            print("The Request Format must be in JSON.")
+            # cloud_logger.error("The Request Format must be in JSON.")
     except Exception as e:
         response =  json.dumps({
                     "message": "Error while retrieving Village_street Data.", 
@@ -142,7 +155,8 @@ def get_village_street():
                     "status_code":"401",
                     "data": []
                     })
-        cloud_logger.error("Error while retrieving Village_street Data : %s | %s | %s", str(e), guard.current_userId, guard.current_appversion)
+        print("Error while retrieving Village_street Data : %s | %s | %s", str(e), guard.current_userId, guard.current_appversion)
+        # cloud_logger.error("Error while retrieving Village_street Data : %s | %s | %s", str(e), guard.current_userId, guard.current_appversion)
 
     finally:
         return response
@@ -150,31 +164,36 @@ def get_village_street():
 
 def retrieve_villages_from(countryId, stateId, districtId, hudId, blockId):
     try:
-        cloud_logger.info("Retrieving the Villages from block id : %s", str(blockId))
+        print("Retrieving the Villages from block id : %s", str(blockId))
+        # cloud_logger.info("Retrieving the Villages from block id : %s", str(blockId))
         villages_list=[]
         address_list=[]
-        with spnDB.snapshot() as snapshot:   
-            query = "with village as (select village_id,village_gid,village_name,country_id,state_id,district_id,hud_id,block_id from address_village_master WHERE village_name not like ('Unallocated%') and country_id =@countryId and state_id =@stateId and district_id =@districtId and hud_id =@hudId and block_id =@blockId),street as (SELECT v.village_id,v.village_gid,v.village_name,asm.street_id, asm.street_gid, asm.street_name, asm.facility_id FROM village v left join@{JOIN_METHOD=APPLY_JOIN} address_street_master asm on asm.village_id = v.village_id and asm.country_id = v.country_id and asm.state_id = v.state_id and asm. district_id= v.district_id and asm.hud_id = v. hud_id and asm.block_id = v.block_id and asm.active=true WHERE street_name not like ('Unallocated%') and facility_id is not NULL ) select  S.village_id,S.village_gid,S.village_name,S.street_id, S.street_gid, S.street_name, fr.facility_id, fr.institution_gid, fr.facility_name, typ.facility_type_name, from street s LEFT join@{JOIN_METHOD=APPLY_JOIN} facility_registry fr on S.facility_id=fr.facility_id LEFT JOIN facility_type_master typ on typ.facility_type_id=fr.facility_type_id order by S.village_name"
-            address_list = snapshot.execute_sql(
-                            query,
-                            params={
-                                "countryId": countryId,
-                                "stateId": stateId,
-                                "districtId": districtId,
-                                "hudId" : hudId,
-                                "blockId": blockId
-                            },
-                            param_types={
-                                "countryId": param_types.STRING,
-                                "stateId": param_types.STRING,
-                                "districtId": param_types.STRING,
-                                "hudId": param_types.STRING,
-                                "blockId": param_types.STRING
-                            })
-            villages_list = get_villages_list(address_list)
+        # with spnDB.snapshot() as snapshot:   
+        query = "with village as (SELECT village_id,village_gid,village_name,country_id,state_id,district_id,hud_id,block_id FROM public.address_village_master WHERE village_name not like ('Unallocated%%') AND country_id =%s AND state_id =%s AND district_id =%s AND hud_id =%s AND block_id =%s),street as (SELECT v.village_id,v.village_gid,v.village_name,asm.street_id, asm.street_gid, asm.street_name, asm.facility_id FROM village v left join public.address_street_master asm on asm.village_id = v.village_id AND asm.country_id = v.country_id AND asm.state_id = v.state_id AND asm. district_id= v.district_id AND asm.hud_id = v. hud_id AND asm.block_id = v.block_id AND asm.active=true WHERE street_name not like ('Unallocated%%') AND facility_id is not NULL ) SELECT  S.village_id,S.village_gid,S.village_name,S.street_id, S.street_gid, S.street_name, fr.facility_id, fr.institution_gid, fr.facility_name, typ.facility_type_name FROM street s LEFT join public.facility_registry fr on S.facility_id=fr.facility_id LEFT JOIN public.facility_type_master typ on typ.facility_type_id=fr.facility_type_id order by S.village_name"
+        #  address_list = snapshot.execute_sql(
+        #                     query,
+        #                     params={
+        #                         "countryId": countryId,
+        #                         "stateId": stateId,
+        #                         "districtId": districtId,
+        #                         "hudId" : hudId,
+        #                         "blockId": blockId
+        #                     },
+        #                     param_types={
+        #                         "countryId": param_types.STRING,
+        #                         "stateId": param_types.STRING,
+        #                         "districtId": param_types.STRING,
+        #                         "hudId": param_types.STRING,
+        #                         "blockId": param_types.STRING
+        #                     })
+        value = (countryId,stateId,districtId,hudId,blockId)
+        cursor.execute(query,value)
+        address_list = cursor.fetchall()
+        villages_list = get_villages_list(address_list)
 
     except Exception as e:
-        cloud_logger.error("Error retriving the Villages at block level : %s", str(e))
+        print("Error retriving the Villages at block level : %s", str(e))
+        # cloud_logger.error("Error retriving the Villages at block level : %s", str(e))
 
     finally:
         return villages_list
@@ -186,7 +205,6 @@ def get_villages_list(address_list):
         villageId=""
         tempVillageId=""
         for row in address_list:
-            print(row)
             tempVillageId=row[0]
             if tempVillageId!=villageId:
                 village = {
@@ -219,7 +237,8 @@ def get_villages_list(address_list):
         # village["streets"]=streets_list
 
     except Exception as e:
-        cloud_logger.error("Error while fetching Villages Data : %s", str(e))
+        print("Error while fetching Villages Data : %s", str(e))
+        # cloud_logger.error("Error while fetching Villages Data : %s", str(e))
 
     finally:
         return villages
@@ -274,4 +293,4 @@ def get_villages_list(address_list):
 
 
 if __name__=="__main__":    
-    app.run(host="0.0.0.0", port=8080)
+    app.run(host="0.0.0.0", port=8000)

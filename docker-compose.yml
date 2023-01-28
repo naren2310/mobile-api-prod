@@ -16,8 +16,8 @@ services:
     image: tnphr/mobileapigetfacility
     ports:
       - "9003:5000"
-  mobile_api_get_family_memberdata:
-    image: tnphr/mobileapigetfamilymemberdata
+  mobile_api_get_village_street:
+    image: tnphr/mobileapigetvillagestreet
     ports:
       - "9004:5000"
   mobile_api_get_block_list:

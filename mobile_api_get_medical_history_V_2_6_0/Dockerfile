@@ -1,7 +1,7 @@
 FROM python:3.8-alpine
 
 # Set the working directory
-WORKDIR /Mobile_Api_Prod/mobile_api_get_family_member_data
+WORKDIR /Mobile_Api_Prod/mobile_api_get_medical_history
 
 # Copy the requirements file
 COPY requirements.txt .

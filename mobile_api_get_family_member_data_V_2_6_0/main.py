@@ -111,9 +111,9 @@ def get_family_member_data():
                 else:
                     print("Token Validated.")
                     # cloud_logger.info("Token Validated.")
-                    #print(lastUpdateTS)
-                    family_members = get_family_member_details(lastUpdateTS, userId, offset)           
-
+                    #print(lastUpdateTS)      
+                    family_members = get_family_member_details(lastUpdateTS, userId, offset)     
+                    print("family_members",len(family_members),type(family_members))
                     if len(family_members) == 0:
                         response =  json.dumps({
                             "message": "There is no family data available, Please Contact Administrator.", 
@@ -180,7 +180,6 @@ def get_address_for(familyId):
             #     params={"familyId": familyId},
             #     param_types={"familyId": param_types.STRING},
             # )
-        print("query",query)
         value = (familyId,)
         cursor.execute(query,value)
         result = cursor.fetchall()
@@ -235,10 +234,10 @@ def getResultFormatted(results):
                     print("Current Updated Row # %s",str(row))
                     # cloud_logger.info("Current Updated Row # %s",str(row))
 
-            for field in results.fields:
-                field_name=field.name
-                field_type=field.type_
-                field_code=field_type.code    
+            for column in cursor.description:
+                field_name=column.name
+                # field_type=column.type_
+                field_code=column.type_code    
                 # Code Mapping: STRING-6, TIMESTAMP-4, INT64-2, JSON-11             
                 if(field_code==11 and row[fieldIdx] is not None):
                     if field_name == "update_register":

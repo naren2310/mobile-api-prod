@@ -105,7 +105,6 @@ def get_families_data():
                     print("Token Validated.")
                     # cloud_logger.info("Token Validated.")
                     families = get_family_data(userId, defaultTime, request_data)
-
                     if len(families) == 0:
                         response =  json.dumps({
                             "message": "There is no family data available, Please contact administrator.", 
@@ -203,7 +202,6 @@ def getResultFormatted(results):
         for row in results:
             data={}
             fieldIdx=0
-            print('family Id: %s', row[0])
             # cloud_logger.info('family Id: %s', row[0])
             if row[19] == None or row[19] == "": # This will get executed only when data for street id is null. - Shreyas G. 25 Feb 22
                 # cloud_logger.info('Street Id is not available for this family Id: %s', row[0])
@@ -226,10 +224,10 @@ def getResultFormatted(results):
                     print("Current Updated Row # %s",str(row))
                     # cloud_logger.info("Current Updated Row # %s",str(row))
 
-            for field in results.fields:
-                field_name=field.name
-                field_type=field.type_
-                field_code=field_type.code    
+            for column in cursor.description:
+                field_name=column.name
+                # field_type=column.type_
+                field_code=column.type_code    
                 # Code Mapping: STRING-6, TIMESTAMP-4, INT64-2, JSON-11             
                 if(field_code==11 and row[fieldIdx] is not None):
                     if field_name == "update_register":

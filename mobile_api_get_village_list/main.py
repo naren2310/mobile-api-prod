@@ -112,6 +112,7 @@ def get_village_list_from_block():
                         values = (blockId,)
                         cursor.execute(query, values)
                         results = cursor.fetchall()
+                        print("results",results)
                         for row in results:
 
                             village = {

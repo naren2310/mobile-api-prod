@@ -28,6 +28,18 @@ import re
 # instance = client.instance(instance_id)
 # spnDB = instance.database(database_id)
 
+#postgresql 
+import psycopg2
+
+conn = psycopg2.connect(
+    host='142.132.206.93',  # hostname of the server
+    database='postgres',  # database name
+    user='tnphruser',  # username
+    password='TNphr@3Z4'  # password
+)
+
+cursor = conn.cursor()
+
 parameters = config.getParameters()
 
 current_appversion = 'Prior V_3.1.4'
@@ -101,18 +113,23 @@ def user_token_validation(userId, mobile):
         #             "user_id": param_types.STRING
         #         },                   
         #     )
-        value = (userId,)
+        value = (mobile,userId)
+        cursor.execute(query,value)
+        results = cursor.fetchall()
         for row in results:
             spnDB_userId = row[0]       #user ID fetched from spannerDB using the mobile number
         if (spnDB_userId != 0):         #Condition to validate userId exist in spannerDB
             if (spnDB_userId == userId):
                 return True
             else:
-                cloud_logger.info("Token is not valid for this user.")  
+                print("Token is not valid for this user.")
+                # cloud_logger.info("Token is not valid for this user.")  
                 return False
         else:
-            cloud_logger.info("Unregistered User/Token-User mismatch.")            
+            print("Unregistered User/Token-User mismatch.")
+            # cloud_logger.info("Unregistered User/Token-User mismatch.")            
             return False
     except Exception as error:
-        cloud_logger.error("Error validating user token:%s | %s | %s", str(error), current_userId, current_appversion)
+        print("Error validating user token:%s | %s | %s", str(error), current_userId, current_appversion)
+        # cloud_logger.error("Error validating user token:%s | %s | %s", str(error), current_userId, current_appversion)
         return False
