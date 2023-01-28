@@ -1,5 +1,6 @@
 from guard import *
 import guard
+from flask import Flask, request
 
 """
 ******Method Details******
@@ -13,6 +14,7 @@ Output: List of Blocks from address_block_master
     
 }]
 """
+app = Flask(__name__)
 
 # decorator for verifying the JWT
 def token_required(request):
@@ -22,16 +24,19 @@ def token_required(request):
         token = request.headers['x-access-token']
     if not token:
         if (str(request.headers['User-Agent']).count("UptimeChecks")!=0):
-            cloud_logger.info("Uptime check trigger.")
+            # cloud_logger.info("Uptime check trigger.")
+            print("Uptime check trigger.")
             return False, json.dumps({"status":"API-ACTIVE", "status_code":"200","message":'Uptime check trigger.'})
         else:
-            cloud_logger.critical("Invalid Token.")
+            # cloud_logger.critical("Invalid Token.")
+            print("Invalid Token.")
             return False, json.dumps({'status':'FAILURE', "status_code":"401", 'message' : 'Invalid Token.'})
     try:
         token = token.strip() #Remove spaces at the beginning and at the end of the token
         token_format = re.compile(parameters['TOKEN_FORMAT'])
         if not token_format.match(token):
-            cloud_logger.critical("Invalid Token format.")
+            # cloud_logger.critical("Invalid Token format.")
+            print("Invalid Token format.")
             return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token format.'})
         else:
             # decoding the payload to fetch the stored details
@@ -39,14 +44,17 @@ def token_required(request):
             return True, data
 
     except jwt.ExpiredSignatureError as e:
-        cloud_logger.critical("Token Expired: %s", str(e))
+        # cloud_logger.critical("Token Expired: %s", str(e))
+        print("Token Expired: %s", str(e))
         return False, json.dumps({'status':'FAILURE', "status_code":"401", 'message' : 'Token Expired.'})
 
     except Exception as e:
-        cloud_logger.critical("Invalid Token: %s", str(e))
+        # cloud_logger.critical("Invalid Token: %s", str(e))
+        print("Invalid Token: %s", str(e))
         return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token.'})
     
-def get_block_list(request):
+@app.route('/mobile_api_get_block_list', methods=['POST'])    
+def get_block_list():
     
     token_status, token_data = token_required(request)
     if not token_status:
@@ -54,7 +62,8 @@ def get_block_list(request):
     response = None
 
     try:
-        cloud_logger.info("********Get Block List*********")
+        # cloud_logger.info("********Get Block List*********")
+        print("********Get Block List*********")
         block_list=[]
         if (request.is_json):
             content=request.get_json()
@@ -84,42 +93,49 @@ def get_block_list(request):
                             })
                     return response
                 else:
-                    cloud_logger.info("Token Validated.")
-                    with spnDB.snapshot() as snapshot:   
-                        query = "SELECT DISTINCT  block_name ,block_id from address_block_master WHERE district_id=@district_id"
+                    # cloud_logger.info("Token Validated.")
+                    print("Token Validated.")
+                    query = "SELECT DISTINCT  block_name ,block_id FROM public.address_block_master WHERE district_id=%s"
+                    values = (districtId,)
+                    cursor.execute(query, values)
+                    results = cursor.fetchall()
+                    # with spnDB.snapshot() as snapshot:   
+                       
 
-                        results = snapshot.execute_sql(
-                            query,
-                            params={
-                                "district_id": districtId
-                                },
-                            param_types={
-                                "district_id": param_types.STRING},                   
-                                )
+                    #     results = snapshot.execute_sql(
+                    #         query,
+                    #         params={
+                    #             "district_id": districtId
+                    #             },
+                    #         param_types={
+                    #             "district_id": param_types.STRING},                   
+                    #             )
 
-                        for row in results:
+                    for row in results:
                             block = {
                                     "block_name":row[0],
                                     "block_id":row[1]
                                     }
                             block_list.append(block)
 
-                        if len(block_list) == 0:
+                    if len(block_list) == 0:
                             response =  json.dumps({
                                 "message": "There are no Blocks available, Please contact administrator.", 
                                 "status": "SUCCESS",
                                 "status_code":"200",
                                 "data": {}
                             })
-                            cloud_logger.info("There is no Blocks available.")
-                        else:
+                            print("There is no Blocks available.")
+                            # cloud_logger.info("There is no Blocks available.")
+                    else:
                             response =  json.dumps({
                                 "message": "Success retrieving Block data.", 
                                 "status": "SUCCESS",
                                 "status_code":"200",
                                 "data": {"block_list":block_list}
                             })
-                            cloud_logger.info("Success retrieving Block data.")
+                            # cloud_logger.info("Success retrieving Block data.")
+                            print("Success retrieving Block data.")
         else :
             response =  json.dumps({
                             "message": "Error!! The Request format should be in JSON.", 
@@ -127,7 +143,8 @@ def get_block_list(request):
                             "status_code":"401",
                             "data": {}
                         })
-            cloud_logger.error("The Request format should be in JSON.")
+            # cloud_logger.error("The Request format should be in JSON.")
+            print("The Request format should be in JSON.") 
     except Exception as e:
         response =  json.dumps({
                             "message": "Error while retrieving Block data, Please Retry.",
@@ -135,6 +152,10 @@ def get_block_list(request):
                             "status_code": "401",
                             "data": {}
                         })
-        cloud_logger.error("Error while retrieving Block data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+        # cloud_logger.error("Error while retrieving Block data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+        print("Error while retrieving Block data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
     finally:
         return response
+
+if __name__=="__main__":    
+    app.run(host="0.0.0.0", port=8000)

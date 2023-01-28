@@ -1,17 +1,19 @@
-# set base image(host OS)
+FROM python:3.8-alpine
 
-FROM python:3.10.4-alpine3.15 AS builder
-# set the working directory in the container
+# Set the working directory
+WORKDIR /Mobile_Api_Prod/mobile_api_get_family_member_data
 
-RUN apk update \
-  && apk add gcc g++ linux-headers
-  
-WORKDIR /API/mobile_api/mobile_api_get_medical_history/
+# Copy the requirements file
+COPY requirements.txt .
 
-COPY . /API/mobile_api/mobile_api_get_medical_history/
+# Install the dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
-# copy the dependencies file to the working directory
-# install dependencies
-# RUN python -m pip install --upgrade pip
-RUN pip --no-cache-dir install -r requirements.txt
-CMD exec gunicorn --workers 9 --threads 8 --timeout 0 main:app
+# Copy the rest of the application code
+COPY . .
+
+# Expose the port for the application
+EXPOSE 5000
+
+# Start the application using Gunicorn
+CMD exec gunicorn --workers 1 --threads 1 --timeout 0 --bind 0.0.0.0:5000 main:app

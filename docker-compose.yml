@@ -5,10 +5,38 @@ services:
     ports:
       - "9000:5000"
   mobile_api_validateOTP:
-    image: tnphr/mobileapivalidateOTP
+    image: tnphr/mobileapivalidateotp
     ports:
       - "9001:5000"
   mobile_api_resendOTP:
     image: tnphr/mobileapiresendotp
     ports:
       - "9002:5000"
+  mobile_api_get_facility:
+    image: tnphr/mobileapigetfacility
+    ports:
+      - "9003:5000"
+  mobile_api_get_family_memberdata:
+    image: tnphr/mobileapigetfamilymemberdata
+    ports:
+      - "9004:5000"
+  mobile_api_get_block_list:
+    image: tnphr/mobileapigetblocklist
+    ports:
+      - "9005:5000"
+  mobile_api_get_clinical_data:
+    image: tnphr/mobileapigetclinicaldata
+    ports:
+      - "9006:5000"
+  mobile_api_get_district_list:
+    image: tnphr/mobileapigetdistrictlist
+    ports:
+      - "9007:5000"
+  mobile_api_get_family_data:
+    image: tnphr/mobileapigetfamilydata
+    ports:
+      - "9008:5000"
+  mobile_api_get_village_list:
+    image: tnphr/mobileapigetvillagelist
+    ports:
+      - "9009:5000"

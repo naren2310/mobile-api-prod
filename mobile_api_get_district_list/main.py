@@ -1,5 +1,6 @@
 from guard import *
 import guard
+from flask import Flask, request
 
 """
 ******Method Details******
@@ -12,6 +13,7 @@ Output: Master data from health_screening
     "STATE_ID":<id>   
 }
 """
+app = Flask(__name__)
 
 # decorator for verifying the JWT
 def token_required(request):
@@ -21,17 +23,20 @@ def token_required(request):
         token = request.headers['x-access-token']
     if not token:
         if (str(request.headers['User-Agent']).count("UptimeChecks")!=0):
-            cloud_logger.info("Uptime check trigger.")
+            # cloud_logger.info("Uptime check trigger.")
+            print("Uptime check trigger.")
             return False, json.dumps({"status":"API-ACTIVE", "status_code":"200","message":'Uptime check trigger.'})
         else:
-            cloud_logger.critical("Invalid Token.")
+            # cloud_logger.critical("Invalid Token.")
+            print("Invalid Token.")
             return False, json.dumps({'status':'FAILURE', "status_code":"401", 'message' : 'Invalid Token.'})
 
     try:
         token = token.strip() #Remove spaces at the beginning and at the end of the token
         token_format = re.compile(parameters['TOKEN_FORMAT'])
         if not token_format.match(token):
-            cloud_logger.critical("Invalid Token format.")
+            # cloud_logger.critical("Invalid Token format.")
+            print("Invalid Token format.")
             return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token format.'})
         else:
             # decoding the payload to fetch the stored details
@@ -39,14 +44,17 @@ def token_required(request):
             return True, data
 
     except jwt.ExpiredSignatureError as e:
-        cloud_logger.critical("Token Expired: %s", str(e))
+        # cloud_logger.critical("Token Expired: %s", str(e))
+        print("Token Expired: %s", str(e))
         return False, json.dumps({'status':'FAILURE', "status_code":"401", 'message' : 'Token Expired.'})
 
     except Exception as e:
-        cloud_logger.critical("Invalid Token: %s", str(e))
+        # cloud_logger.critical("Invalid Token: %s", str(e))
+        print("Invalid Token: %s", str(e))
         return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token.'})
-    
-def get_district_list(request):
+
+@app.route('/mobile_api_get_district_list', methods=['POST'])    
+def get_district_list():
     
     token_status, token_data = token_required(request)
     if not token_status:
@@ -55,7 +63,8 @@ def get_district_list(request):
     response = None
 
     try:
-        cloud_logger.info("*********Get District List*********")
+        # cloud_logger.info("*********Get District List*********")
+        print("*********Get District List*********")
         district_list=[]
         if (request.is_json):
             content=request.get_json()
@@ -84,13 +93,14 @@ def get_district_list(request):
                             })
                     return response
                 else:
-                    cloud_logger.info("Token Validated.")
-                    with spnDB.snapshot() as snapshot:   
-                        query = "SELECT DISTINCT district_name, district_id FROM address_district_master"
-
-                        results = snapshot.execute_sql(query)
-
-                        for row in results:
+                    # cloud_logger.info("Token Validated.")
+                    print("Token Validated.")
+                    query = "SELECT DISTINCT district_name, district_id FROM public.address_district_master"
+                    # with spnDB.snapshot() as snapshot:   
+                    #     results = snapshot.execute_sql(query)
+                    cursor.execute(query)
+                    results = cursor.fetchall()
+                    for row in results:
 
                             district = {
                                 "district_name":row[0],
@@ -98,22 +108,24 @@ def get_district_list(request):
                             }
                             district_list.append(district)
 
-                        if len(district_list) == 0:
+                    if len(district_list) == 0:
                             response =  json.dumps({
                                 "message": "There is no districts available, Please contact Administrator.", 
                                 "status": "SUCCESS",
                                 "status_code":"200",
                                 "data": {}
                             })
-                            cloud_logger.info("There is no districts available.")
-                        else:
+                            # cloud_logger.info("There is no districts available.")
+                            print("There is no districts available.")
+                    else:
                             response =  json.dumps({
                                 "message": "Success retrieving District data.", 
                                 "status": "SUCCESS",
                                 "status_code":"200",
                                 "data": {"district_list":district_list}
                             })
-                            cloud_logger.info("Success retrieving District data.")
+                            # cloud_logger.info("Success retrieving District data.")
+                            print("Success retrieving District data.")
         else :
             response =  json.dumps({
                     "message": "Error!! The Request Format should be in JSON.", 
@@ -121,7 +133,8 @@ def get_district_list(request):
                     "status_code":"401",
                     "data": {}
                 })
-            cloud_logger.error("The Request Format should be in JSON.")
+            # cloud_logger.error("The Request Format should be in JSON.")
+            print("The Request Format should be in JSON.")
         
     except Exception as e:
         response =  json.dumps({
@@ -130,7 +143,10 @@ def get_district_list(request):
                     "status_code": "401",
                     "data": {}
                 })
-        cloud_logger.error("Error while retrieving District data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-
+        # cloud_logger.error("Error while retrieving District data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+        print("Error while retrieving District data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
     finally:
         return response
+
+if __name__=="__main__":    
+    app.run(host="0.0.0.0", port=8000)

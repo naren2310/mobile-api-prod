@@ -1,6 +1,6 @@
-from google.cloud import spanner
-from google.cloud.spanner_v1 import param_types
-from google.cloud import logging as cloudlogging
+# from google.cloud import spanner
+# from google.cloud.spanner_v1 import param_types
+# from google.cloud import logging as cloudlogging
 
 import logging
 import os
@@ -9,22 +9,34 @@ import json
 import jwt
 import re
 
-log_client = cloudlogging.Client()
+# log_client = cloudlogging.Client()
 
-log_handler = log_client.get_default_handler()
-cloud_logger = logging.getLogger("cloudLogger")
-cloud_logger.setLevel(logging.INFO)
-cloud_logger.setLevel(logging.DEBUG)
-cloud_logger.addHandler(log_handler)
+# log_handler = log_client.get_default_handler()
+# cloud_logger = logging.getLogger("cloudLogger")
+# cloud_logger.setLevel(logging.INFO)
+# cloud_logger.setLevel(logging.DEBUG)
+# cloud_logger.addHandler(log_handler)
 
-instance_id = os.environ.get('instance_id')
-database_id = os.environ.get('database_id')
+# instance_id = os.environ.get('instance_id')
+# database_id = os.environ.get('database_id')
 
-client = spanner.Client()
-instance = client.instance(instance_id)
-spnDB = instance.database(database_id)
+# client = spanner.Client()
+# instance = client.instance(instance_id)
+# spnDB = instance.database(database_id)
 
 parameters = config.getParameters()
+
+#postgresql 
+import psycopg2
+
+conn = psycopg2.connect(
+    host='142.132.206.93',  # hostname of the server
+    database='postgres',  # database name
+    user='tnphruser',  # username
+    password='TNphr@3Z4'  # password
+)
+
+cursor = conn.cursor()
 
 current_appversion = 'Prior V_3.1.4'
 current_userId = ''
@@ -46,12 +58,14 @@ def validate_id_attribute(userId, districtId):
     is_valid_id = False
     try:
         if userId == "" and districtId == "":
-            cloud_logger.critical("Both userId and districtId are empty")
+            # cloud_logger.critical("Both userId and districtId are empty")
+            print('Both userId and districtId are empty')
             return is_valid_id
         else:
             return validate_id(userId, districtId)
     except Exception as error:
-        cloud_logger.error("Error validating Id attribute : %s | %s | %s ", str(error), current_userId, current_appversion)
+        # cloud_logger.error("Error validating Id attribute : %s | %s | %s ", str(error), current_userId, current_appversion)
+        print('Error validating Id attribute :  %s | %s | %s', str(error), current_userId, current_appversion)
         return is_valid_id
 
 
@@ -78,15 +92,18 @@ def validate_id(*ids):
                         id != None and id != "" and len(id) == parameters['ID_LENGTH']:
                     valid_ids.append(True)
                 else:
-                    cloud_logger.critical("ID is not valid %s", str(id))
+                    # cloud_logger.critical("ID is not valid %s", str(id))
+                    print("ID is not valid %s", str(id))
                     valid_ids.append(False)
         if all(item == True for item in valid_ids) and len(valid_ids) != 0:
             return True
         else:
-            cloud_logger.info("One or more supplied ID not valid.")
+            # cloud_logger.info("One or more supplied ID not valid.")
+            print("One or more supplied ID not valid.")
             return False
     except Exception as error:
-        cloud_logger.error("Error validating Id attribute format : %s | %s | %s ", str(error), current_userId, current_appversion)
+        # cloud_logger.error("Error validating Id attribute format : %s | %s | %s ", str(error), current_userId, current_appversion)
+        print("Error validating Id attribute format : %s | %s | %s ", str(error), current_userId, current_appversion)
         return False
 
 def user_token_validation(userId, mobile):
@@ -98,30 +115,36 @@ def user_token_validation(userId, mobile):
     """ 
     spnDB_userId = 0
     try:
-        query = "select user_id from user_master where mobile_number=@mobile and user_id=@user_id"
-        with spnDB.snapshot() as snapshot: 
-            results = snapshot.execute_sql(
-                query,
-                params={
-                    "mobile": mobile,
-                    "user_id": userId
-                },
-                param_types={
-                    "mobile": param_types.INT64,
-                    "user_id": param_types.STRING
-                },                   
-            )
+        query = "SELECT user_id FROM public.user_master WHERE mobile_number=%s AND user_id=%s"
+        # with spnDB.snapshot() as snapshot: 
+        #     results = snapshot.execute_sql(
+        #         query,
+        #         params={
+        #             "mobile": mobile,
+        #             "user_id": userId
+        #         },
+        #         param_types={
+        #             "mobile": param_types.INT64,
+        #             "user_id": param_types.STRING
+        #         },                   
+        #     )
+        value = (mobile, userId)
+        cursor.execute(query, value)
+        results = cursor.fetchall()
         for row in results:
             spnDB_userId = row[0]       #user ID fetched from spannerDB using the mobile number
         if (spnDB_userId != 0):         #Condition to validate userId exist in spannerDB
             if (spnDB_userId == userId):
                 return True
             else:
-                cloud_logger.info("Token is not valid for this user.")  
+                # cloud_logger.info("Token is not valid for this user.")  
+                print("Token is not valid for this user.")
                 return False
         else:
-            cloud_logger.info("Unregistered User/Token-User mismatch.")            
+            # cloud_logger.info("Unregistered User/Token-User mismatch.")  
+            print("Unregistered User/Token-User mismatch.")         
             return False
     except Exception as error:
-        cloud_logger.error("Error validating user token: %s | %s | %s ", str(error), current_userId, current_appversion)
+        print("Error validating user token: %s | %s | %s ", str(error), current_userId, current_appversion)
+        # cloud_logger.error("Error validating user token: %s | %s | %s ", str(error), current_userId, current_appversion)
         return False
