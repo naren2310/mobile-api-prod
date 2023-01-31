@@ -3,15 +3,16 @@ import guard
 
 def getResultFormatted(results):
     data_list=[]
-    cloud_logger.info("Formatting the Result.")
+    print("Formatting the Result.")
+    # cloud_logger.info("Formatting the Result.")
     for row in results:
         data={}
         fieldIdx=0
 
-        for field in results.fields:
-            field_name=field.name
-            field_type=field.type_
-            field_code=field_type.code    
+        for column in cursor.description:
+            field_name=column.name
+            # field_type=field.type_
+            field_code=column.type_code    
             # Code Mapping: STRING-6, TIMESTAMP-4, INT64-2, JSON-11, DATE-5            
             if(field_code==11 and row[fieldIdx] is not None):
                 if field_name == "update_register":
@@ -33,7 +34,8 @@ def getResultFormatted(results):
 
 def getUpdateRegister(update_register):
     try:
-        cloud_logger.info("Formatting Update Register.")
+        print("Formatting Update Register.")
+        # cloud_logger.info("Formatting Update Register.")
         if isinstance(update_register, dict):
             update_register_list = [update_register]
             if len(update_register_list) == 1 or len(update_register_list) == 0:
@@ -52,4 +54,5 @@ def getUpdateRegister(update_register):
 
                 return update_register
     except Exception as e:
-        cloud_logger.error("Error parsing Update Register : %s| %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+        print("Error parsing Update Register : %s| %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+        # cloud_logger.error("Error parsing Update Register : %s| %s | %s ", str(e), guard.current_userId, guard.current_appversion)

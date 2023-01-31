@@ -197,10 +197,10 @@ def getResultFormatted(results):
             data={}
             fieldIdx=0
 
-            for field in results.fields:
-                field_name=field.name
-                field_type=field.type_
-                field_code=field_type.code    
+            for column in cursor.description:
+                field_name=column.name
+                # field_type=field.type_
+                field_code=column.type_code
                 # Code Mapping: STRING-6, TIMESTAMP-4, INT64-2, JSON-11             
                 if(field_code==11 and row[fieldIdx] is not None):
                     if field_name == "update_register":

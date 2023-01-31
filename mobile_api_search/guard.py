@@ -1,7 +1,7 @@
 from pytz import timezone
-from google.cloud import spanner
-from google.cloud.spanner_v1 import param_types
-from google.cloud import logging as cloudlogging
+# from google.cloud import spanner
+# from google.cloud.spanner_v1 import param_types
+# from google.cloud import logging as cloudlogging
 
 import logging
 import config
@@ -10,19 +10,31 @@ import jwt
 import os
 import re
 
-log_client = cloudlogging.Client()
-log_handler = log_client.get_default_handler()
-cloud_logger = logging.getLogger("cloudLogger")
-cloud_logger.setLevel(logging.INFO)
-cloud_logger.setLevel(logging.DEBUG)
-cloud_logger.addHandler(log_handler)
+# log_client = cloudlogging.Client()
+# log_handler = log_client.get_default_handler()
+# cloud_logger = logging.getLogger("cloudLogger")
+# cloud_logger.setLevel(logging.INFO)
+# cloud_logger.setLevel(logging.DEBUG)
+# cloud_logger.addHandler(log_handler)
 
-instance_id = os.environ.get('instance_id')
-database_id = os.environ.get('database_id')
+# instance_id = os.environ.get('instance_id')
+# database_id = os.environ.get('database_id')
 
-client = spanner.Client()
-instance = client.instance(instance_id)
-spnDB = instance.database(database_id)
+# client = spanner.Client()
+# instance = client.instance(instance_id)
+# spnDB = instance.database(database_id)
+
+#postgresql 
+import psycopg2
+
+conn = psycopg2.connect(
+    host='142.132.206.93',  # hostname of the server
+    database='postgres',  # database name
+    user='tnphruser',  # username
+    password='TNphr@3Z4'  # password
+)
+
+cursor = conn.cursor()
 
 parameters = config.getParameters()
 
@@ -62,18 +74,22 @@ def validate_id(*ids):
                         id != None and id != "" and len(id) == parameters['ID_LENGTH']:                    
                     valid_ids.append(True)
                 else:
-                    cloud_logger.critical("ID is not valid %s", str(id))
+                    print("ID is not valid %s", str(id))
+                    # cloud_logger.critical("ID is not valid %s", str(id))
                     valid_ids.append(False)
             else:
-                cloud_logger.critical("Supplied ID is empty or not valid %s", str(id))
+                print("Supplied ID is empty or not valid %s", str(id))
+                # cloud_logger.critical("Supplied ID is empty or not valid %s", str(id))
                 valid_ids.append(False)
         if all(item == True for item in valid_ids) and len(valid_ids) != 0:
             return True
         else:
-            cloud_logger.info("One or more supplied ID not valid.")            
+            print("One or more supplied ID not valid.")
+            # cloud_logger.info("One or more supplied ID not valid.")            
             return False
     except Exception as error:
-        cloud_logger.error("Error validating Id attribute format : %s | %s | %s ", str(error), current_userId, current_appversion)
+        print("Error validating Id attribute format : %s | %s | %s ", str(error), current_userId, current_appversion)
+        # cloud_logger.error("Error validating Id attribute format : %s | %s | %s ", str(error), current_userId, current_appversion)
         return False
 
 def user_token_validation(userId, mobile):
@@ -85,32 +101,39 @@ def user_token_validation(userId, mobile):
     """ 
     spnDB_userId = 0
     try:
-        query = "select user_id from user_master where mobile_number=@mobile and user_id=@user_id"
-        with spnDB.snapshot() as snapshot: 
-            results = snapshot.execute_sql(
-                query,
-                params={
-                    "mobile": mobile,
-                    "user_id": userId
-                },
-                param_types={
-                    "mobile": param_types.INT64,
-                    "user_id": param_types.STRING
-                },                   
-            )
+        # query = "select user_id from user_master where mobile_number=@mobile and user_id=@user_id"
+        query = "SELECT user_id FROM public.user_master WHERE mobile_number=%s AND user_id=%s"
+        # with spnDB.snapshot() as snapshot: 
+        #     results = snapshot.execute_sql(
+        #         query,
+        #         params={
+        #             "mobile": mobile,
+        #             "user_id": userId
+        #         },
+        #         param_types={
+        #             "mobile": param_types.INT64,
+        #             "user_id": param_types.STRING
+        #         },                   
+        #     )
+        value = (mobile,userId)
+        cursor.execute(query,value)
+        results = cursor.fetchall()
         for row in results:
             spnDB_userId = row[0]       #user ID fetched from spannerDB using the mobile number
         if (spnDB_userId != 0):         #Condition to validate userId exist in spannerDB
             if (spnDB_userId == userId):
                 return True
             else:
-                cloud_logger.info("Token is not valid for this user.")  
+                print("Token is not valid for this user.")
+                # cloud_logger.info("Token is not valid for this user.")  
                 return False
         else:
-            cloud_logger.info("Unregistered User/Token-User mismatch.")            
+            print("Unregistered User/Token-User mismatch.")
+            # cloud_logger.info("Unregistered User/Token-User mismatch.")            
             return False
     except Exception as error:
-        cloud_logger.error("Error validating user token: %s | %s | %s ", str(error), current_userId, current_appversion)
+        print("Error validating user token: %s | %s | %s ", str(error), current_userId, current_appversion)
+        # cloud_logger.error("Error validating user token: %s | %s | %s ", str(error), current_userId, current_appversion)
         return False
 
 def validate_mobile_no(mobile_number):
@@ -126,7 +149,8 @@ def validate_mobile_no(mobile_number):
             return True        
         return is_valid_mobile
     except Exception as error:
-        cloud_logger.error("Error in validating mobile number : %s | %s | %s ", str(error), current_userId, current_appversion)
+        print("Error in validating mobile number : %s | %s | %s ", str(error), current_userId, current_appversion)
+        # cloud_logger.error("Error in validating mobile number : %s | %s | %s ", str(error), current_userId, current_appversion)
         return False
 
 def validate_unique_health_id(unique_health_id):
@@ -142,7 +166,8 @@ def validate_unique_health_id(unique_health_id):
             return True        
         return is_valid_UHID
     except Exception as error:
-        cloud_logger.error("Error in validating unique health Id: %s | %s | %s ", str(error), current_userId, current_appversion)
+        print("Error in validating unique health Id: %s | %s | %s ", str(error), current_userId, current_appversion)
+        # cloud_logger.error("Error in validating unique health Id: %s | %s | %s ", str(error), current_userId, current_appversion)
         return False
 
 def validate_pds_smart_card_id(pds_smart_card_id):
@@ -158,7 +183,8 @@ def validate_pds_smart_card_id(pds_smart_card_id):
             return True        
         return is_valid_PDSID
     except Exception as error:
-        cloud_logger.error("Error in validating pds smart card Id: %s | %s | %s ", str(error), current_userId, current_appversion)
+        print("Error in validating pds smart card Id: %s | %s | %s ", str(error), current_userId, current_appversion)
+        # cloud_logger.error("Error in validating pds smart card Id: %s | %s | %s ", str(error), current_userId, current_appversion)
         return False
 
 def validate_member_name_inputs(**kwargs):
@@ -192,7 +218,8 @@ def validate_member_name_inputs(**kwargs):
                     return False, message
         return is_valid_inputs, message
     except Exception as error:
-        cloud_logger.error("Error in validating member name inputs: %s | %s | %s ", str(error), current_userId, current_appversion)
+        print("Error in validating member name inputs: %s | %s | %s ", str(error), current_userId, current_appversion)
+        # cloud_logger.error("Error in validating member name inputs: %s | %s | %s ", str(error), current_userId, current_appversion)
         return False
 
 def check_id_registered(districtId, blockId, villageId):
@@ -202,33 +229,39 @@ def check_id_registered(districtId, blockId, villageId):
     Return: Boolean
     """
     try:
-        query = 'SELECT EXISTS(select district_id from address_village_master'
+        query = 'SELECT EXISTS(SELECT district_id FROM public.address_village_master'
         param = {}
-        types = {}
-
+        # types = {}
+        value = {}
+        
         if districtId != "" and blockId != "" and villageId != "" and villageId != None: #When all the IDs are not empty
-            query += ' where district_id=@district_id and block_id=@block_id and village_id=@village_id)'                    
+            query += ' WHERE district_id=%s AND block_id=%s AND village_id=%s)'                    
             param['district_id'] = districtId
             param['block_id'] = blockId
             param['village_id'] = villageId
-            types['district_id'] = param_types.STRING
-            types['block_id'] = param_types.STRING
-            types['village_id'] = param_types.STRING
+            
+            # types['district_id'] = param_types.STRING
+            # types['block_id'] = param_types.STRING
+            # types['village_id'] = param_types.STRING
 
         elif districtId != "" and blockId != "" and (villageId == "" or villageId == None): #when district and block Ids are not empty
-            query += ' where district_id=@district_id and block_id=@block_id)'
+            query += ' WHERE district_id=%s AND block_id=%s)'
             param['district_id'] = districtId
             param['block_id'] = blockId
-            types['district_id'] = param_types.STRING
-            types['block_id'] = param_types.STRING
+            # types['district_id'] = param_types.STRING
+            # types['block_id'] = param_types.STRING
 
-        with spnDB.snapshot() as snapshot: 
-            result = snapshot.execute_sql(query, params= param, param_types=types)
+        # with spnDB.snapshot() as snapshot: 
+            # result = snapshot.execute_sql(query, params= param, param_types=types)
+        value = (districtId,blockId,villageId)
+        cursor.execute(query,value)
+        result = cursor.fetchall()
         for row in result:
             id_exist = row[0]
         return id_exist
     except Exception as error:
-        cloud_logger.error("Error occurred in check id registered : %s | %s | %s ", str(error), current_userId, current_appversion)
+        print("Error occurred in check id registered : %s | %s | %s ", str(error), current_userId, current_appversion)
+        # cloud_logger.error("Error occurred in check id registered : %s | %s | %s ", str(error), current_userId, current_appversion)
         return False
 
 def validate_search_parameter(search_parameter):
@@ -243,5 +276,6 @@ def validate_search_parameter(search_parameter):
             return True        
         return is_valid_search_param
     except Exception as error:
-        cloud_logger.error("Error in validating search parameter : %s | %s | %s ", str(error), current_userId, current_appversion)
+        print("Error in validating search parameter : %s | %s | %s ", str(error), current_userId, current_appversion)
+        # cloud_logger.error("Error in validating search parameter : %s | %s | %s ", str(error), current_userId, current_appversion)
         return False

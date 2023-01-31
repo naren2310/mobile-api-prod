@@ -103,7 +103,7 @@ def get_address(streetId, UserId, Query):
     street_gid = None
     
     try:
-        print('Getting address details of Family for Street Id : %s by query : %s', str(streetId), str(Query))
+        # print('Getting address details of Family for Street Id : %s by query : %s', str(streetId), str(Query))
         # cloud_logger.info('Getting address details of Family for Street Id : %s by query : %s', str(streetId), str(Query))
         # with spnDB.snapshot() as snapshot:
         query = Query
@@ -135,7 +135,7 @@ def get_address(streetId, UserId, Query):
                     hierarchy_fields["country_id"]=row[13]
                     hierarchy_fields["hsc_unit_id"]=row[14]
                     street_gid = row[15]
-                    print("Address Details from hierarchy : {}".format(str(hierarchy_fields)))
+                    # print("Address Details from hierarchy : {}".format(str(hierarchy_fields)))
                     # cloud_logger.debug("Address Details from hierarchy : {}".format(str(hierarchy_fields)))
                 else:
                     return street_gid, hierarchy_fields
@@ -318,9 +318,9 @@ def fetchLastUpdateMember(memberId, familyId):
     try:
         print("Fetching Last Update Timestamp for Member.")
         # cloud_logger.info("Fetching Last Update Timestamp for Member.")
-        print("Member Id = {}".format(memberId))
+        # print("Member Id = {}".format(memberId))
         # cloud_logger.debug("Member Id = {}".format(memberId))
-        query = "SELECT last_update_date, update_register FROM public.family_member_master WHERE member_id=%s and family_id=%s"
+        query = "SELECT last_update_date, update_register FROM public.family_member_master WHERE member_id=%s AND family_id=%s"
         # with spnDB.snapshot() as snapshot:
         #     results = snapshot.execute_sql(
         #         query,
@@ -339,7 +339,7 @@ def fetchLastUpdateMember(memberId, familyId):
         for row in results:
                 data = {
                     'last_update_date': row[0],
-                    'update_register': json.loads(row[1]) if row[1] is not None else row[1]
+                    'update_register':row[1] if row[1] is not None else row[1]
                 }
 
         return data
@@ -351,15 +351,14 @@ def fetchLastUpdateMember(memberId, familyId):
 
 #Important: Temp Fix the Mobile App to be changed.
 def isUpdatedFamily(updateRegister, reqUpdateRegister, userId):
-
     if updateRegister is None or len(updateRegister)==0:
         return True
 
     reqUpdateRegTS = datetime.strptime(reqUpdateRegister['timestamp'], "%Y-%m-%d %H:%M:%S%z")
     for register in updateRegister:
         updateRegTS = datetime.strptime(register['timestamp'], "%Y-%m-%d %H:%M:%S%z")
-        print("Time from request: ", reqUpdateRegTS, " TS from Spanner: ", updateRegTS)
-        print("User from request: ", userId, " User from Spanner: ", register['user_id'])
+        # print("Time from request: ", reqUpdateRegTS, " TS from Spanner: ", updateRegTS)
+        # print("User from request: ", userId, " User from Spanner: ", register['user_id'])
         if updateRegTS==reqUpdateRegTS and register['user_id'] == userId:
             return False
         
@@ -402,15 +401,10 @@ def UpsertFamilyDetails(family_list, userId):
             print("Family Id = {}".format(family_id))
             # cloud_logger.debug("Family Id = {}".format(family_id))
             spannerData = fetchLastUpdateFamily(family_id)
-            requestUpdateDate = datetime.strptime(familyDetails['last_update_date'], "%Y-%m-%d %H:%M:%S%z")
+            requestUpdateDate = datetime.strptime(familyDetails['last_update_date'], "%Y-%m-%d %H:%M:%S")
             # TODO - UNDERSTAND THIS WELL
-            print("spannerData",spannerData)
-            print("requestUpdateDate",requestUpdateDate)
-            print("spannerData",spannerData['last_update_date'])
             if (spannerData is None) or (requestUpdateDate > spannerData['last_update_date']):
-                print("aaaaaaaa")
                 isFamilyUpdated = isUpdatedFamily(spannerData['update_register'], updateRegister, userId) if spannerData is not None else True
-                print("isFamilyUpdated",isFamilyUpdated)
                 if isFamilyUpdated:
                     for key in familyDetails.keys():
                         val=familyDetails[key]
@@ -449,7 +443,7 @@ def UpsertFamilyDetails(family_list, userId):
                         elif key=='last_update_date' and (val is not None or val!=""):
                             if(cntIdx==0):
                                 familyKeys.append(key)
-                            last_update_date = datetime.strptime(val, "%Y-%m-%d %H:%M:%S%z") 
+                            last_update_date = datetime.strptime(val, "%Y-%m-%d %H:%M:%S") 
                             fvalues.append(last_update_date)
                         elif key=='family_id' and (val is not None or val!=""):
                             if(cntIdx==0):
@@ -494,7 +488,7 @@ def UpsertFamilyDetails(family_list, userId):
                             if(cntIdx==0):
                                 familyKeys.append(key)
                                 serefKeys.append(key)
-                            print("Update_Register value for Family: {}".format(str(val)))
+                            # print("Update_Register value for Family: {}".format(str(val)))
                             # cloud_logger.debug("Update_Register value for Family: {}".format(str(val)))
                             update_register = spannerData['update_register'] if(spannerData is not None) else None
                             if update_register is not None:
@@ -515,17 +509,15 @@ def UpsertFamilyDetails(family_list, userId):
                     print('Family values added.')
                     # cloud_logger.info('Family values added.')
                     family_details.append({"family_id": family_id, "phr_family_id":phr_fid})
-                
                 if len(members_list) != 0:
                     isMemberUpdates, member_keys, mValues, member_details_current_family = UpsertMemberDetails(members_list, phr_fid, address_details, userId)
                     #print("Keys from Member Function:", member_keys)
                     #print("Values from Member Function:", mValues)
                     #print("member_details",member_details_current_family)
                     print("PHR FID Values from update Member Function: {}".format(str(phr_fid)))
-                    print("ADDRESS DETAILS: {}".format(str(address_details)))
+                    # print("ADDRESS DETAILS: {}".format(str(address_details)))
                     # cloud_logger.debug("PHR FID Values from update Member Function: {}".format(str(phr_fid)))
                     # cloud_logger.debug("ADDRESS DETAILS: {}".format(str(address_details)))
-
                     if isMemberUpdates:
                         if len(memberKeys)==0:
                             memberKeys = member_keys
@@ -555,13 +547,10 @@ def UpsertFamilyDetails(family_list, userId):
                 #     columns=familyKeys,
                 #     values=familyVals
                 # )
-                
-        print("familyKeys",familyKeys)
-        print("familyVals",familyVals)
-            # value = ()
-            # query = "INSERT INTO public.family_master (table_name, last_update_date) VALUES ('facility_registry',%s) ON CONFLICT (table_name) DO UPDATE SET last_update_date = EXCLUDED.last_update_date "
-            # cursor.execute(query,value)
-            # conn.commit()
+        value = (familyVals[0][0],familyVals[0][1],familyVals[0][2],familyVals[0][3],familyVals[0][4],familyVals[0][5],familyVals[0][6],familyVals[0][7],familyVals[0][8],familyVals[0][9],familyVals[0][10],familyVals[0][11],familyVals[0][12],familyVals[0][13],familyVals[0][14],familyVals[0][15],familyVals[0][16],familyVals[0][17],familyVals[0][18],familyVals[0][19])
+        query = "INSERT INTO public.family_master (family_id,phr_family_id,facility_id,hhg_id,street_id,ward_id,area_id,habitation_id,rev_village_id,village_id, block_id,hud_id,taluk_id,district_id,state_id,country_id,hsc_unit_id,shop_id,last_update_date,update_register) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) ON CONFLICT (family_id) DO UPDATE SET family_id = EXCLUDED.family_id,phr_family_id = EXCLUDED.phr_family_id,facility_id = EXCLUDED.facility_id,hhg_id = EXCLUDED.hhg_id,street_id = EXCLUDED.street_id,ward_id = EXCLUDED.ward_id,area_id = EXCLUDED.area_id,habitation_id = EXCLUDED.habitation_id,rev_village_id = EXCLUDED.rev_village_id,village_id = EXCLUDED.village_id,block_id = EXCLUDED.block_id,hud_id = EXCLUDED.hud_id,taluk_id = EXCLUDED.taluk_id,district_id = EXCLUDED.district_id,state_id = EXCLUDED.state_id,country_id = EXCLUDED.country_id,hsc_unit_id = EXCLUDED.hsc_unit_id,shop_id = EXCLUDED.shop_id,last_update_date = EXCLUDED.last_update_date,update_register=COALESCE(EXCLUDED.update_register, '[]'::jsonb) ||EXCLUDED.update_register  ::jsonb"
+        cursor.execute(query,value)
+        conn.commit()
             # spnDB.run_in_transaction(upsertFamily)   
 
         if len(serefKeys)>0:
@@ -573,10 +562,8 @@ def UpsertFamilyDetails(family_list, userId):
                 #     columns=serefKeys,
                 #     values=serefVals
                 # )
-            print('serefKeys',serefKeys)
-            print("serefVals",serefVals)
-            value = ()
-            query = "INSERT INTO public.family_socio_economic_ref (table_name, last_update_date) VALUES ('facility_registry',%s) ON CONFLICT (table_name) DO UPDATE SET last_update_date = EXCLUDED.last_update_date"
+            value = (serefVals[0][0],serefVals[0][1],serefVals[0][2])
+            query = "INSERT INTO public.family_socio_economic_ref (family_id,family_socio_economic_id,update_register) VALUES (%s,%s,%s) ON CONFLICT (family_socio_economic_id) DO UPDATE SET family_id = EXCLUDED.family_id,family_socio_economic_id = EXCLUDED.family_socio_economic_id,update_register=COALESCE(EXCLUDED.update_register, '[]'::jsonb) ||EXCLUDED.update_register  ::jsonb"
             cursor.execute(query,value)
             conn.commit()
             # spnDB.run_in_transaction(UpsertSeref)   
@@ -590,12 +577,10 @@ def UpsertFamilyDetails(family_list, userId):
                 #     columns=memberKeys,
                 #     values=memberVals
                 # )
-        print("memberKeys",memberKeys)
-        print("memberVals",memberVals)
-            # value = ()
-            # query = ""
-            # cursor.execute(query,value)
-            # conn.commit()
+        value = (memberVals[0][0],memberVals[0][1],memberVals[0][2],memberVals[0][3],memberVals[0][4],memberVals[0][5],memberVals[0][6],memberVals[0][7],memberVals[0][8],memberVals[0][9],memberVals[0][10],memberVals[0][11],memberVals[0][12],memberVals[0][13],memberVals[0][14],memberVals[0][15],memberVals[0][16])
+        query = "INSERT INTO public.family_member_master (member_id,family_id,facility_id,street_id,ward_id,area_id,habitation_id,rev_village_id,village_id,block_id,hud_id,taluk_id,district_id,state_id,country_id,last_update_date,update_register) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) ON CONFLICT (member_id) DO UPDATE SET member_id = EXCLUDED.member_id,family_id = EXCLUDED.family_id,facility_id = EXCLUDED.facility_id,street_id = EXCLUDED.street_id,ward_id = EXCLUDED.ward_id,area_id = EXCLUDED.area_id,habitation_id = EXCLUDED.habitation_id,rev_village_id = EXCLUDED.rev_village_id,village_id = EXCLUDED.village_id,block_id = EXCLUDED.block_id,hud_id = EXCLUDED.hud_id,taluk_id = EXCLUDED.taluk_id,district_id = EXCLUDED.district_id,state_id = EXCLUDED.state_id,country_id = EXCLUDED.country_id,last_update_date = EXCLUDED.last_update_date,update_register=COALESCE(EXCLUDED.update_register, '[]'::jsonb) ||EXCLUDED.update_register  ::jsonb"
+        cursor.execute(query,value)
+        conn.commit()
             # spnDB.run_in_transaction(UpsertMember)   
 
     except Exception as e:
@@ -628,7 +613,7 @@ def UpsertMemberDetails(member_list, phr_fid, address_details, userId):
             memberId = member['member_id']      
             familyId = member['family_id']            
             spannerData = fetchLastUpdateMember(memberId, familyId)
-            requestUpdateDate = datetime.strptime(member['last_update_date'], "%Y-%m-%d %H:%M:%S%z")
+            requestUpdateDate = datetime.strptime(member['last_update_date'], "%Y-%m-%d %H:%M:%S")
             if spannerData is None or requestUpdateDate > spannerData['last_update_date']:
                 for key in member.keys():
                     val=member[key]
@@ -682,7 +667,7 @@ def UpsertMemberDetails(member_list, phr_fid, address_details, userId):
                     elif key=='last_update_date' and (val is not None or val != ""):
                         if(cntIdx==0):
                             memberKeys.append(key)
-                        last_update_date = datetime.strptime(val, "%Y-%m-%d %H:%M:%S%z")
+                        last_update_date = datetime.strptime(val, "%Y-%m-%d %H:%M:%S")
                         mValues.append(last_update_date)
                     elif key in ['family_id', 'member_id'] and (val is not None or val != ""):
                         if(cntIdx==0):
@@ -718,6 +703,7 @@ def UpsertMemberDetails(member_list, phr_fid, address_details, userId):
         return True, memberKeys, memberVals, member_details
 
 def getUpdateRegisterForFamilySocioRef(familyId, updateRegister):
+    print("getUpdateRegisterForFamilySocioRef")
     try:
         update_register = None
         
@@ -735,7 +721,7 @@ def getUpdateRegisterForFamilySocioRef(familyId, updateRegister):
                 if row[0] is None:
                     update_register = []
                 else:
-                    update_register=json.loads(row[0])
+                    update_register=row[0]
 
         if update_register is None:
                 update_register = []

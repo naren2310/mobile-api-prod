@@ -12,17 +12,20 @@ def token_required(request):
         token = request.headers['x-access-token']
     if not token:
         if (str(request.headers['User-Agent']).count("UptimeChecks")!=0):
-            cloud_logger.info("Uptime check trigger.")
+            print("Uptime check trigger.")
+            # cloud_logger.info("Uptime check trigger.")
             return False, json.dumps({"status":"API-ACTIVE", "status_code":"200","message":'Uptime check trigger.'})
         else:
-            cloud_logger.critical("Invalid Token.")
+            print("Invalid Token.")
+            # cloud_logger.critical("Invalid Token.")
             return False, json.dumps({'status':'FAILURE', "status_code":"401", 'message' : 'Invalid Token.'})
 
     try:
         token = token.strip() #Remove spaces at the beginning and at the end of the token
         token_format = re.compile(parameters['TOKEN_FORMAT'])
         if not token_format.match(token):
-            cloud_logger.critical("Invalid Token format.")
+            print("Invalid Token format.")
+            # cloud_logger.critical("Invalid Token format.")
             return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token format.'})
         else:
             # decoding the payload to fetch the stored details
@@ -30,11 +33,13 @@ def token_required(request):
             return True, data
 
     except jwt.ExpiredSignatureError as e:
-        cloud_logger.critical("Token Expired: %s", str(e))
+        print("Token Expired: %s", str(e))
+        # cloud_logger.critical("Token Expired: %s", str(e))
         return False, json.dumps({'status':'FAILURE', "status_code":"401", 'message' : 'Token Expired.'})
 
     except Exception as e:
-        cloud_logger.critical("Invalid Token: %s", str(e))
+        print("Invalid Token: %s", str(e))
+        # cloud_logger.critical("Invalid Token: %s", str(e))
         return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token.'})
 
 @app.route('/mobile_api_upload', methods=['POST'])
@@ -61,7 +66,8 @@ def upload_files():
                             "status_code":"401",
                             "data": []
                             })
-                cloud_logger.error("Provided user id is not valid. | %s | %s", guard.current_userId, guard.current_appversion)
+                print("Provided user id is not valid. | %s | %s", guard.current_userId, guard.current_appversion)
+                # cloud_logger.error("Provided user id is not valid. | %s | %s", guard.current_userId, guard.current_appversion)
                 return response
             else:
                 is_token_valid = user_token_validation(request.values["USER_ID"], token_data["mobile_number"])
@@ -71,7 +77,8 @@ def upload_files():
                             "status": "FAILURE",
                             "status_code":"401"
                             })
-                    cloud_logger.error("Unregistered User/Token-User mismatch. | %s | %s", guard.current_userId, guard.current_appversion)
+                    print("Unregistered User/Token-User mismatch. | %s | %s", guard.current_userId, guard.current_appversion)
+                    # cloud_logger.error("Unregistered User/Token-User mismatch. | %s | %s", guard.current_userId, guard.current_appversion)
                     return response
 
             if metadata == parameters['CONSENT_IMAGE']:
@@ -89,7 +96,8 @@ def upload_files():
                                 "status_code":"401",
                                 "data": []
                                 })
-                cloud_logger.info("Invalid Metadata %s", str(metadata))
+                print("Invalid Metadata %s", str(metadata))
+                # cloud_logger.info("Invalid Metadata %s", str(metadata))
                 return response
 
             response = {}
@@ -103,7 +111,8 @@ def upload_files():
                         "status_code":"401",
                         "data": []
                         })
-                cloud_logger.info("There is no Data to upload.")
+                print("There is no Data to upload.")
+                # cloud_logger.info("There is no Data to upload.")
                 return response                
             else:                
                 is_valid_upload, file_list, upserts, ignores, ignore_filenames = uploadfiles(files, blob_name)
@@ -115,7 +124,8 @@ def upload_files():
                                     "status_code":"401",
                                     "data": []
                                 })
-                    cloud_logger.error("Error while uploading files.")
+                    print("Error while uploading files.")
+                    # cloud_logger.error("Error while uploading files.")
                 else:
                     response =  json.dumps({
                                         "message": "Upload successful: Upserts= {}, ignores= {}, ignoredfiles={}.".format(str(upserts), str(ignores), ignore_filenames),
@@ -123,7 +133,8 @@ def upload_files():
                                         "status_code":"200",
                                         "data": file_list
                                     })
-                    cloud_logger.info("Upload successful.")   
+                    print("Upload successful.")
+                    # cloud_logger.info("Upload successful.")   
         else :
             response =  json.dumps({
                         "message": "Invalid Request Format.", 
@@ -131,7 +142,8 @@ def upload_files():
                         "status_code":"401",
                         "data": []
                     })
-            cloud_logger.error("The Request Format must be in Multipart Format.")
+            print("The Request Format must be in Multipart Format.")
+            # cloud_logger.error("The Request Format must be in Multipart Format.")
 
     except Exception as e:
         response =  json.dumps({
@@ -139,10 +151,12 @@ def upload_files():
                             "status": "FAILURE",
                             "status_code": "401",
                             "data": []
-                            })        
-        cloud_logger.error("Error while Uploading Data : %s | %s | %s", str(e), guard.current_userId, guard.current_appversion)        
+                            })  
+        print("Error while Uploading Data : %s | %s | %s", str(e), guard.current_userId, guard.current_appversion)      
+        # cloud_logger.error("Error while Uploading Data : %s | %s | %s", str(e), guard.current_userId, guard.current_appversion)        
     finally:
-        cloud_logger.info(response)
+        print(response)
+        # cloud_logger.info(response)
         return response
 
 def uploadfiles(files, blob_name):
@@ -151,9 +165,9 @@ def uploadfiles(files, blob_name):
     invalid_filenames=[]
     # file_oversized=[]
     
-    client = storage.Client()
+    # client = storage.Client()
     #bucket = client.get_bucket(parameters['Bucket'])
-    bucket = client.get_bucket(bucket_name)
+    # bucket = client.get_bucket(bucket_name)
     # storage.blob._MAX_MULTIPART_SIZE = 100097152 # 100 MB
     
     try:
@@ -166,15 +180,17 @@ def uploadfiles(files, blob_name):
             filename_ext = filename.split(".")
             #Only one file extension is allowed in filename so checking the filename ext list length.
             if len(filename_ext)==2 and (filename.endswith('jpg') or filename.endswith('jpeg') or filename.endswith('png')): #or filename.endswith('pdf'): #pdf file extension can be considered in future.
-                file_blob = bucket.blob(blob_name+filename)
-                file_blob.upload_from_file(files[each_file], rewind=True)
-                file_blob.make_public()
+                # file_blob = bucket.blob(blob_name+filename)
+                # file_blob.upload_from_file(files[each_file], rewind=True)
+                # file_blob.make_public()
                 files_url = url + str(blob_name) + str(filename)
                 file_list.append(files_url)
-                cloud_logger.info("Upload Successful for File: %s", str(filename))
+                print("Upload Successful for File: %s", str(filename))
+                # cloud_logger.info("Upload Successful for File: %s", str(filename))
                 valid_upload.append(True)
             else:
-                cloud_logger.error("Filename contains more than one or without or invalid file extension.: %s", str(filename))
+                print("Filename contains more than one or without or invalid file extension.: %s", str(filename))
+                # cloud_logger.error("Filename contains more than one or without or invalid file extension.: %s", str(filename))
                 invalid_filenames.append(filename)
             # else:
             #     cloud_logger.error('Received file size is not in limit: %s', str(filename))
@@ -182,9 +198,11 @@ def uploadfiles(files, blob_name):
         # return True, file_oversized, file_list, len(valid_upload), len(invalid_filenames), invalid_filenames
         return True, file_list, len(valid_upload), len(invalid_filenames), invalid_filenames
     except Exception as e:        
-        cloud_logger.error('Error while uploading files to storage : %s | %s | %s', str(e), guard.current_userId, guard.current_appversion)
+        print('Error while uploading files to storage : %s | %s | %s', str(e), guard.current_userId, guard.current_appversion)
+        # cloud_logger.error('Error while uploading files to storage : %s | %s | %s', str(e), guard.current_userId, guard.current_appversion)
         # return False, file_oversized, file_list, None, None, None
         return False, file_list, None, None, None
+    
 
 if __name__=="__main__":    
-    app.run(host="0.0.0.0", port=8080)
+    app.run(host="0.0.0.0", port=8000)

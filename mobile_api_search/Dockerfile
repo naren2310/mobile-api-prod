@@ -1,7 +1,7 @@
 FROM python:3.8-alpine
 
 # Set the working directory
-WORKDIR /Mobile_Api_Prod/mobile_api_get_screening_data
+WORKDIR /Mobile_Api_Prod/mobile_api_search
 
 # Copy the requirements file
 COPY requirements.txt .

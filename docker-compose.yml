@@ -40,3 +40,35 @@ services:
     image: tnphr/mobileapigetvillagelist
     ports:
       - "9009:5000"
+  mobile_api_get_medical_history:
+    image: tnphr/mobileapigetmedicalhistory
+    ports:
+      - "9010:5000"
+  mobile_api_get_screening_data:
+    image: tnphr/mobileapigetscreeningdata
+    ports:
+      - "9011:5000"
+  mobile_api_get_search_family_details:
+    image: tnphr/mobileapigetsearchfamilydetails
+    ports:
+      - "9012:5000"
+  mobile_api_search:
+    image: tnphr/mobileapisearch
+    ports:
+      - "9013:5000"
+  mobile_api_get_family_member_data_V_2_6_0:
+    image: tnphr/mobileapigetfamilymemberdata
+    ports:
+      - "9014:5000"
+  mobile_api_add_update_family_detail:
+    image: tnphr/mobileapiaddupdatefamilydetail
+    ports:
+      - "9015:5000"
+  phrlocker_api_v1:
+    image: vigneshanbu92/phrlocker_api_v1:API1
+    ports:
+      - "9025:80"
+  phrlocker_view_v1:
+    image: vigneshanbu92/phrlocker_view_v1:phrlocker-view
+    ports:
+      - "9026:80"

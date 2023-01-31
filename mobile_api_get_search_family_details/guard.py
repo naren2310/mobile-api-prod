@@ -1,7 +1,7 @@
 from pytz import timezone
-from google.cloud import logging as cloudlogging
-from google.cloud import spanner
-from google.cloud.spanner_v1 import param_types
+# from google.cloud import logging as cloudlogging
+# from google.cloud import spanner
+# from google.cloud.spanner_v1 import param_types
 
 import logging
 import os
@@ -10,19 +10,31 @@ import config
 import jwt
 import re
 
-instance_id = os.environ.get('instance_id')
-database_id = os.environ.get('database_id')
+# instance_id = os.environ.get('instance_id')
+# database_id = os.environ.get('database_id')
 
-client = spanner.Client()
-instance = client.instance(instance_id)
-spnDB = instance.database(database_id)
+# client = spanner.Client()
+# instance = client.instance(instance_id)
+# spnDB = instance.database(database_id)
 
-log_client = cloudlogging.Client()
-log_handler = log_client.get_default_handler()
-cloud_logger = logging.getLogger("cloudLogger")
-cloud_logger.setLevel(logging.INFO)
-cloud_logger.setLevel(logging.DEBUG)
-cloud_logger.addHandler(log_handler)
+# log_client = cloudlogging.Client()
+# log_handler = log_client.get_default_handler()
+# cloud_logger = logging.getLogger("cloudLogger")
+# cloud_logger.setLevel(logging.INFO)
+# cloud_logger.setLevel(logging.DEBUG)
+# cloud_logger.addHandler(log_handler)
+
+#postgresql 
+import psycopg2
+
+conn = psycopg2.connect(
+    host='142.132.206.93',  # hostname of the server
+    database='postgres',  # database name
+    user='tnphruser',  # username
+    password='TNphr@3Z4'  # password
+)
+
+cursor = conn.cursor()
 
 parameters = config.getParameters()
 
@@ -46,12 +58,14 @@ def validate_id_attribute(familyId, memberId):
     is_valid_id = False
     try:
         if familyId == "" and memberId == "":
-            cloud_logger.critical("Both familyId and memberId are empty")
+            print("Both familyId and memberId are empty")
+            # cloud_logger.critical("Both familyId and memberId are empty")
             return is_valid_id
         else:
             return validate_id(familyId, memberId)
     except Exception as error:
-        cloud_logger.error("Error validating Id attribute format : %s | %s | %s ", str(error), current_userId, current_appversion)
+        print("Error validating Id attribute format : %s | %s | %s ", str(error), current_userId, current_appversion)
+        # cloud_logger.error("Error validating Id attribute format : %s | %s | %s ", str(error), current_userId, current_appversion)
         return is_valid_id
 
 def validate_id(*ids):
@@ -77,15 +91,18 @@ def validate_id(*ids):
                         id != None and id != "" and len(id) == parameters['ID_LENGTH']:
                     valid_ids.append(True)
                 else:
-                    cloud_logger.critical("ID is not valid %s", str(id))
+                    print("ID is not valid %s", str(id))
+                    # cloud_logger.critical("ID is not valid %s", str(id))
                     valid_ids.append(False)            
         if all(item == True for item in valid_ids) and len(valid_ids) != 0:
             return True
         else:
-            cloud_logger.info("One or more supplied ID not valid.")
+            print("One or more supplied ID not valid.")
+            # cloud_logger.info("One or more supplied ID not valid.")
             return False
     except Exception as error:
-        cloud_logger.error("Error in validating inputs : %s | %s | %s ", str(error), current_userId, current_appversion)
+        print("Error in validating inputs : %s | %s | %s ", str(error), current_userId, current_appversion)
+        # cloud_logger.error("Error in validating inputs : %s | %s | %s ", str(error), current_userId, current_appversion)
         return False
 
 def check_id_registered(familyId, memberId):
@@ -95,33 +112,37 @@ def check_id_registered(familyId, memberId):
     Return: Boolean
     """
     try:
-        query = 'SELECT EXISTS(select family_id from family_member_master'
+        query = 'SELECT EXISTS(SELECT family_id FROM public.family_member_master'
         param = {}
         types = {}
 
         if familyId != "" and memberId != "": #When both the IDs are not empty
-            query += ' where family_id=@family_id and member_id=@member_id)'                    
+            query += ' WHERE family_id=%s and member_id=%s)'                    
             param['family_id'] = familyId
             param['member_id'] = memberId
-            types['family_id'] = param_types.STRING
-            types['member_id'] = param_types.STRING
+            # types['family_id'] = param_types.STRING
+            # types['member_id'] = param_types.STRING
 
         elif familyId != "" and memberId == "": #When only family id is not empty
-            query += ' where family_id=@family_id)'
+            query += ' WHERE family_id=%s)'
             param['family_id'] = familyId
-            types['family_id'] = param_types.STRING
+            # types['family_id'] = param_types.STRING
 
         elif familyId == "" and memberId != "": #when only member id is not empty
-            query += ' where member_id=@member_id)'
+            query += ' WHERE member_id=%s)'
             param['member_id'] = memberId
-            types['member_id'] = param_types.STRING
+            # types['member_id'] = param_types.STRING
 
-        with spnDB.snapshot() as snapshot: 
-            result = snapshot.execute_sql(query, params= param, param_types=types)
+        # with spnDB.snapshot() as snapshot: 
+            # result = snapshot.execute_sql(query, params= param, param_types=types)
+        value = (familyId,memberId)
+        cursor.execute(query,value)
+        result = cursor.fetchall()
         for row in result:
             id_exist = row[0]
         return id_exist
         
     except Exception as error:
-        cloud_logger.error("Error occurred in check id registered : %s| %s | %s ", str(error), current_userId, current_appversion)
+        print("Error occurred in check id registered : %s| %s | %s ", str(error), current_userId, current_appversion)
+        # cloud_logger.error("Error occurred in check id registered : %s| %s | %s ", str(error), current_userId, current_appversion)
         return False

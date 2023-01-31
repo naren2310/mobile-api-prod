@@ -145,14 +145,12 @@ def validate_inputs(content):
         message = "Supplied IDs are valid."        
         family_list = content['family_list']
         for family in family_list:
-            print("11111",type(family['family_details']))
             #Checks provided family members count and family member details are same
             # Below 3 lines of code blocks for the case to add new member to family. Hence commenting them.
             #if family['family_details']['family_members_count'] != len(family['family_member_details']):
                 #message = "Supplied family members count not matching with family member details."
                 #return False, message
             for key, value in family['family_details'].items():
-                print('2222')
                 if key == 'facility_id':
                     if not validate_id(value):
                         message = "Supplied facility Id in family details is empty or not valid."
@@ -178,7 +176,6 @@ def validate_inputs(content):
                                     return False, message                                                           
             for member in family['family_member_details']:  
                 for key, value in member['member_detail'].items():
-                    print("key",key)
                     if key == 'facility_id':
                         if not validate_id(value):
                             message = "Supplied facility Id in family member details is empty or not valid."

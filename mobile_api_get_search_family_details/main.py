@@ -1,6 +1,6 @@
 
 from get_family_data import *
-
+from flask import Flask, request
 """
 ******Method Details******
 Description: API to get Family and Member details along with Medical, Screening and Socio Reference details for each member.
@@ -15,6 +15,7 @@ Output: Master data from family_master, family_socio_economic_ref, family_member
     "LIMIT": <int>
 }]
 """
+app = Flask(__name__)
 
 # decorator for verifying the JWT
 def token_required(request):
@@ -24,17 +25,20 @@ def token_required(request):
         token = request.headers['x-access-token']
     if not token:
         if (str(request.headers['User-Agent']).count("UptimeChecks")!=0):
-            cloud_logger.info("Uptime check trigger.")
+            print("Uptime check trigger.")
+            # cloud_logger.info("Uptime check trigger.")
             return False, json.dumps({"status":"API-ACTIVE", "status_code":"200","message":'Uptime check trigger.'})
         else:
-            cloud_logger.critical("Invalid Token.")
+            print("Invalid Token.")
+            # cloud_logger.critical("Invalid Token.")
             return False, json.dumps({'status':'FAILURE', "status_code":"401", 'message' : 'Invalid Token.'})
 
     try:
         token = token.strip() #Remove spaces at the beginning and at the end of the token
         token_format = re.compile(parameters['TOKEN_FORMAT'])
         if not token_format.match(token):
-            cloud_logger.critical("Invalid Token format.")
+            print("Invalid Token format.")
+            # cloud_logger.critical("Invalid Token format.")
             return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token format.'})
         else:            
             # decoding the payload to fetch the stored details
@@ -42,14 +46,17 @@ def token_required(request):
             return True, data
 
     except jwt.ExpiredSignatureError as e:
-        cloud_logger.critical("Token Expired: %s", str(e))
+        print("Token Expired: %s", str(e))
+        # cloud_logger.critical("Token Expired: %s", str(e))
         return False, json.dumps({'status':'FAILURE', "status_code":"401", 'message' : 'Token Expired.'})
 
     except Exception as e:
-        cloud_logger.critical("Invalid Token: %s", str(e))
+        print("Invalid Token: %s", str(e))
+        # cloud_logger.critical("Invalid Token: %s", str(e))
         return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token.'})
 
-def get_family_and_member_details(request):
+@app.route('/mobile_api_get_search_family_details', methods=['POST'])
+def get_family_and_member_details():
 
     token_status, token_data = token_required(request)
     if not token_status:
@@ -58,7 +65,8 @@ def get_family_and_member_details(request):
     response = {}
 
     try:
-        cloud_logger.info("********** Get Search Family and Member Details **********")
+        print("********** Get Search Family and Member Details **********")
+        # cloud_logger.info("********** Get Search Family and Member Details **********")
         # Check the request data for JSON
         if (request.is_json):            
             content = request.get_json()
@@ -71,7 +79,8 @@ def get_family_and_member_details(request):
             
             familyId = content["FAMILY_ID"]
             memberId = content["MEMBER_ID"]
-            cloud_logger.info("Fetching Family and Member Details.")
+            print("Fetching Family and Member Details.")
+            # cloud_logger.info("Fetching Family and Member Details.")
 
             is_valid_id = validate_id_attribute(familyId, memberId)
 
@@ -86,7 +95,8 @@ def get_family_and_member_details(request):
             else:
                 is_id_exist = check_id_registered(familyId, memberId)
                 if not is_id_exist:
-                    cloud_logger.info("Unregistered family Id/member Id.")
+                    print("Unregistered family Id/member Id.")
+                    # cloud_logger.info("Unregistered family Id/member Id.")
                     response =  json.dumps({
                             "message": "Unregistered family Id/member Id.",
                             "status": "FAILURE",
@@ -95,7 +105,8 @@ def get_family_and_member_details(request):
                             })
                     return response
                 else:
-                    cloud_logger.info("Inputs Validated.")
+                    print("Inputs Validated.")
+                    # cloud_logger.info("Inputs Validated.")
                     if (familyId is not None and familyId !=''):
                         family_details = get_family_data(familyId)
                         members = get_all_member_data(familyId)
@@ -128,21 +139,22 @@ def get_family_and_member_details(request):
                         response["family_details"] = family_details
                         response["member_list"] = member_list
                         response['address_details'] = get_address_data(familyId)
-
                         response =  json.dumps({
                             "message": "Data retrieved Successfully.", 
                             "status": "SUCCESS",
                             "status_code":"200",
                             "data": {"family_details": response['family_details'], "member_list":response["member_list"], "address_details":response['address_details']}
                         })
-                        cloud_logger.info("Data retrieved Successfully.")
+                        print("Data retrieved Successfully.")
+                        # cloud_logger.info("Data retrieved Successfully.")
 
                     elif (memberId is not None and memberId !=''):
                         familyId = get_member_familyId(memberId)
                         family_details=get_family_data(familyId)
                         members = get_all_member_data(familyId)
                         member_list = []
-                        cloud_logger.debug("Member ID = {}".format(memberId))
+                        print("Member ID = {}".format(memberId))
+                        # cloud_logger.debug("Member ID = {}".format(memberId))
 
                         for member in members:
                             member_details = {}
@@ -171,14 +183,14 @@ def get_family_and_member_details(request):
                         response["family_details"] = family_details
                         response["member_list"] = member_list
                         response['address_details'] = get_address_data(familyId)
-
                         response =  json.dumps({
                             "message": "Data retrieved Successfully.", 
                             "status": "SUCCESS",
                             "status_code":"200",
                             "data": {"family_details": response['family_details'], "member_list":response["member_list"], "address_details":response['address_details']}
                         })
-                        cloud_logger.info("Data retrieved Successfully.")
+                        print("Data retrieved Successfully.")
+                        # cloud_logger.info("Data retrieved Successfully.")
                     else:
                         response =  json.dumps({
                             "message": "Invalid Inputs. Atleast FamilyId or MemberId is required.", 
@@ -186,7 +198,8 @@ def get_family_and_member_details(request):
                             "status_code":"401",
                             "data": {}
                         })
-                        cloud_logger.error("Invalid Inputs. Atleast FamilyId or MemberId is required.")
+                        print("Invalid Inputs. Atleast FamilyId or MemberId is required.")
+                        # cloud_logger.error("Invalid Inputs. Atleast FamilyId or MemberId is required.")
         else :
             response =  json.dumps({
                     "message": "Error!! The Request Format must be in JSON.", 
@@ -194,7 +207,8 @@ def get_family_and_member_details(request):
                     "status_code":"401",
                     "data": {}
                 })
-            cloud_logger.error("The Request Format must be in JSON.")   
+            print("The Request Format must be in JSON.")
+            # cloud_logger.error("The Request Format must be in JSON.")   
 
     except Exception as e:
         response =  json.dumps({
@@ -203,7 +217,11 @@ def get_family_and_member_details(request):
                     "status_code": "401",
                     "data": {}
                 })
-        cloud_logger.error("Error while retrieving family and member Data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+        print("Error while retrieving family and member Data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+        # cloud_logger.error("Error while retrieving family and member Data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
 
     finally :
         return response
+    
+if __name__=="__main__":    
+    app.run(host="0.0.0.0", port=8000)
