@@ -64,6 +64,14 @@ services:
     image: tnphr/mobileapiaddupdatefamilydetail
     ports:
       - "9015:5000"
+  mobile_api_health_screening:
+    image: tnphr/mobileapihealthscreening
+    ports:
+      - "9016:5000"
+  mobile_api_health_history:
+    image: tnphr/mobileapihealthhistory
+    ports:
+      - "9017:5000"
   phrlocker_api_v1:
     image: vigneshanbu92/phrlocker_api_v1:API1
     ports:

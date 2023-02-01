@@ -3,32 +3,38 @@ import guard
 
 def fetchLastUpdate(memberId, familyId):
     try:
-        cloud_logger.info("Fetching Last Update Timestamp.")
-        query = "SELECT FORMAT_TIMESTAMP('%Y-%m-%d %H:%M:%S%z', last_update_date, 'Asia/Calcutta') as last_update_date FROM health_history WHERE family_id=@familyId and member_id=@memberId"
+        # cloud_logger.info("Fetching Last Update Timestamp.")
+        print("Fetching Last Update Timestamp.")
+        query = "SELECT to_char(last_update_date AT TIME ZONE 'Asia/Calcutta', 'YYYY-MM-DD HH24:MI:SS') as last_update_date FROM public.health_history WHERE family_id=%s AND member_id=%s"
+        values = (familyId, memberId)
+        cursor.execute(query,values)
+        results = cursor.fetchall()
 
         last_update_date = None    
 
-        with spnDB.snapshot() as snapshot:
-            results = snapshot.execute_sql(query,params={"memberId": memberId, "familyId": familyId},
-            param_types={"memberId": param_types.STRING, "familyId": param_types.STRING})
+        # with spnDB.snapshot() as snapshot:
+        #     results = snapshot.execute_sql(query,params={"memberId": memberId, "familyId": familyId},
+        #     param_types={"memberId": param_types.STRING, "familyId": param_types.STRING})
 
-            for row in results:
-                last_update_date = datetime.strptime(row[0], "%Y-%m-%d %H:%M:%S%z")
+        for row in results:
+            last_update_date = datetime.strptime(row[0], "%Y-%m-%d %H:%M:%S")
 
-            if last_update_date:
-                return last_update_date
-            else:
-                return None
+        if last_update_date:
+            return last_update_date
+        else:
+            return None
         
     except Exception as e:
-        cloud_logger.error("Error While Last Update Date : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+        # cloud_logger.error("Error While Last Update Date : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+        print("Error While Last Update Date : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
         return None   
 
 def UpsertMedicalHistory(historyList):
     ignores=0
     upserts=0
 
-    cloud_logger.info("Adding Medical History.")
+    # cloud_logger.info("Adding Medical History.")
+    print("Adding Medical History.")
     try:    
         #Key Arrays
         historyKeys=[]
@@ -49,7 +55,7 @@ def UpsertMedicalHistory(historyList):
             familyId = history['family_id']
             is_correct_date = False
             lastUpdateDate = fetchLastUpdate(memberId, familyId)
-            requestUpdateDate = datetime.strptime(history['last_update_date'], "%Y-%m-%d %H:%M:%S%z")
+            requestUpdateDate = datetime.strptime(history['last_update_date'], "%Y-%m-%d %H:%M:%S")
             if lastUpdateDate is not None:#not first time check
                 is_correct_date = requestUpdateDate > lastUpdateDate
             if lastUpdateDate is None or is_correct_date:
@@ -89,7 +95,7 @@ def UpsertMedicalHistory(historyList):
                     elif key in ['last_update_date']:
                         if(cntIdx==0):
                             historyKeys.append(key)
-                        last_update_date = datetime.strptime(val, "%Y-%m-%d %H:%M:%S%z") if(val is not None) else val
+                        last_update_date = datetime.strptime(val, "%Y-%m-%d %H:%M:%S") if(val is not None) else val
                         values.append(last_update_date)
                     elif key in ['family_id', 'member_id']:
                         if(cntIdx==0):
@@ -120,34 +126,58 @@ def UpsertMedicalHistory(historyList):
                 
                 upserts+=1
 
-                cloud_logger.debug("History = {}, Values = {}".format(str(historyKeys), str(historyVals)))     
-                def UpsertHistory(transaction):
+                # cloud_logger.debug("History = {}, Values = {}".format(str(historyKeys), str(historyVals)))
+                print('health_history inserting')
+                # print("History = {}, Values = {}".format(str(historyKeys), str(historyVals))) 
+                # print("historyKeys",historyKeys)
+                # print("historyVals",historyVals)
+                value = (historyVals[0][0],historyVals[0][1],historyVals[0][2],historyVals[0][3],historyVals[0][4])
+                query = "INSERT INTO public.health_history (family_id,member_id,medical_history_id,last_update_date,update_register) VALUES (%s,%s,%s,%s,%s) ON CONFLICT (medical_history_id) DO UPDATE SET family_id = EXCLUDED.family_id,member_id = EXCLUDED.member_id,medical_history_id = EXCLUDED.medical_history_id,last_update_date = EXCLUDED.last_update_date,update_register=COALESCE(EXCLUDED.update_register, '[]'::jsonb) ||EXCLUDED.update_register  ::jsonb"    
+                cursor.execute(query,value)
+                conn.commit()
+                # def UpsertHistory(transaction):
 
-                    transaction.insert_or_update(
-                        "health_history",
-                        columns=historyKeys,
-                        values=historyVals
-                    )
+                    # transaction.insert_or_update(
+                    #     "health_history",
+                    #     columns=historyKeys,
+                    #     values=historyVals
+                    # )
 
-                spnDB.run_in_transaction(UpsertHistory)   
-                cloud_logger.debug("Member = {}, Values = {}".format(str(memberKeys), str(memberVals)))
-                def UpsertMember(transaction):
-                    transaction.insert_or_update(
-                        "family_member_master",
-                        columns=memberKeys,
-                        values=memberVals
-                    )
+                # spnDB.run_in_transaction(UpsertHistory)   
+                # cloud_logger.debug("Member = {}, Values = {}".format(str(memberKeys), str(memberVals)))
+                print("family_member_master inserting")
+                # print("Member = {}, Values = {}".format(str(memberKeys), str(memberVals)))
+                # print("memberKeys",memberKeys)
+                # print("memberVals",memberVals)
+                value = (memberVals[0][0],memberVals[0][1],memberVals[0][2])
+                query = "INSERT INTO public.family_member_master (family_id,member_id,update_register) VALUES (%s,%s,%s) ON CONFLICT (member_id) DO UPDATE SET family_id = EXCLUDED.family_id,member_id = EXCLUDED.member_id,update_register=COALESCE(EXCLUDED.update_register, '[]'::jsonb) ||EXCLUDED.update_register  ::jsonb"    
+                cursor.execute(query,value)
+                conn.commit()
+                # def UpsertMember(transaction):
+                    # transaction.insert_or_update(
+                    #     "family_member_master",
+                    #     columns=memberKeys,
+                    #     values=memberVals
+                    # )
 
-                spnDB.run_in_transaction(UpsertMember)   
-                cloud_logger.debug("columns = {}, Values = {}".format(str(serefKeys), str(serefVals)))
-                def UpsertSeref(transaction):
-                    transaction.insert_or_update(
-                        "family_member_socio_economic_ref",
-                        columns=serefKeys,
-                        values=serefVals
-                    )
+                # spnDB.run_in_transaction(UpsertMember)   
+                # cloud_logger.debug("columns = {}, Values = {}".format(str(serefKeys), str(serefVals)))
+                print("family_member_socio_economic_ref inserting")
+                # print("serefKeys",serefKeys)
+                # print("serefVals",serefVals)
+                value = (serefVals[0][0],serefVals[0][1],serefVals[0][2])
+                query = "INSERT INTO public.family_member_socio_economic_ref (family_id,member_id,update_register) VALUES (%s,%s,%s) ON CONFLICT (member_id) DO UPDATE SET family_id = EXCLUDED.family_id,member_id = EXCLUDED.member_id,update_register=COALESCE(EXCLUDED.update_register, '[]'::jsonb) ||EXCLUDED.update_register  ::jsonb"    
+                cursor.execute(query,value)
+                conn.commit()
+                # def UpsertSeref(transaction):
+                #     transaction.insert_or_update(
+                #         "family_member_socio_economic_ref",
+                #         columns=serefKeys,
+                #         values=serefVals
+                #     )
 
-                spnDB.run_in_transaction(UpsertSeref)
+                # spnDB.run_in_transaction(UpsertSeref)
+
                 
             else:
                 ignores+=1
@@ -155,94 +185,110 @@ def UpsertMedicalHistory(historyList):
         return True, ignores, upserts
 
     except Exception as e:
-        cloud_logger.error("Error while upsert of Medical History : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+        # cloud_logger.error("Error while upsert of Medical History : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+        print("Error while upsert of Medical History : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
         return False, ignores, upserts
 
 
 def getUpdateRegister(memberId, updateRegister, familyId):
     try:
-        cloud_logger.info("Formatting Update Register.")
+        # cloud_logger.info("Formatting Update Register.")
+        print("Formatting Update Register.")
         update_register = None
-
-        with spnDB.snapshot() as snapshot:
-            query = "SELECT update_register FROM health_history where family_id=@familyId and member_id=@memberId"
-            results = snapshot.execute_sql(
-                        query,
-                        params={"familyId": familyId, "memberId": memberId},
-                        param_types={"familyId": param_types.STRING, "memberId": param_types.STRING}
-                        )
-            for row in results:
-                if row[0] is None:
-                    update_register = []
-                else:
-                    update_register=json.loads(row[0])
-
-            if update_register is None:
+        query = "SELECT update_register FROM public.health_history WHERE family_id=%s AND member_id=%s"
+        values = (familyId, memberId)
+        cursor.execute(query,values)
+        results = cursor.fetchall()
+        # with spnDB.snapshot() as snapshot:
+            
+        #     results = snapshot.execute_sql(
+        #                 query,
+        #                 params={"familyId": familyId, "memberId": memberId},
+        #                 param_types={"familyId": param_types.STRING, "memberId": param_types.STRING}
+        #                 )
+        for row in results:
+            if row[0] is None:
                 update_register = []
+            else:
+                update_register=row[0]
 
-            update_register.append(updateRegister)
+        if update_register is None:
+            update_register = []
+
+        update_register.append(updateRegister)
         return json.dumps(update_register)
 
     except Exception as e:
-        cloud_logger.error("Error while Updating Register : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+        # cloud_logger.error("Error while Updating Register : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+        print("Error while Updating Register : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
 
 
 def getUpdateRegisterForMemberMaster(memberId, updateRegister, familyId):
     try:
-        cloud_logger.info("Formatting Update Register for Member.")
+        # cloud_logger.info("Formatting Update Register for Member.")
+        print("Formatting Update Register for Member.")
         update_register = None
-
-        with spnDB.snapshot() as snapshot:
-            query = "SELECT update_register FROM family_member_master where family_id=@familyId and member_id=@memberId"
-            results = snapshot.execute_sql(
-                        query,
-                        params={"familyId": familyId, "memberId": memberId},
-                        param_types={"familyId": param_types.STRING, "memberId": param_types.STRING}
-                    )
-            for row in results:
-                if row[0] is None:
-                    update_register = []
-                else:
-                    update_register=json.loads(row[0])
-
-            if update_register is None:
+        query = "SELECT update_register FROM public.family_member_master WHERE family_id=%s AND member_id=%s"
+        values = (familyId, memberId)
+        cursor.execute(query,values)
+        results = cursor.fetchall()
+        # with spnDB.snapshot() as snapshot:
+            
+        #     results = snapshot.execute_sql(
+        #                 query,
+        #                 params={"familyId": familyId, "memberId": memberId},
+        #                 param_types={"familyId": param_types.STRING, "memberId": param_types.STRING}
+        #             )
+        for row in results:
+            if row[0] is None:
                 update_register = []
+            else:
+                update_register=row[0]
 
-            update_register.append(updateRegister)
+        if update_register is None:
+            update_register = []
+
+        update_register.append(updateRegister)
         return json.dumps(update_register)
 
     except Exception as e:
-        cloud_logger.error("Error while Updating Register for Member : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+        # cloud_logger.error("Error while Updating Register for Member : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+        print("Error while Updating Register for Member : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
 
 
 def getUpdateRegisterForSocioMemberRef(memberId, updateRegister, familyId):
     try:
-        cloud_logger.info("Formatting Update Register for social details.")
+        # cloud_logger.info("Formatting Update Register for social details.")
+        print("Formatting Update Register for social details.")
         update_register = None
         userId = updateRegister["user_id"]
         timestamp = updateRegister["timestamp"]
-
-        with spnDB.snapshot() as snapshot:
-            query = "SELECT update_register FROM family_member_socio_economic_ref where family_id=@familyId and member_id=@memberId"
-            results = snapshot.execute_sql(
-                        query,
-                        params={"familyId": familyId, "memberId": memberId},
-                        param_types={"familyId": param_types.STRING, "memberId": param_types.STRING}
-                        )
-            for row in results:
-                if row[0] is None:
-                    update_register = []
-                else:
-                    update_register=json.loads(row[0])
-
-            if update_register is None:
+        query = "SELECT update_register FROM public.family_member_socio_economic_ref WHERE family_id=%s AND member_id=%s"
+        values = (familyId, memberId)
+        cursor.execute(query,values)
+        results = cursor.fetchall()
+        # with spnDB.snapshot() as snapshot:
+            
+        #     results = snapshot.execute_sql(
+        #                 query,
+        #                 params={"familyId": familyId, "memberId": memberId},
+        #                 param_types={"familyId": param_types.STRING, "memberId": param_types.STRING}
+        #                 )
+        for row in results:
+            if row[0] is None:
                 update_register = []
+            else:
+                update_register=row[0]
 
-            update_register.append(updateRegister)
+        if update_register is None:
+            update_register = []
+
+        update_register.append(updateRegister)
         return json.dumps(update_register)
 
     except Exception as e:
-        cloud_logger.error("Error while Updating Register for social details : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+        # cloud_logger.error("Error while Updating Register for social details : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+        print("Error while Updating Register for social details : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
 
 
 def mtm_data_verification(memberId, history, familyId):
@@ -253,15 +299,20 @@ def mtm_data_verification(memberId, history, familyId):
     Return: dict 
     """
     try:
-        with spnDB.snapshot() as snapshot:
-            query = "SELECT mtm_beneficiary from health_history where family_id=@familyId and member_id=@memberId"
-            results = snapshot.execute_sql(
-                        query,
-                        params={"familyId": familyId, "memberId": memberId},
-                        param_types={"familyId": param_types.STRING, "memberId": param_types.STRING}
-                        )
-            for mtm_values in results:
-                cloud_logger.info("MTM_Values:")
+        query = "SELECT mtm_beneficiary FROM public.health_history WHERE family_id=%s AND member_id=%s"
+        values = (familyId, memberId)
+        cursor.execute(query,values)
+        results = cursor.fetchall()
+        # with spnDB.snapshot() as snapshot:
+        #     query = "SELECT mtm_beneficiary from health_history where family_id=@familyId and member_id=@memberId"
+        #     results = snapshot.execute_sql(
+        #                 query,
+        #                 params={"familyId": familyId, "memberId": memberId},
+        #                 param_types={"familyId": param_types.STRING, "memberId": param_types.STRING}
+        #                 )
+        for mtm_values in results:
+                # cloud_logger.info("MTM_Values:")
+                print("MTM_Values:")
                 print(mtm_values)
                 if mtm_values[0] is not None and mtm_values[0]!={}:
                     mtm_json_db = json.loads(mtm_values[0])
@@ -296,13 +347,15 @@ def mtm_data_verification(memberId, history, familyId):
                                     mtm_json_db[key]=history['mtm_beneficiary'][key]
                                     return mtm_json_db
                     else: # This is when we don't have mtm data from request we will return db data.
-                        cloud_logger.info('return the db value when request mtm value is null.')
+                        # cloud_logger.info('return the db value when request mtm value is null.')
+                        print('return the db value when request mtm value is null.')
                         return mtm_json_db                
                 else:
                     return history['mtm_beneficiary']
             # print ("Health history inserted for the first time.")
-            return history['mtm_beneficiary']
+        return history['mtm_beneficiary']
             
     except Exception as e:
-        cloud_logger.error("Error while verifying the MTM data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+        print("Error while verifying the MTM data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+        # cloud_logger.error("Error while verifying the MTM data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
         
