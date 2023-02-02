@@ -1,6 +1,7 @@
 # from google.cloud import spanner
 # from google.cloud.spanner_v1 import param_types
 from datetime import datetime
+
 # from google.cloud.spanner_v1.param_types import INT64, JSON, STRING, TIMESTAMP
 # from google.cloud import logging as cloudlogging
 # from google.cloud import storage

@@ -72,6 +72,10 @@ services:
     image: tnphr/mobileapihealthhistory
     ports:
       - "9017:5000"
+  mobile_api_upload_V_2_5_9:
+    image: tnphr/mobileapiupload
+    ports:
+      - "9018:5000"
   phrlocker_api_v1:
     image: vigneshanbu92/phrlocker_api_v1:API1
     ports:

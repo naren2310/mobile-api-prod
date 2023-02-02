@@ -1,7 +1,8 @@
-from fileinput import filename
 from guard import *
 import guard
 from flask import Flask, request
+from PIL import Image
+import base64
 
 app = Flask(__name__)
 
@@ -53,7 +54,7 @@ def upload_files():
         if request.mimetype == "multipart/form-data":
             userId=request.values['USER_ID']
             set_current_user(userId)
-            metadata = request.values['metadata']
+            # metadata = request.values['metadata']
             blob_name = ""
             if ("APP_VERSION" in request.values):
                 setApp_Version(request.values['APP_VERSION'])            
@@ -81,29 +82,29 @@ def upload_files():
                     # cloud_logger.error("Unregistered User/Token-User mismatch. | %s | %s", guard.current_userId, guard.current_appversion)
                     return response
 
-            if metadata == parameters['CONSENT_IMAGE']:
-                blob_name = parameters['CONSENT_IMAGE_BLOB_NAME']
-            elif metadata == parameters['PROFILE_IMAGE']:
-                blob_name = parameters['PROFILE_IMAGE_BLOB_NAME']
-            elif metadata == parameters['GOVT_ID']:
-                blob_name = parameters['GOVT_ID_BLOB_NAME']
-            elif metadata == parameters['MEDICAL_REPORTS']:
-                blob_name = parameters['MEDICAL_REPORTS_BLOB_NAME']
-            else:
-                response =  json.dumps({
-                                "message": "Metadata is not Valid.", 
-                                "status": "FAILURE",
-                                "status_code":"401",
-                                "data": []
-                                })
-                print("Invalid Metadata %s", str(metadata))
-                # cloud_logger.info("Invalid Metadata %s", str(metadata))
-                return response
+            # if metadata == parameters['CONSENT_IMAGE']:
+            #     blob_name = parameters['CONSENT_IMAGE_BLOB_NAME']
+            # elif metadata == parameters['PROFILE_IMAGE']:
+            #     blob_name = parameters['PROFILE_IMAGE_BLOB_NAME']
+            # elif metadata == parameters['GOVT_ID']:
+            #     blob_name = parameters['GOVT_ID_BLOB_NAME']
+            # elif metadata == parameters['MEDICAL_REPORTS']:
+            #     blob_name = parameters['MEDICAL_REPORTS_BLOB_NAME']
+            # else:
+            #     response =  json.dumps({
+            #                     "message": "Metadata is not Valid.", 
+            #                     "status": "FAILURE",
+            #                     "status_code":"401",
+            #                     "data": []
+            #                     })
+            #     print("Invalid Metadata %s", str(metadata))
+            #     # cloud_logger.info("Invalid Metadata %s", str(metadata))
+            #     return response
 
             response = {}
-            files = request.files.getlist('files[]')
+            files = request.files.getlist('images')
             empty_files = [e for e in files if e.filename == '']
-            file = request.files['files[]']
+            file = request.files['images']
             if len(empty_files) > 0 and file.filename == '':
                 response = json.dumps({
                         "message": "No Data to Upload.", 
@@ -115,7 +116,7 @@ def upload_files():
                 # cloud_logger.info("There is no Data to upload.")
                 return response                
             else:                
-                is_valid_upload, file_list, upserts, ignores, ignore_filenames = uploadfiles(files, blob_name)
+                is_valid_upload, file_list = uploadfiles()
                 
                 if not is_valid_upload:
                     response =  json.dumps({
@@ -128,7 +129,7 @@ def upload_files():
                     # cloud_logger.error("Error while uploading files.")
                 else:
                     response =  json.dumps({
-                                        "message": "Upload successful: Upserts= {}, ignores= {}, ignoredfiles={}.".format(str(upserts), str(ignores), ignore_filenames),
+                                        "message": "Upload successful",
                                         "status": "SUCCESS",
                                         "status_code":"200",
                                         "data": file_list
@@ -159,7 +160,7 @@ def upload_files():
         # cloud_logger.info(response)
         return response
 
-def uploadfiles(files, blob_name):
+# def uploadfiles(files, blob_name):
     file_list = []
     valid_upload=[]
     invalid_filenames=[]
@@ -202,6 +203,156 @@ def uploadfiles(files, blob_name):
         # cloud_logger.error('Error while uploading files to storage : %s | %s | %s', str(e), guard.current_userId, guard.current_appversion)
         # return False, file_oversized, file_list, None, None, None
         return False, file_list, None, None, None
+
+# Get the current time
+now = datetime.now()
+
+# Format the timestamp
+timestamp = now.strftime("%Y-%m-%d %H:%M:%S.%f")
+
+def uploadfiles():
+    try:
+        files = request.files.getlist("images")
+        for file in files:
+            if (file.filename.split('.')[1]=='png'):
+                imagename = ""+timestamp+".png"
+                # file.save('/tmp/userImage', 'png')
+                file.save(os.path.join('./userImage', imagename))
+                # tesfsd = os.getcwd() + '/mobile_api_upload_V_2_5_9/userImage/' + imagename
+                # Flask_Logos = os.path.join(os.getcwd(), tesfsd)
+                Flask_Logo = os.path.join('./userImage',imagename)
+                img = Image.open(Flask_Logo)
+                imagesize = img.size
+                with open(Flask_Logo, "rb") as f:
+                    img_data = f.read()
+                    imgbinarydata = psycopg2.Binary(img_data)               
+                    cursor.execute("INSERT INTO public.image (original_image_name,user_id,image_data,image_name,image_path,image_type,image_size) VALUES (%s,%s,%s,%s,%s,%s,%s)", (file.filename,request.values["USER_ID"],imgbinarydata,imagename,Flask_Logo,file.content_type,imagesize))
+                    conn.commit()
+            elif(file.filename.split('.')[1]=='jpeg'):
+                imagename = ""+timestamp+".jpeg"
+                file.save(os.path.join('./userImage', imagename))
+                Flask_Logo = os.path.join('./userImage',imagename)
+                img = Image.open(Flask_Logo)
+                imagesize = img.size
+                with open(Flask_Logo, "rb") as f:
+                    img_data = f.read()
+                    imgbinarydata = psycopg2.Binary(img_data)   
+                    cursor.execute("INSERT INTO public.image (original_image_name,user_id,image_data,image_name,image_path,image_type,image_size) VALUES (%s,%s,%s,%s,%s,%s,%s)", (file.filename,request.values["USER_ID"],imgbinarydata,imagename,Flask_Logo,file.content_type,imagesize))
+                    conn.commit()
+            elif(file.filename.split('.')[1]=='jpg'):
+                imagename = ""+timestamp+".jpg"
+                file.save(os.path.join('./userImage', imagename))
+                Flask_Logo = os.path.join('./userImage',imagename)
+                img = Image.open(Flask_Logo)
+                imagesize = img.size
+                with open(Flask_Logo, "rb") as f:
+                    img_data = f.read()
+                    imgbinarydata = psycopg2.Binary(img_data)   
+                    cursor.execute("INSERT INTO public.image (original_image_name,user_id,image_data,image_name,image_path,image_type,image_size) VALUES (%s,%s,%s,%s,%s,%s,%s)", (file.filename,request.values["USER_ID"],imgbinarydata,imagename,Flask_Logo,file.content_type,imagesize))
+                    conn.commit()
+               
+            else: 
+                print("Failed")
+                return "Failed"
+            print("Uploaded Successfully")
+            return True,Flask_Logo
+        
+    except Exception as e:
+        print('Error while uploading files to storage : %s | %s | %s', str(e), guard.current_userId, guard.current_appversion)
+        return False, Flask_Logo
+    
+    
+@app.route('/images/<image_name>')
+def getimages(image_name):
+        
+    token_status, token_data = token_required(request)
+    if not token_status:
+        return token_data
+    response=None
+    try:
+        if request.mimetype == "image/*":
+            userId=request.values['USER_ID']
+            set_current_user(userId)
+            if ("APP_VERSION" in request.values):
+                setApp_Version(request.values['APP_VERSION'])            
+            
+            is_valid_id = validate_id(userId)
+            if not is_valid_id:
+                response =  json.dumps({
+                            "message": "User ID is not Valid.", 
+                            "status": "FAILURE",
+                            "status_code":"401",
+                            "data": []
+                            })
+                print("Provided user id is not valid. | %s | %s", guard.current_userId, guard.current_appversion)
+
+                return response
+            else:
+                is_token_valid = user_token_validation(request.values["USER_ID"], token_data["mobile_number"])
+                if not is_token_valid:
+                    response =  json.dumps({
+                            "message": "Unregistered User/Token-User mismatch.", 
+                            "status": "FAILURE",
+                            "status_code":"401"
+                            })
+                    print("Unregistered User/Token-User mismatch. | %s | %s", guard.current_userId, guard.current_appversion)
+                    return response
+                            
+                is_valid_upload, file_list = getfiles(image_name)
+                
+                if not is_valid_upload:
+                    response =  json.dumps({
+                                    "message": "Error while get images.",
+                                    "status": "FAILURE",
+                                    "status_code":"401",
+                                    "data": []
+                                })
+                    print("Error while uploading files.")
+
+                else:
+                    response =  json.dumps({
+                                        "message": "Successfully",
+                                        "status": "SUCCESS",
+                                        "status_code":"200",
+                                        "data": file_list
+                                    })
+                    print("Upload successful.")
+  
+        else :
+            response =  json.dumps({
+                        "message": "Invalid Request Format.", 
+                        "status": "FAILURE",
+                        "status_code":"401",
+                        "data": []
+                    })
+            print("The Request Format must be in Format.")
+
+    except Exception as e:
+        response =  json.dumps({
+                            "message": "Error while get data.", 
+                            "status": "FAILURE",
+                            "status_code": "401",
+                            "data": []
+                            })  
+        print("Error while Uploading Data : %s | %s | %s", str(e), guard.current_userId, guard.current_appversion)      
+      
+    finally:
+        print(response)
+        return response
+    
+def getfiles(image_name):
+    try:
+        
+        file = "./mobile_api_upload_V_2_5_9/userImage/"+image_name+""
+        with open(file, "rb") as f:
+            img_data = base64.b64encode(f.read())
+            imgbinarydata = img_data.decode('utf-8')
+        return True,imgbinarydata
+        
+    except Exception as e:
+        print('Error while retrieve files to storage : %s | %s | %s', str(e), guard.current_userId, guard.current_appversion)
+        return False
+    
     
 
 if __name__=="__main__":    
