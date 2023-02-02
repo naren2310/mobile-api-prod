@@ -343,7 +343,7 @@ def getimages(image_name):
 def getfiles(image_name):
     try:
         
-        file = "./mobile_api_upload_V_2_5_9/userImage/"+image_name+""
+        file = "./userImage/"+image_name+""
         with open(file, "rb") as f:
             img_data = base64.b64encode(f.read())
             imgbinarydata = img_data.decode('utf-8')
