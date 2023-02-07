@@ -1,7 +1,7 @@
 from guard import *
 import guard
 from flask import Flask, request
-from PIL import Image
+# from PIL import Image
 import base64
 
 app = Flask(__name__)
@@ -43,7 +43,7 @@ def token_required(request):
         # cloud_logger.critical("Invalid Token: %s", str(e))
         return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token.'})
 
-@app.route('/mobile_api_upload', methods=['POST'])
+@app.route('/api/mobile_api_upload', methods=['POST'])
 def upload_files():
         
     token_status, token_data = token_required(request)
@@ -132,7 +132,7 @@ def upload_files():
                                         "message": "Upload successful",
                                         "status": "SUCCESS",
                                         "status_code":"200",
-                                        "data": file_list
+                                        "data": {"image_name": file_list}
                                     })
                     print("Upload successful.")
                     # cloud_logger.info("Upload successful.")   
@@ -204,65 +204,69 @@ def upload_files():
         # return False, file_oversized, file_list, None, None, None
         return False, file_list, None, None, None
 
-# Get the current time
-now = datetime.now()
-
-# Format the timestamp
-timestamp = now.strftime("%Y-%m-%d %H:%M:%S.%f")
 
 def uploadfiles():
     try:
+        file_list = []
         files = request.files.getlist("images")
+        # path = '/home/tlspc-150/Documents/project/mobile-api-prod/mobile_api_upload_V_2_5_9'
+        # Get the current time
         for file in files:
-            if (file.filename.split('.')[1]=='png'):
-                imagename = ""+timestamp+".png"
-                # file.save('/tmp/userImage', 'png')
-                file.save(os.path.join('./userImage', imagename))
-                # tesfsd = os.getcwd() + '/mobile_api_upload_V_2_5_9/userImage/' + imagename
-                # Flask_Logos = os.path.join(os.getcwd(), tesfsd)
-                Flask_Logo = os.path.join('./userImage',imagename)
-                img = Image.open(Flask_Logo)
-                imagesize = img.size
-                with open(Flask_Logo, "rb") as f:
-                    img_data = f.read()
-                    imgbinarydata = psycopg2.Binary(img_data)               
-                    cursor.execute("INSERT INTO public.image (original_image_name,user_id,image_data,image_name,image_path,image_type,image_size) VALUES (%s,%s,%s,%s,%s,%s,%s)", (file.filename,request.values["USER_ID"],imgbinarydata,imagename,Flask_Logo,file.content_type,imagesize))
-                    conn.commit()
-            elif(file.filename.split('.')[1]=='jpeg'):
-                imagename = ""+timestamp+".jpeg"
-                file.save(os.path.join('./userImage', imagename))
-                Flask_Logo = os.path.join('./userImage',imagename)
-                img = Image.open(Flask_Logo)
-                imagesize = img.size
-                with open(Flask_Logo, "rb") as f:
-                    img_data = f.read()
-                    imgbinarydata = psycopg2.Binary(img_data)   
-                    cursor.execute("INSERT INTO public.image (original_image_name,user_id,image_data,image_name,image_path,image_type,image_size) VALUES (%s,%s,%s,%s,%s,%s,%s)", (file.filename,request.values["USER_ID"],imgbinarydata,imagename,Flask_Logo,file.content_type,imagesize))
-                    conn.commit()
-            elif(file.filename.split('.')[1]=='jpg'):
-                imagename = ""+timestamp+".jpg"
-                file.save(os.path.join('./userImage', imagename))
-                Flask_Logo = os.path.join('./userImage',imagename)
-                img = Image.open(Flask_Logo)
-                imagesize = img.size
-                with open(Flask_Logo, "rb") as f:
-                    img_data = f.read()
-                    imgbinarydata = psycopg2.Binary(img_data)   
-                    cursor.execute("INSERT INTO public.image (original_image_name,user_id,image_data,image_name,image_path,image_type,image_size) VALUES (%s,%s,%s,%s,%s,%s,%s)", (file.filename,request.values["USER_ID"],imgbinarydata,imagename,Flask_Logo,file.content_type,imagesize))
-                    conn.commit()
+                now = datetime.now()
+                timestamp = now.strftime("%Y-%m-%d %H:%M:%S.%f")
+                if (file.filename.split('.')[1]=='png'):
+                    imagename = ""+timestamp+".png"                
+                    file.save(os.path.join('./userImage', imagename))
+                    Flask_Logo = os.path.join('./userImage',imagename)
+                # img = Image.open(Flask_Logo)
+                # imagesize = img.size
+                # with open(Flask_Logo, "rb") as f:
+                    # img_data = f.read()
+                    # imgbinarydata = psycopg2.Binary(img_data)               
+                    # cursor.execute("INSERT INTO public.image (original_image_name,user_id,image_data,image_name,image_path,image_type,image_size) VALUES (%s,%s,%s,%s,%s,%s,%s)", (file.filename,request.values["USER_ID"],imgbinarydata,imagename,Flask_Logo,file.content_type,imagesize))
+                    # conn.commit()
+                    # print("Flask_Logo",Flask_Logo.split('/'))
+                    Flask_Logo =  Flask_Logo.split('/')[2]
+                    file_list.append(Flask_Logo)
+                elif(file.filename.split('.')[1]=='jpeg'):
+                    imagename = ""+timestamp+".jpeg"
+                    file.save(os.path.join('./userImage', imagename))
+                    Flask_Logo = os.path.join('./userImage',imagename)
+                # img = Image.open(Flask_Logo)
+                # imagesize = img.size
+                # with open(Flask_Logo, "rb") as f:
+                    # img_data = f.read()
+                    # imgbinarydata = psycopg2.Binary(img_data)   
+                    # cursor.execute("INSERT INTO public.image (original_image_name,user_id,image_data,image_name,image_path,image_type,image_size) VALUES (%s,%s,%s,%s,%s,%s,%s)", (file.filename,request.values["USER_ID"],imgbinarydata,imagename,Flask_Logo,file.content_type,imagesize))
+                    # conn.commit()
+                    Flask_Logo =  Flask_Logo.split('/')[2]
+                    file_list.append(Flask_Logo)
+                elif(file.filename.split('.')[1]=='jpg'):
+                    imagename = ""+timestamp+".jpg"
+                    file.save(os.path.join('./userImage', imagename))
+                    Flask_Logo = os.path.join('./userImage',imagename)
+                # img = Image.open(Flask_Logo)
+                # imagesize = img.size
+                # with open(Flask_Logo, "rb") as f:
+                    # img_data = f.read()
+                    # imgbinarydata = psycopg2.Binary(img_data)   
+                    # cursor.execute("INSERT INTO public.image (original_image_name,user_id,image_data,image_name,image_path,image_type,image_size) VALUES (%s,%s,%s,%s,%s,%s,%s)", (file.filename,request.values["USER_ID"],imgbinarydata,imagename,Flask_Logo,file.content_type,imagesize))
+                    # conn.commit()
+                    Flask_Logo.split('/')[2]
+                    file_list.append(Flask_Logo)
                
-            else: 
-                print("Failed")
-                return "Failed"
-            print("Uploaded Successfully")
-            return True,Flask_Logo
+                else: 
+                    print('Error while uploading files')
+                    return 'Error while uploading files'
+        print("Uploaded Successfully")
+        return True,file_list
         
     except Exception as e:
         print('Error while uploading files to storage : %s | %s | %s', str(e), guard.current_userId, guard.current_appversion)
-        return False, Flask_Logo
+        return False, file_list
     
     
-@app.route('/images/<image_name>')
+@app.route('/api/get_images/<image_name>')
 def getimages(image_name):
         
     token_status, token_data = token_required(request)
