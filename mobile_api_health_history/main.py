@@ -56,7 +56,7 @@ def token_required(request):
         print("Invalid Token.")
         return False, json.dumps({'status':'FAILURE', "status_code":"401", 'message' : 'Invalid Token.'})
     
-@app.route('/mobile_api_health_history', methods=['POST'])
+@app.route('/api/mobile_api_health_history', methods=['POST'])
 def member_health_history():
 
     token_status, token_data = token_required(request)

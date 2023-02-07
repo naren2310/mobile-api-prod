@@ -57,7 +57,7 @@ def token_required(request):
         # cloud_logger.critical("Invalid Token: %s", str(e))
         return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token.'})
 
-@app.route('/mobile_api_get_facility', methods=['POST'])
+@app.route('/api/mobile_api_get_facility', methods=['POST'])
 def get_facilities_data():
     
     token_status, token_data = token_required(request)
@@ -191,4 +191,4 @@ def retrieve_streets(facilityId):
         return streets
 
 if __name__=="__main__":    
-    app.run(host="0.0.0.0", port=8000)
+    app.run(host="0.0.0.0", port=8080)

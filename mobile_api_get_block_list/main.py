@@ -53,7 +53,7 @@ def token_required(request):
         print("Invalid Token: %s", str(e))
         return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token.'})
     
-@app.route('/mobile_api_get_block_list', methods=['POST'])    
+@app.route('/api/mobile_api_get_block_list', methods=['POST'])    
 def get_block_list():
     
     token_status, token_data = token_required(request)

@@ -3,7 +3,7 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
-@app.route('/mobile_api_resendOTP', methods=['POST'])
+@app.route('/api/mobile_api_resendOTP', methods=['POST'])
 def resendOTP():
     try:
         print("*********Resending OTP*********")

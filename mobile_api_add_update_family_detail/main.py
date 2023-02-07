@@ -97,7 +97,7 @@ def token_required(request):
         # cloud_logger.critical("Invalid Token.")
         return False, json.dumps({'status':'FAILURE', "status_code":"401", 'message' : 'Invalid Token.'})
 
-@app.route('/mobile_api_add_update_family_detail', methods=['POST'])
+@app.route('/api/mobile_api_add_update_family_detail', methods=['POST'])
 def add_update_family_details():
 
     token_status, token_data = token_required(request)

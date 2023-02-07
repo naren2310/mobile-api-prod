@@ -58,7 +58,7 @@ def token_required(request):
         # cloud_logger.critical("Invalid Token: %s", str(e))
         return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token.'})
 
-@app.route('/mobile_api_get_screening_data', methods=['POST'])
+@app.route('/api/mobile_api_get_screening_data', methods=['POST'])
 def get_screening_data():
     
     token_status, token_data = token_required(request)

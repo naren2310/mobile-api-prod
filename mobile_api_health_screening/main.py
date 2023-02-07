@@ -59,7 +59,7 @@ def token_required(request):
         # cloud_logger.error("Error adding Screening data : %s | Test User | V_3.1.4", str(e))
         return False, json.dumps({'status':'FAILURE', "status_code":"401", 'message' : 'Invalid Token.'})
 
-@app.route('/mobile_api_health_screening', methods=['POST'])
+@app.route('/api/mobile_api_health_screening', methods=['POST'])
 def member_screening_details():
 
     token_status, token_data = token_required(request)
