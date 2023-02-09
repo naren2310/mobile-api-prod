@@ -222,7 +222,7 @@ def retrieve_data(tables, lastUpdateTS):
                 drugs=[]
                 # cloud_logger.info("Retrieving Drugs Data.")
                 print("Retrieving Drugs Data.")
-                query = "SELECT  drug_id, drug_name, drug_type, dosage FROM health_drugs_master WHERE drug_usage_type!='Consumables' AND last_update_date>%s" 
+                query = "SELECT  drug_id, drug_name, drug_type, dosage FROM public.health_drugs_master WHERE drug_usage_type!='Consumables' AND last_update_date>%s" 
                 # with spnDB.snapshot() as snapshot:   
                 #     results = snapshot.execute_sql(
                 #         query,

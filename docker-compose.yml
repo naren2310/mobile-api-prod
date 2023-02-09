@@ -12,32 +12,32 @@ services:
     image: tnphr/mobileapiresendotp
     ports:
       - "9002:5000"
-  mobile_api_get_facility:
-    image: tnphr/mobileapigetfacility
+  mobile_api_add_update_family_detail:
+    image: tnphr/mobileapiaddupdatefamilydetail
     ports:
       - "9003:5000"
-  mobile_api_get_village_street:
-    image: tnphr/mobileapigetvillagestreet
-    ports:
-      - "9004:5000"
   mobile_api_get_block_list:
     image: tnphr/mobileapigetblocklist
     ports:
-      - "9005:5000"
+      - "9004:5000"
   mobile_api_get_clinical_data:
     image: tnphr/mobileapigetclinicaldata
     ports:
-      - "9006:5000"
+      - "9005:5000"
   mobile_api_get_district_list:
     image: tnphr/mobileapigetdistrictlist
+    ports:
+      - "9006:5000"
+  mobile_api_get_facility:
+    image: tnphr/mobileapigetfacility
     ports:
       - "9007:5000"
   mobile_api_get_family_data:
     image: tnphr/mobileapigetfamilydata
     ports:
       - "9008:5000"
-  mobile_api_get_village_list:
-    image: tnphr/mobileapigetvillagelist
+  mobile_api_get_family_member_data:
+    image: tnphr/mobileapigetfamilymemberdata
     ports:
       - "9009:5000"
   mobile_api_get_medical_history:
@@ -52,35 +52,41 @@ services:
     image: tnphr/mobileapigetsearchfamilydetails
     ports:
       - "9012:5000"
-  mobile_api_search:
-    image: tnphr/mobileapisearch
+  mobile_api_get_village_list:
+    image: tnphr/mobileapigetvillagelist
     ports:
       - "9013:5000"
-  mobile_api_get_family_member_data_V_2_6_0:
-    image: tnphr/mobileapigetfamilymemberdata
+  mobile_api_get_village_street:
+    image: tnphr/mobileapigetvillagestreet
     ports:
       - "9014:5000"
-  mobile_api_add_update_family_detail:
-    image: tnphr/mobileapiaddupdatefamilydetail
+  mobile_api_health_history:
+    image: tnphr/mobileapihealthhistory
     ports:
       - "9015:5000"
   mobile_api_health_screening:
     image: tnphr/mobileapihealthscreening
     ports:
       - "9016:5000"
-  mobile_api_health_history:
-    image: tnphr/mobileapihealthhistory
+  mobile_api_search:
+    image: tnphr/mobileapisearch
     ports:
       - "9017:5000"
-  mobile_api_upload_V_2_5_9:
+  mobile_api_upload:
     image: tnphr/mobileapiupload
     ports:
       - "9018:5000"
+    volumes:
+      - type: volume
+        source: file_upload_volumes
+        target: /Mobile_Api_Prod/mobile_api_upload/userImage
   phrlocker_api_v1:
-    image: vigneshanbu92/phrlocker_api_v1:API1
+    image: vigneshanbu92/phrlookerapi_v2:apiv2
     ports:
       - "9025:80"
   phrlocker_view_v1:
     image: vigneshanbu92/phrlocker_view_v1:phrlocker-view
     ports:
       - "9026:80"
+volumes:
+  file_upload_volumes:
