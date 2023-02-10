@@ -1,5 +1,4 @@
 from guard import *
-import guard
 
 def getResultFormatted(results):
     data_list=[]
