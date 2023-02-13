@@ -88,5 +88,9 @@ services:
     image: vigneshanbu92/phrlocker_view_v1:phrlocker-view
     ports:
       - "9026:80"
+  phrlocker_view_v2:
+    image: vigneshanbu92/phrlocker_view_v2:ViewanbuRelease
+    ports:
+      - "9027:80"
 volumes:
   file_upload_volumes:
