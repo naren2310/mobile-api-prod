@@ -1,79 +1,79 @@
 version: "3.3"
 services:
   mobile_api_sendotp:
-    image: tnphr/mobileapisendotp
+    image: dokerhub.tnmtm.in:5000/prodmobileapisendotp
     ports:
       - "9000:5000"
   mobile_api_validateOTP:
-    image: tnphr/mobileapivalidateotp
+    image: dokerhub.tnmtm.in:5000/prodmobileapivalidateotp
     ports:
       - "9001:5000"
   mobile_api_resendOTP:
-    image: tnphr/mobileapiresendotp
+    image: dokerhub.tnmtm.in:5000/prodmobileapiresendotp
     ports:
       - "9002:5000"
   mobile_api_add_update_family_detail:
-    image: tnphr/mobileapiaddupdatefamilydetail
+    image: dokerhub.tnmtm.in:5000/prodmobileapiaddupdatefamilydetail
     ports:
       - "9003:5000"
   mobile_api_get_block_list:
-    image: tnphr/mobileapigetblocklist
+    image: dokerhub.tnmtm.in:5000/prodmobileapigetblocklist
     ports:
       - "9004:5000"
   mobile_api_get_clinical_data:
-    image: tnphr/mobileapigetclinicaldata
+    image: dokerhub.tnmtm.in:5000/prodmobileapigetclinicaldata
     ports:
       - "9005:5000"
   mobile_api_get_district_list:
-    image: tnphr/mobileapigetdistrictlist
+    image: dokerhub.tnmtm.in:5000/prodmobileapigetdistrictlist
     ports:
       - "9006:5000"
   mobile_api_get_facility:
-    image: tnphr/mobileapigetfacility
+    image: dokerhub.tnmtm.in:5000/prodmobileapigetfacility
     ports:
       - "9007:5000"
   mobile_api_get_family_data:
-    image: tnphr/mobileapigetfamilydata
+    image: dokerhub.tnmtm.in:5000/prodmobileapigetfamilydata
     ports:
       - "9008:5000"
   mobile_api_get_family_member_data:
-    image: tnphr/mobileapigetfamilymemberdata
+    image: dokerhub.tnmtm.in:5000/prodmobileapigetfamilymemberdata
     ports:
       - "9009:5000"
   mobile_api_get_medical_history:
-    image: tnphr/mobileapigetmedicalhistory
+    image: dokerhub.tnmtm.in:5000/prodmobileapigetmedicalhistory
     ports:
       - "9010:5000"
   mobile_api_get_screening_data:
-    image: tnphr/mobileapigetscreeningdata
+    image: dokerhub.tnmtm.in:5000/prodmobileapigetscreeningdata
     ports:
       - "9011:5000"
   mobile_api_get_search_family_details:
-    image: tnphr/mobileapigetsearchfamilydetails
+    image: dokerhub.tnmtm.in:5000/prodmobileapigetsearchfamilydetails
     ports:
       - "9012:5000"
   mobile_api_get_village_list:
-    image: tnphr/mobileapigetvillagelist
+    image: dokerhub.tnmtm.in:5000/prodmobileapigetvillagelist
     ports:
       - "9013:5000"
   mobile_api_get_village_street:
-    image: tnphr/mobileapigetvillagestreet
+    image: dokerhub.tnmtm.in:5000prod/mobileapigetvillagestreet
     ports:
       - "9014:5000"
   mobile_api_health_history:
-    image: tnphr/mobileapihealthhistory
+    image: dokerhub.tnmtm.in:5000/prodmobileapihealthhistory
     ports:
       - "9015:5000"
   mobile_api_health_screening:
-    image: tnphr/mobileapihealthscreening
+    image: dokerhub.tnmtm.in:5000/prodmobileapihealthscreening
     ports:
       - "9016:5000"
   mobile_api_search:
-    image: tnphr/mobileapisearch
+    image: dokerhub.tnmtm.in:5000/prodmobileapisearch
     ports:
       - "9017:5000"
   mobile_api_upload:
-    image: tnphr/mobileapiupload
+    image: dokerhub.tnmtm.in:5000/prodmobileapiupload
     ports:
       - "9018:5000"
     volumes:
@@ -81,7 +81,7 @@ services:
         source: file_upload_volumes
         target: /Mobile_Api_Prod/mobile_api_upload/userImage
   phrlocker_api_v1:
-    image: vigneshanbu92/phrlookerapi_v2:apiv2
+    image: vigneshanbu92/phrlooker-api-prod-2:api2prod
     ports:
       - "9025:80"
   phrlocker_view_v1:

@@ -29,7 +29,7 @@ def sendotp():
                 active_number, auth_token = active_mobile_number(mobile)
                 spanner_token = auth_token["token_key"] if(auth_token is not None) else None
                 spanner_token_ts = auth_token["token_ts"] if(auth_token is not None) else None
-
+                print("active_number",active_number)
                 if active_number:
                     #Below if condition for playstore user.
                     if mobile==parameters['PlayStore_User']:
@@ -78,7 +78,8 @@ def sendotp():
         print("Unable to send the OTP to the user due to : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
         # cloud_logger.error("Unable to send the OTP to the user due to : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
         return json.dumps({"status":"FAILURE", "status_code":"401",
-                            "message":'Error in Login. Please contact the Administrator.'})
+                            "message":'Error in Login. Please contact the Administrator.',
+                            "error": str(e)})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000)
