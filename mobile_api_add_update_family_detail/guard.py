@@ -30,10 +30,10 @@ import re
 import psycopg2
 
 conn = psycopg2.connect(
-    host='10.236.221.123',  # hostname of the server
-    database='tnphrprod',  # database name
+    host='142.132.206.93',  # hostname of the server
+    database='postgres',  # database name
     user='tnphruser',  # username
-    password='P3@PHRmdHT1@123'  # password
+    password='TNphr@3Z4'  # password
 )
 
 cursor = conn.cursor()
