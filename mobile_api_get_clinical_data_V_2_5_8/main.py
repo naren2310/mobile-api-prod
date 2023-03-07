@@ -285,12 +285,12 @@ def retrieve_data(tables, lastUpdateTS):
                 data["DIAGNOSIS_MASTER"] = diagnosis
 
     except Exception as e:
-        response =  json.dumps({
-                    "message": ("Error while retrieving Clinical data, Please Retry."),
-                    "status": "FAILURE",
-                    "status_code":"401",
-                    "data": {}
-                })
+        # response =  json.dumps({
+        #             "message": ("Error while retrieving Clinical data, Please Retry."),
+        #             "status": "FAILURE",
+        #             "status_code":"401",
+        #             "data": {}
+        #         })
         # cloud_logger.error("Error while retrieving Clinical data : %s | %s | %s", str(e), guard.current_userId, guard.current_appversion)
         print("Error while retrieving Clinical data : %s | %s | %s", str(e), guard.current_userId, guard.current_appversion)
     

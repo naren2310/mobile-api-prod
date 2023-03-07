@@ -242,7 +242,6 @@ def getResultFormatted(results):
                 fieldIdx+=1
 
             data_list.append(data)
-        print(len(data_list))
         return data_list
 
     except Exception as e:

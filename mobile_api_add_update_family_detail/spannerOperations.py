@@ -518,12 +518,9 @@ def UpsertFamilyDetails(family_list, userId):
                     # print("ADDRESS DETAILS: {}".format(str(address_details)))
                     # cloud_logger.debug("PHR FID Values from update Member Function: {}".format(str(phr_fid)))
                     # cloud_logger.debug("ADDRESS DETAILS: {}".format(str(address_details)))
-                    print("isMemberUpdates",isMemberUpdates)
                     if isMemberUpdates:
                         if len(memberKeys)==0:
-                            print("memberKeys",len(memberKeys))
                             memberKeys = member_keys
-                        print("mValues",mValues)
                         memberVals.extend(mValues)
                         # member_details.append(member_details_current_family) 
                         if len(member_details_current_family)>0: # This code is added because for 2 member it was returning only one member details.

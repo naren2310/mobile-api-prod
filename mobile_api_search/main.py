@@ -208,7 +208,6 @@ def get_search_details():
                                                 "data": {}
                                                 })
                         return response                    
-                    print("result",result)
                     if len(result) == 0:
                         response =  json.dumps({
                             "message": "There is no member data available, Please contact administrator.", 
