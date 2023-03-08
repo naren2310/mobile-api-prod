@@ -313,7 +313,7 @@ def mtm_data_verification(memberId, history, familyId):
                 # cloud_logger.info("MTM_Values:")
                 print("MTM_Values:")
                 if mtm_values[0] is not None and mtm_values[0]!={}:
-                    mtm_json_db = json.loads(mtm_values[0])
+                    mtm_json_db = mtm_values[0]
                     mtm_keys_db = mtm_json_db.keys()
                     mtm_json_req = history['mtm_beneficiary']
                     if mtm_json_req is not None: # This is when we have mtm data from request. 25 March 2022.
