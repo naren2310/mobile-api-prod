@@ -46,7 +46,7 @@ def add_screening_details(screenings):
             # cloud_logger.info('Screening details from request: %s', str(screening))
             # print('Screening details from request: %s', str(screening))
             lastUpdateDate = fetchLastUpdate(familyId,memberId)
-            requestUpdateDate = datetime.strptime(screening['last_update_date'], "%Y-%m-%d %H:%M:%S")
+            requestUpdateDate = datetime.strptime(screening['last_update_date'], "%Y-%m-%d %H:%M:%S%z")
             # This check is removed to allow all the screenings to be get inserted. 25 March 2022
             # if lastUpdateDate is None or requestUpdateDate > lastUpdateDate:
             for key in screening.keys():
@@ -77,7 +77,7 @@ def add_screening_details(screenings):
                 elif key in ['last_update_date']:
                     # This check is here to validate the timestamp is the latest than the one in DB. 25 March 2022. 
                     if lastUpdateDate is None or requestUpdateDate > lastUpdateDate:
-                        last_update_date = datetime.strptime(val, "%Y-%m-%d %H:%M:%S")
+                        last_update_date = datetime.strptime(val, "%Y-%m-%d %H:%M:%S%z")
                     else: # This will execute only when request has an older record than the DB.
                         # date = datetime.now(timezone(parameters['TIMEZONE']))
                         # last_update_date = datetime.strptime(date, "%Y-%m-%d %H:%M:%S%z")
@@ -99,7 +99,7 @@ def add_screening_details(screenings):
                         if as_value == "no":
                             add_serv_form[as_key]={
                                 "enroll_date": "2021-07-07 00:00:00+0530",
-                                "exit_date": (datetime.now().astimezone()).strftime("%Y-%m-%d %H:%M:%S"),
+                                "exit_date": (datetime.now().astimezone()).strftime("%Y-%m-%d %H:%M:%S%z"),
                                 "status": "no"
                             }
                         if as_value == "yes":
@@ -121,16 +121,15 @@ def add_screening_details(screenings):
             if "additional_services" in kArray:
                 kArray.remove("additional_services")
             else:
-                print("Already have an updated data for member id : %s", str(memberId))
                 # cloud_logger.info("Already have an updated data for member id : %s", str(memberId))                
 
         # with spnDB.batch() as batch:
                 # We were using an insert by batch.insert() till 11 April 2022, but since the app somehow is sending a duplicate screening id.
                 # We are changing the code to support the mobile app's screening id duplication. Hence we are doing upsert here. 11 April 2022.
                 # batch.insert_or_update('health_screening', columns=kArray, values=vArray)
-                value = (vArray[0][1],vArray[0][2],vArray[0][3],vArray[0][4],vArray[0][5])
-                query = "INSERT INTO public.health_screening (family_id,member_id,screening_id,last_update_date,update_register) VALUES (%s,%s,%s,%s,%s) ON CONFLICT (screening_id) DO UPDATE SET family_id = EXCLUDED.family_id,member_id = EXCLUDED.member_id,screening_id = EXCLUDED.screening_id,last_update_date = EXCLUDED.last_update_date,update_register=COALESCE(EXCLUDED.update_register, '[]'::jsonb) ||EXCLUDED.update_register  ::jsonb"
-                cursor.execute(query,value)
+                value = tuple(vArray[0])
+                query = f"INSERT INTO public.health_screening ({','.join(kArray)}) VALUES ({','.join(['%s']*len(kArray))}) ON CONFLICT (screening_id) DO UPDATE SET {','.join([f'{key}=%s' for key in kArray])}"
+                cursor.execute(query,(value)*2)
                 conn.commit()
         #API Versioning to handle the old APK request with additional services.
         #Updating the additional services data to mtm beneficiary on health history table.
