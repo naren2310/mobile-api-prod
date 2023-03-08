@@ -5,7 +5,7 @@ def fetchLastUpdate(memberId, familyId):
     try:
         # cloud_logger.info("Fetching Last Update Timestamp.")
         print("Fetching Last Update Timestamp.")
-        query = "SELECT to_char(last_update_date AT TIME ZONE 'Asia/Calcutta', 'YYYY-MM-DD HH24:MI:SS') as last_update_date FROM public.health_history WHERE family_id=%s AND member_id=%s"
+        query = "SELECT to_char(last_update_date AT TIME ZONE 'Asia/Calcutta', 'YYYY-MM-DD HH24:MI:SS+05:30') as last_update_date FROM public.health_history WHERE family_id=%s AND member_id=%s"
         values = (familyId, memberId)
         cursor.execute(query,values)
         results = cursor.fetchall()
@@ -15,9 +15,8 @@ def fetchLastUpdate(memberId, familyId):
         # with spnDB.snapshot() as snapshot:
         #     results = snapshot.execute_sql(query,params={"memberId": memberId, "familyId": familyId},
         #     param_types={"memberId": param_types.STRING, "familyId": param_types.STRING})
-
         for row in results:
-            last_update_date = datetime.strptime(row[0], "%Y-%m-%d %H:%M:%S")
+            last_update_date = datetime.strptime(row[0], "%Y-%m-%d %H:%M:%S%z")
 
         if last_update_date:
             return last_update_date
@@ -55,7 +54,7 @@ def UpsertMedicalHistory(historyList):
             familyId = history['family_id']
             is_correct_date = False
             lastUpdateDate = fetchLastUpdate(memberId, familyId)
-            requestUpdateDate = datetime.strptime(history['last_update_date'], "%Y-%m-%d %H:%M:%S")
+            requestUpdateDate = datetime.strptime(history['last_update_date'], "%Y-%m-%d %H:%M:%S%z")
             if lastUpdateDate is not None:#not first time check
                 is_correct_date = requestUpdateDate > lastUpdateDate
             if lastUpdateDate is None or is_correct_date:
@@ -95,7 +94,7 @@ def UpsertMedicalHistory(historyList):
                     elif key in ['last_update_date']:
                         if(cntIdx==0):
                             historyKeys.append(key)
-                        last_update_date = datetime.strptime(val, "%Y-%m-%d %H:%M:%S") if(val is not None) else val
+                        last_update_date = datetime.strptime(val, "%Y-%m-%d %H:%M:%S%z") if(val is not None) else val
                         values.append(last_update_date)
                     elif key in ['family_id', 'member_id']:
                         if(cntIdx==0):
@@ -131,9 +130,9 @@ def UpsertMedicalHistory(historyList):
                 # print("History = {}, Values = {}".format(str(historyKeys), str(historyVals))) 
                 # print("historyKeys",historyKeys)
                 # print("historyVals",historyVals)
-                value = (historyVals[0][0],historyVals[0][1],historyVals[0][2],historyVals[0][3],historyVals[0][4])
-                query = "INSERT INTO public.health_history (family_id,member_id,medical_history_id,last_update_date,update_register) VALUES (%s,%s,%s,%s,%s) ON CONFLICT (medical_history_id) DO UPDATE SET family_id = EXCLUDED.family_id,member_id = EXCLUDED.member_id,medical_history_id = EXCLUDED.medical_history_id,last_update_date = EXCLUDED.last_update_date,update_register=COALESCE(EXCLUDED.update_register, '[]'::jsonb) ||EXCLUDED.update_register  ::jsonb"    
-                cursor.execute(query,value)
+                value = tuple(historyVals[0])
+                query = f"INSERT INTO public.health_history ({','.join(historyKeys)}) VALUES ({','.join(['%s']*len(historyKeys))}) ON CONFLICT (medical_history_id) DO UPDATE SET {','.join([f'{key}=%s' for key in historyKeys])}"
+                cursor.execute(query,(value)*2)
                 conn.commit()
                 # def UpsertHistory(transaction):
 
@@ -149,9 +148,9 @@ def UpsertMedicalHistory(historyList):
                 # print("Member = {}, Values = {}".format(str(memberKeys), str(memberVals)))
                 # print("memberKeys",memberKeys)
                 # print("memberVals",memberVals)
-                value = (memberVals[0][0],memberVals[0][1],memberVals[0][2])
-                query = "INSERT INTO public.family_member_master (family_id,member_id,update_register) VALUES (%s,%s,%s) ON CONFLICT (member_id) DO UPDATE SET family_id = EXCLUDED.family_id,member_id = EXCLUDED.member_id,update_register=COALESCE(EXCLUDED.update_register, '[]'::jsonb) ||EXCLUDED.update_register  ::jsonb"    
-                cursor.execute(query,value)
+                value = tuple(memberVals[0])
+                query = f"INSERT INTO public.family_member_master ({','.join(memberKeys)}) VALUES ({','.join(['%s']*len(memberKeys))}) ON CONFLICT (member_id) DO UPDATE SET {','.join([f'{key}=%s' for key in memberKeys])}"
+                cursor.execute(query,(value)*2)
                 conn.commit()
                 # def UpsertMember(transaction):
                     # transaction.insert_or_update(
@@ -165,9 +164,9 @@ def UpsertMedicalHistory(historyList):
                 print("family_member_socio_economic_ref inserting")
                 # print("serefKeys",serefKeys)
                 # print("serefVals",serefVals)
-                value = (serefVals[0][0],serefVals[0][1],serefVals[0][2])
-                query = "INSERT INTO public.family_member_socio_economic_ref (family_id,member_id,update_register) VALUES (%s,%s,%s) ON CONFLICT (member_id) DO UPDATE SET family_id = EXCLUDED.family_id,member_id = EXCLUDED.member_id,update_register=COALESCE(EXCLUDED.update_register, '[]'::jsonb) ||EXCLUDED.update_register  ::jsonb"    
-                cursor.execute(query,value)
+                value = tuple(serefVals[0])
+                query = f"INSERT INTO public.family_member_socio_economic_ref ({','.join(serefKeys)}) VALUES ({','.join(['%s']*len(serefKeys))}) ON CONFLICT (member_id) DO UPDATE SET {','.join([f'{key}=%s' for key in serefKeys])}"
+                cursor.execute(query,(value)*2)
                 conn.commit()
                 # def UpsertSeref(transaction):
                 #     transaction.insert_or_update(
@@ -313,7 +312,6 @@ def mtm_data_verification(memberId, history, familyId):
         for mtm_values in results:
                 # cloud_logger.info("MTM_Values:")
                 print("MTM_Values:")
-                print(mtm_values)
                 if mtm_values[0] is not None and mtm_values[0]!={}:
                     mtm_json_db = json.loads(mtm_values[0])
                     mtm_keys_db = mtm_json_db.keys()
