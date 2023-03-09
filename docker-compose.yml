@@ -1,96 +1,84 @@
-version: "3.3"
+version: '3'
 services:
   mobile_api_sendotp:
-    image: dokerhub.tnmtm.in:5000/prodmobileapisendotp
+    image: tnphr/mobileapisendotp
     ports:
       - "9000:5000"
   mobile_api_validateOTP:
-    image: dokerhub.tnmtm.in:5000/prodmobileapivalidateotp
+    image: tnphr/mobileapivalidateotp
     ports:
       - "9001:5000"
   mobile_api_resendOTP:
-    image: dokerhub.tnmtm.in:5000/prodmobileapiresendotp
+    image: tnphr/mobileapiresendotp
     ports:
       - "9002:5000"
-  mobile_api_add_update_family_detail:
-    image: dokerhub.tnmtm.in:5000/prodmobileapiaddupdatefamilydetail
+  mobile_api_get_facility:
+    image: tnphr/mobileapigetfacility
     ports:
       - "9003:5000"
   mobile_api_get_block_list:
-    image: dokerhub.tnmtm.in:5000/prodmobileapigetblocklist
+    image: tnphr/mobileapigetblocklist
     ports:
       - "9004:5000"
   mobile_api_get_clinical_data:
-    image: dokerhub.tnmtm.in:5000/prodmobileapigetclinicaldata
+    image: tnphr/mobileapigetclinicaldata
     ports:
       - "9005:5000"
   mobile_api_get_district_list:
-    image: dokerhub.tnmtm.in:5000/prodmobileapigetdistrictlist
+    image: tnphr/mobileapigetdistrictlist
     ports:
       - "9006:5000"
-  mobile_api_get_facility:
-    image: dokerhub.tnmtm.in:5000/prodmobileapigetfacility
+  mobile_api_get_family_data:
+    image: tnphr/mobileapigetfamilydata
     ports:
       - "9007:5000"
-  mobile_api_get_family_data:
-    image: dokerhub.tnmtm.in:5000/prodmobileapigetfamilydata
+  mobile_api_get_village_street:
+    image: tnphr/mobileapigetvillagestreet
     ports:
       - "9008:5000"
-  mobile_api_get_family_member_data:
-    image: dokerhub.tnmtm.in:5000/prodmobileapigetfamilymemberdata
+  mobile_api_get_village_list:
+    image: tnphr/mobileapigetvillagelist
     ports:
       - "9009:5000"
-  mobile_api_get_medical_history:
-    image: dokerhub.tnmtm.in:5000/prodmobileapigetmedicalhistory
+  mobile_api_get_screening_data:
+    image: tnphr/mobileapigetscreeningdata
     ports:
       - "9010:5000"
-  mobile_api_get_screening_data:
-    image: dokerhub.tnmtm.in:5000/prodmobileapigetscreeningdata
+  mobile_api_get_search_family_details:
+    image: tnphr/mobileapigetsearchfamilydetails
     ports:
       - "9011:5000"
-  mobile_api_get_search_family_details:
-    image: dokerhub.tnmtm.in:5000/prodmobileapigetsearchfamilydetails
+  mobile_api_search:
+    image: tnphr/mobileapisearch
     ports:
       - "9012:5000"
-  mobile_api_get_village_list:
-    image: dokerhub.tnmtm.in:5000/prodmobileapigetvillagelist
+  mobile_api_get_family_member_data:
+    image: tnphr/mobileapigetfamilymemberdata
     ports:
       - "9013:5000"
-  mobile_api_get_village_street:
-    image: dokerhub.tnmtm.in:5000prod/mobileapigetvillagestreet
+  mobile_api_get_medical_history:
+    image: tnphr/mobileapigetmedicalhistory
     ports:
       - "9014:5000"
-  mobile_api_health_history:
-    image: dokerhub.tnmtm.in:5000/prodmobileapihealthhistory
+  mobile_api_add_update_family_detail:
+    image: tnphr/mobileapiaddupdatefamilydetail
     ports:
       - "9015:5000"
-  mobile_api_health_screening:
-    image: dokerhub.tnmtm.in:5000/prodmobileapihealthscreening
+  mobile_api_health_history:
+    image: tnphr/mobileapihealthhistory
     ports:
       - "9016:5000"
-  mobile_api_search:
-    image: dokerhub.tnmtm.in:5000/prodmobileapisearch
+  mobile_api_health_screening:
+    image: tnphr/mobileapihealthscreening
     ports:
       - "9017:5000"
   mobile_api_upload:
-    image: dokerhub.tnmtm.in:5000/prodmobileapiupload
+    image: tnphr/mobileapiupload
     ports:
       - "9018:5000"
     volumes:
       - type: volume
         source: file_upload_volumes
-        target: /Mobile_Api_Prod/mobile_api_upload/userImage
-  phrlocker_api_v1:
-    image: vigneshanbu92/phrlooker-api-prod-2:api2prod
-    ports:
-      - "9025:80"
-  phrlocker_view_v1:
-    image: vigneshanbu92/phrlocker_view_v1:phrlocker-view
-    ports:
-      - "9026:80"
-  phrlocker_view_v2:
-    image: vigneshanbu92/phrlocker_view_v2:ViewanbuRelease
-    ports:
-      - "9027:80"
+        target: /Mobile_Api_Dev/mobile_api_upload/userImage
 volumes:
   file_upload_volumes:
