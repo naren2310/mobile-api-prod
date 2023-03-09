@@ -225,7 +225,7 @@ def get_unique_health_id():
     try:
         print('Generating Unique health Id.')
         # cloud_logger.info('Generating Unique health Id.')
-        query = "SELECT value FROM public.operational_parameters WHERE parameter='MAX_PHR_FAMILY_ID'"
+        query = "SELECT value FROM public.operational_parameters WHERE parameter='MAX_UHID'"
 
         # with spnDB.snapshot() as snapshot:
         #     results = snapshot.execute_sql(

@@ -342,7 +342,7 @@ def search_by_unique_health_id(unique_health_id):
             # The above query was commented for the change in the design to optimised CPU & Also resolving the outcome response was comming null everytime. Check for function get_details_from for more info. 6 April 2022. (Shankar/Atul)
             # query = 'SELECT fmm.family_id,fmm.member_id from family_member_master fmm WHERE  fmm.unique_health_id=@unique_health_id'
             # Below query is formulated as per discussion with Dr.V & Kiran for removing the outcome & last update date value. 26 May 2022 = b/233998552
-        query = "SELECT fmm.family_id ,fmm.member_id, fmm.member_name, fmm.gender, fmm.member_local_name, to_char(fmm.birth_date,'YYYY-MM-DD') AS birth_date, fmm.unique_health_id,null as last_update_date,null as outcome  FROM public.family_member_master fmm WHERE fmm unique_health_id=%s"
+        query = "SELECT fmm.family_id ,fmm.member_id, fmm.member_name, fmm.gender, fmm.member_local_name, to_char(fmm.birth_date,'YYYY-MM-DD') AS birth_date, fmm.unique_health_id,null as last_update_date,null as outcome  FROM public.family_member_master fmm WHERE fmm.unique_health_id=%s"
             # results = snapshot.execute_sql(
             #     query,
             #     params= {
