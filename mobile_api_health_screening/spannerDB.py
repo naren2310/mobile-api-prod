@@ -127,10 +127,11 @@ def add_screening_details(screenings):
                 # We were using an insert by batch.insert() till 11 April 2022, but since the app somehow is sending a duplicate screening id.
                 # We are changing the code to support the mobile app's screening id duplication. Hence we are doing upsert here. 11 April 2022.
                 # batch.insert_or_update('health_screening', columns=kArray, values=vArray)
-                value = tuple(vArray[0])
-                query = f"INSERT INTO public.health_screening ({','.join(kArray)}) VALUES ({','.join(['%s']*len(kArray))}) ON CONFLICT (screening_id) DO UPDATE SET {','.join([f'{key}=%s' for key in kArray])}"
-                cursor.execute(query,(value)*2)
-                conn.commit()
+                for vArrays in vArray:
+                    value = tuple(vArrays)
+                    query = f"INSERT INTO public.health_screening ({','.join(kArray)}) VALUES ({','.join(['%s']*len(kArray))}) ON CONFLICT (screening_id) DO UPDATE SET {','.join([f'{key}=%s' for key in kArray])}"
+                    cursor.execute(query,(value)*2)
+                    conn.commit()
         #API Versioning to handle the old APK request with additional services.
         #Updating the additional services data to mtm beneficiary on health history table.
         if len(mem_add_serv)!=0:

@@ -560,10 +560,11 @@ def UpsertFamilyDetails(family_list, userId):
             # value = (familyVals[0][0],familyVals[0][1],familyVals[0][2],familyVals[0][3],familyVals[0][4],familyVals[0][5],familyVals[0][6],familyVals[0][7],familyVals[0][8],familyVals[0][9],familyVals[0][10],familyVals[0][11],familyVals[0][12],familyVals[0][13],familyVals[0][14],familyVals[0][15],familyVals[0][16],familyVals[0][17],familyVals[0][18],familyVals[0][19])
             # query = "INSERT INTO public.family_master ("+column+") VALUES ("+values+") ON CONFLICT (family_id) DO UPDATE SET "+column+" = EXCLUDED."+column+""
             # ON CONFLICT (family_id) DO UPDATE SET family_id = EXCLUDED.family_id,phr_family_id = EXCLUDED.phr_family_id,facility_id = EXCLUDED.facility_id,hhg_id = EXCLUDED.hhg_id,street_id = EXCLUDED.street_id,ward_id = EXCLUDED.ward_id,area_id = EXCLUDED.area_id,habitation_id = EXCLUDED.habitation_id,rev_village_id = EXCLUDED.rev_village_id,village_id = EXCLUDED.village_id,block_id = EXCLUDED.block_id,hud_id = EXCLUDED.hud_id,taluk_id = EXCLUDED.taluk_id,district_id = EXCLUDED.district_id,state_id = EXCLUDED.state_id,country_id = EXCLUDED.country_id,hsc_unit_id = EXCLUDED.hsc_unit_id,shop_id = EXCLUDED.shop_id,last_update_date = EXCLUDED.last_update_date,update_register=COALESCE(EXCLUDED.update_register, '[]'::jsonb) ||EXCLUDED.update_register  ::jsonb"
-            value = tuple(familyVals[0]) 
-            query = f"INSERT INTO public.family_master ({','.join(familyKeys)}) VALUES ({','.join(['%s']*len(familyKeys))}) ON CONFLICT (family_id) DO UPDATE SET {','.join([f'{key}=%s' for key in familyKeys])}"
-            cursor.execute(query,(value)*2)
-            conn.commit()
+            for familyValss in familyVals:
+                value = tuple(familyValss) 
+                query = f"INSERT INTO public.family_master ({','.join(familyKeys)}) VALUES ({','.join(['%s']*len(familyKeys))}) ON CONFLICT (family_id) DO UPDATE SET {','.join([f'{key}=%s' for key in familyKeys])}"
+                cursor.execute(query,(value)*2)
+                conn.commit()
             # spnDB.run_in_transaction(upsertFamily)   
 
         if len(serefKeys)>0:
@@ -578,10 +579,11 @@ def UpsertFamilyDetails(family_list, userId):
             # query = "INSERT INTO public.family_socio_economic_ref ("+column+") VALUES ("+values+")ON CONFLICT (family_socio_economic_id) DO UPDATE SET "+column+" = EXCLUDED."+column+""
             # # value = (serefVals[0][0],serefVals[0][1],serefVals[0][2])
             # query = "INSERT INTO public.family_socio_economic_ref (family_id,family_socio_economic_id,update_register) VALUES (%s,%s,%s) ON CONFLICT (family_socio_economic_id) DO UPDATE SET family_id = EXCLUDED.family_id,family_socio_economic_id = EXCLUDED.family_socio_economic_id,update_register=COALESCE(EXCLUDED.update_register, '[]'::jsonb) ||EXCLUDED.update_register  ::jsonb"
-            value = tuple(serefVals[0])
-            query = f"INSERT INTO public.family_socio_economic_ref ({','.join(serefKeys)}) VALUES ({','.join(['%s']*len(serefKeys))}) ON CONFLICT (family_socio_economic_id) DO UPDATE SET {','.join([f'{key}=%s' for key in serefKeys])}"
-            cursor.execute(query,(value)*2)
-            conn.commit()
+            for serefValss in serefVals:
+                value = tuple(serefValss)
+                query = f"INSERT INTO public.family_socio_economic_ref ({','.join(serefKeys)}) VALUES ({','.join(['%s']*len(serefKeys))}) ON CONFLICT (family_socio_economic_id) DO UPDATE SET {','.join([f'{key}=%s' for key in serefKeys])}"
+                cursor.execute(query,(value)*2)
+                conn.commit()
             # spnDB.run_in_transaction(UpsertSeref)   
 
         if len(memberKeys)>0:
@@ -593,14 +595,11 @@ def UpsertFamilyDetails(family_list, userId):
                 #     columns=memberKeys,
                 #     values=memberVals
                 # )
-                # query = "INSERT INTO public.family_member_master ("+column+") VALUES ("+values+")"
-                # value = (memberVals[0][0],memberVals[0][1],memberVals[0][2],memberVals[0][3],memberVals[0][4],memberVals[0][5],memberVals[0][6],memberVals[0][7],memberVals[0][8],memberVals[0][9],memberVals[0][10],memberVals[0][11],memberVals[0][12],memberVals[0][13],memberVals[0][14],memberVals[0][15],memberVals[0][16])
-                # query = "INSERT INTO public.family_member_master (member_id,family_id,facility_id,street_id,ward_id,area_id,habitation_id,rev_village_id,village_id,block_id,hud_id,taluk_id,district_id,state_id,country_id,last_update_date,update_register) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) ON CONFLICT (member_id) DO UPDATE SET member_id = EXCLUDED.member_id,family_id = EXCLUDED.family_id,facility_id = EXCLUDED.facility_id,street_id = EXCLUDED.street_id,ward_id = EXCLUDED.ward_id,area_id = EXCLUDED.area_id,habitation_id = EXCLUDED.habitation_id,rev_village_id = EXCLUDED.rev_village_id,village_id = EXCLUDED.village_id,block_id = EXCLUDED.block_id,hud_id = EXCLUDED.hud_id,taluk_id = EXCLUDED.taluk_id,district_id = EXCLUDED.district_id,state_id = EXCLUDED.state_id,country_id = EXCLUDED.country_id,last_update_date = EXCLUDED.last_update_date,update_register=COALESCE(EXCLUDED.update_register, '[]'::jsonb) ||EXCLUDED.update_register  ::jsonb"
-                # cursor.execute(query,value)
-                value = tuple(memberVals[0])
-                query = f"INSERT INTO public.family_member_master ({','.join(memberKeys)}) VALUES ({','.join(['%s']*len(memberKeys))}) ON CONFLICT (member_id) DO UPDATE SET {','.join([f'{key}=%s' for key in memberKeys])}"
-                cursor.execute(query,(value)*2)
-                conn.commit()
+                for memberValss in memberVals:
+                    value = tuple(memberValss)
+                    query = f"INSERT INTO public.family_member_master ({','.join(memberKeys)}) VALUES ({','.join(['%s']*len(memberKeys))}) ON CONFLICT (member_id) DO UPDATE SET {','.join([f'{key}=%s' for key in memberKeys])}"
+                    cursor.execute(query,(value)*2)
+                    conn.commit()
             # spnDB.run_in_transaction(UpsertMember)   
 
     except Exception as e:
