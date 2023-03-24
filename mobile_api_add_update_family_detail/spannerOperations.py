@@ -64,15 +64,15 @@ def get_hierarchy_fields(streetId, userId):
     
     queryToGetAddressFromFacilityIdOfUser = 'SELECT strt.facility_id, hhg.hhg_id, strt.street_id, strt.ward_id, strt.area_id, strt.habitation_id, strt.rev_village_id, strt.village_id, strt.block_id, strt.hud_id, rev.taluk_id, strt.district_id, strt.state_id, strt.country_id, strt.hsc_unit_id, strt.street_gid FROM public.address_street_master strt LEFT JOIN public.address_hhg_master hhg on hhg.street_id=strt.street_id LEFT JOIN public.address_revenue_village_master as rev on hhg.rev_village_id=rev.rev_village_id WHERE strt.street_id=(SELECT street_id FROM public.address_street_master WHERE block_id = (SELECT fr.block_id FROM public.facility_registry fr WHERE facility_id = (SELECT facility_id FROM public.user_master WHERE user_id =%s))limit 1)'
         
-    street_gid, hierarchy_fields = get_address(streetId,userId,queryToGetAddressFromAddHHGMaster)
+    street_gid, hierarchy_fields = get_address(streetId,queryToGetAddressFromAddHHGMaster)
     if((street_gid is not None and street_gid !='') and (hierarchy_fields['street_id'] is not None and hierarchy_fields['street_id'] != '')):
         return street_gid, hierarchy_fields
     else:
-        street_gid, hierarchy_fields = get_address(streetId,userId,queryToGetAddressFromAddStreetMaster)
+        street_gid, hierarchy_fields = get_address(streetId,queryToGetAddressFromAddStreetMaster)
         if (street_gid is not None and street_gid !='') and (hierarchy_fields['street_id'] is not None and hierarchy_fields['street_id'] != ''):
             return street_gid, hierarchy_fields
         else:
-            street_gid, hierarchy_fields = get_address(streetId,userId,queryToGetAddressFromFacilityIdOfUser)
+            street_gid, hierarchy_fields = get_address(userId,queryToGetAddressFromFacilityIdOfUser)
             if (street_gid is not None and street_gid !='') and (hierarchy_fields['street_id'] is not None and hierarchy_fields['street_id'] != ''):
                 return street_gid, hierarchy_fields
             else:
@@ -91,7 +91,7 @@ def get_hierarchy_fields(streetId, userId):
                 }
                 return street_gid, hierarchy_fields
     
-def get_address(streetId, UserId, Query): 
+def get_address(streetId, Query): 
     hierarchy_fields = {
             "facility_id": "",
             "hhg_id" : "",
