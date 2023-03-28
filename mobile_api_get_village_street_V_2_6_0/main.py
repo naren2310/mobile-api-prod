@@ -193,6 +193,14 @@ def retrieve_villages_from(countryId, stateId, districtId, hudId, blockId):
 
     except Exception as e:
         print("Error retriving the Villages at block level : %s", str(e))
+        conn.rollback()
+        # conn = psycopg2.connect(
+        #         host='142.132.206.93',  # hostname of the server
+        #         database='postgres',  # database name
+        #         user='tnphruser',  # username
+        #         password='TNphr@3Z4'  # password
+        # )
+        # cursor = conn.cursor()
         # cloud_logger.error("Error retriving the Villages at block level : %s", str(e))
 
     finally:
