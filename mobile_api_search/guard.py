@@ -131,9 +131,13 @@ def user_token_validation(userId, mobile):
             print("Unregistered User/Token-User mismatch.")
             # cloud_logger.info("Unregistered User/Token-User mismatch.")            
             return False
-    except Exception as error:
-        print("Error validating user token: %s | %s | %s ", str(error), current_userId, current_appversion)
-        # cloud_logger.error("Error validating user token: %s | %s | %s ", str(error), current_userId, current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("get_search_details user_token_validation ProgrammingError",e)  
+        conn.rollback()
+        return False
+    except psycopg2.InterfaceError as e:
+        print("get_search_details user_token_validation InterfaceError",e)
+        reconnectToDB()
         return False
 
 def validate_mobile_no(mobile_number):
@@ -259,9 +263,13 @@ def check_id_registered(districtId, blockId, villageId):
         for row in result:
             id_exist = row[0]
         return id_exist
-    except Exception as error:
-        print("Error occurred in check id registered : %s | %s | %s ", str(error), current_userId, current_appversion)
-        # cloud_logger.error("Error occurred in check id registered : %s | %s | %s ", str(error), current_userId, current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("get_search_details check_id_registered ProgrammingError",e)  
+        conn.rollback()
+        return False
+    except psycopg2.InterfaceError as e:
+        print("get_search_details check_id_registered InterfaceError",e)
+        reconnectToDB()
         return False
 
 def validate_search_parameter(search_parameter):
@@ -279,3 +287,8 @@ def validate_search_parameter(search_parameter):
         print("Error in validating search parameter : %s | %s | %s ", str(error), current_userId, current_appversion)
         # cloud_logger.error("Error in validating search parameter : %s | %s | %s ", str(error), current_userId, current_appversion)
         return False
+    
+def reconnectToDB():
+    global conn, cursor
+    conn = psycopg2.connect(host='142.132.206.93',database='postgres',user='tnphruser',password='TNphr@3Z4')
+    cursor = conn.cursor()

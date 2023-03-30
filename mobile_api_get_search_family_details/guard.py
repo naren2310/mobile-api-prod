@@ -142,7 +142,16 @@ def check_id_registered(familyId, memberId):
             id_exist = row[0]
         return id_exist
         
-    except Exception as error:
-        print("Error occurred in check id registered : %s| %s | %s ", str(error), current_userId, current_appversion)
-        # cloud_logger.error("Error occurred in check id registered : %s| %s | %s ", str(error), current_userId, current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("get_family_and_member_details check_id_registered ProgrammingError",e)  
+        conn.rollback()
         return False
+    except psycopg2.InterfaceError as e:
+        print("get_family_and_member_details check_id_registered InterfaceError",e)
+        reconnectToDB()
+        return False
+    
+def reconnectToDB():
+    global conn, cursor
+    conn = psycopg2.connect(host='142.132.206.93',database='postgres',user='tnphruser',password='TNphr@3Z4')
+    cursor = conn.cursor()

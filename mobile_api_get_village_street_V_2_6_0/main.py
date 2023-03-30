@@ -148,7 +148,12 @@ def get_village_street():
                                     })
             print("The Request Format must be in JSON.")
             # cloud_logger.error("The Request Format must be in JSON.")
-    except Exception as e:
+    except psycopg2.ProgrammingError as e:
+        print("Village_street ProgrammingError",e)  
+        conn.rollback()
+    except psycopg2.InterfaceError as e:
+        print("Village_street InterfaceError",e)
+        reconnectToDB()
         response =  json.dumps({
                     "message": "Error while retrieving Village_street Data.", 
                     "status": "FAILURE",
@@ -190,18 +195,13 @@ def retrieve_villages_from(countryId, stateId, districtId, hudId, blockId):
         cursor.execute(query,value)
         address_list = cursor.fetchall()
         villages_list = get_villages_list(address_list)
-
-    except Exception as e:
-        print("Error retriving the Villages at block level : %s", str(e))
+        
+    except psycopg2.ProgrammingError as e:
+        print("Village_street retrieve_villages_from ProgrammingError",e)  
         conn.rollback()
-        # conn = psycopg2.connect(
-        #         host='142.132.206.93',  # hostname of the server
-        #         database='postgres',  # database name
-        #         user='tnphruser',  # username
-        #         password='TNphr@3Z4'  # password
-        # )
-        # cursor = conn.cursor()
-        # cloud_logger.error("Error retriving the Villages at block level : %s", str(e))
+    except psycopg2.InterfaceError as e:
+        print("Village_street retrieve_villages_from InterfaceError",e)
+        reconnectToDB()
 
     finally:
         return villages_list

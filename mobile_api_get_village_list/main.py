@@ -158,7 +158,18 @@ def get_village_list_from_block():
             print("The Request Format should be in JSON.")
             # cloud_logger.info("The Request Format should be in JSON.")
 
-    except Exception as e:
+    except psycopg2.ProgrammingError as e:
+        print("get_village_list_from_block get_village_list_from_block ProgrammingError",e)  
+        conn.rollback()
+        response =  json.dumps({
+                    "message": "Error while retrieving Villages data, Please Retry.",
+                    "status": "FAILURE",
+                    "status_code": "401",
+                    "data": {}
+                })
+    except psycopg2.InterfaceError as e:
+        print("get_village_list_from_block get_village_list_from_block InterfaceError",e)
+        reconnectToDB()
         response =  json.dumps({
                     "message": "Error while retrieving Villages data, Please Retry.",
                     "status": "FAILURE",

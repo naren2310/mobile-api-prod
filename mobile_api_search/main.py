@@ -322,9 +322,12 @@ def get_details_from(familyIdList, memberIdList):
                     fieldIdx+=1
 
                 member_list.append(data)
-    except Exception as e:
-        print("Error While retrieving data from family & Member Id Search : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error While retrieving data from family & Member Id Search : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("get_search_details get_details_from ProgrammingError",e)  
+        conn.rollback()
+    except psycopg2.InterfaceError as e:
+        print("get_search_details get_details_from InterfaceError",e)
+        reconnectToDB()
     
     finally:
         return member_list
@@ -366,9 +369,12 @@ def search_by_unique_health_id(unique_health_id):
             # else:
         return family_details
 
-    except Exception as e:
-        print("Error While retrieving data by Unique health id Search : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error While retrieving data by Unique health id Search : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("get_search_details search_by_unique_health_id ProgrammingError",e)  
+        conn.rollback()
+    except psycopg2.InterfaceError as e:
+        print("get_search_details search_by_unique_health_id InterfaceError",e)
+        reconnectToDB()
     
     finally:
         return family_details
@@ -410,9 +416,12 @@ def search_by_mobile_number(mobile_number):
         family_details = getResultFormatted(results)
         return family_details
 
-    except Exception as e:
-        print("Error While retrieving data by Mobile Number Search : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error While retrieving data by Mobile Number Search : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("get_search_details search_by_mobile_number ProgrammingError",e)  
+        conn.rollback()
+    except psycopg2.InterfaceError as e:
+        print("get_search_details search_by_mobile_number InterfaceError",e)
+        reconnectToDB()
     
     finally:
         return family_details
@@ -455,9 +464,12 @@ def search_by_smart_card_id(pds_smartcard_id):
         family_details = getResultFormatted(results)
         return family_details
 
-    except Exception as e:
-        print("Error While retrieving data by PDS Smart Card Id Search : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error While retrieving data by PDS Smart Card Id Search : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("get_search_details search_by_smart_card_id ProgrammingError",e)  
+        conn.rollback()
+    except psycopg2.InterfaceError as e:
+        print("get_search_details search_by_smart_card_id InterfaceError",e)
+        reconnectToDB()
     
     finally:
         return family_details
@@ -521,9 +533,12 @@ def search_by_name(member_name, district_id, block_id, village_id, offset):
         family_details = getResultFormatted(results)
         return family_details
 
-    except Exception as e:
-        print("Error While retrieving data by Name Search : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error While retrieving data by Name Search : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("get_search_details search_by_name ProgrammingError",e)  
+        conn.rollback()
+    except psycopg2.InterfaceError as e:
+        print("get_search_details search_by_name InterfaceError",e)
+        reconnectToDB()
     
     finally:
         return family_details

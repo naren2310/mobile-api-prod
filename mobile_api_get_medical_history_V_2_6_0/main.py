@@ -176,7 +176,18 @@ def get_medical_history():
             print("The Request Format should be in JSON.")
             # cloud_logger.error("The Request Format should be in JSON.")
 
-    except Exception as e:
+    except psycopg2.ProgrammingError as e:
+        print("get_medical_history ProgrammingError",e)  
+        conn.rollback()
+        response =  json.dumps({
+                    "message": "Error while retrieving Medical History Data.", 
+                    "status": "FAILURE",
+                    "status_code": "401",
+                    "data": []
+                })
+    except psycopg2.InterfaceError as e:
+        print("get_medical_history InterfaceError",e)
+        reconnectToDB()
         response =  json.dumps({
                     "message": "Error while retrieving Medical History Data.", 
                     "status": "FAILURE",

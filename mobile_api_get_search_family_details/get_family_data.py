@@ -23,9 +23,12 @@ def get_socioEconomic_data(familyId):
                 data["social_details"] = row[1] if (row[1] is None) else row[1]
                 data["economic_details"]=row[2] if (row[2] is None) else row[2]
  
-    except Exception as e:
-        print("Error fetching social details : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error fetching social details : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("get_family_and_member_details get_socioEconomic_data ProgrammingError",e)  
+        conn.rollback()
+    except psycopg2.InterfaceError as e:
+        print("get_family_and_member_details get_socioEconomic_data InterfaceError",e)
+        reconnectToDB()
         
     finally:
         return data
@@ -52,9 +55,12 @@ def get_member_socioEconomic_data(familyId, memberId):
                 data["social_details"] = row[1] if (row[1] is None) else row[1]
                 data["economic_details"]=row[2] if (row[2] is None) else row[2]
 
-    except Exception as e:
-        print("Error while fetching Member Socio Economic Details : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error while fetching Member Socio Economic Details : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("get_family_and_member_details get_member_socioEconomic_data ProgrammingError",e)  
+        conn.rollback()
+    except psycopg2.InterfaceError as e:
+        print("get_family_and_member_details get_member_socioEconomic_data InterfaceError",e)
+        reconnectToDB()
         
     finally:
         return data
@@ -90,9 +96,12 @@ def get_family_data(familyId):
                 family_data["social_details"] = None
                 family_data["economic_details"] = None
 
-    except Exception as e:
-        print("Error while fetching family data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error while fetching family data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("get_family_and_member_details get_family_data ProgrammingError",e)  
+        conn.rollback()
+    except psycopg2.InterfaceError as e:
+        print("get_family_and_member_details get_family_data InterfaceError",e)
+        reconnectToDB()
         
     finally:
         return family_data
@@ -118,9 +127,12 @@ def get_all_member_data(familyId):
             results = cursor.fetchall()
             data_list = getResultFormatted(results)
 
-    except Exception as e:
-        print("Error while fetching Member data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error while fetching Member data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("get_family_and_member_details get_all_member_data ProgrammingError",e)  
+        conn.rollback()
+    except psycopg2.InterfaceError as e:
+        print("get_family_and_member_details get_all_member_data InterfaceError",e)
+        reconnectToDB()
         
     finally:
         return data_list
@@ -145,9 +157,12 @@ def get_member_familyId(memberId):
             for row in results:
                 family_id = row[0]         
 
-    except Exception as e:
-        print("Error while fetching Family ID : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error while fetching Family ID : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("get_family_and_member_details get_member_familyId ProgrammingError",e)  
+        conn.rollback()
+    except psycopg2.InterfaceError as e:
+        print("get_family_and_member_details get_member_familyId InterfaceError",e)
+        reconnectToDB()
         
     finally:
         return family_id
@@ -174,9 +189,12 @@ def get_health_screening(familyId,memberId):
             data_list = getResultFormatted(results) 
             data['data_list'] = data_list
 
-    except Exception as e:
-        print("Error while fetching Screening Data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error while fetching Screening Data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("get_family_and_member_details get_health_screening ProgrammingError",e)  
+        conn.rollback()
+    except psycopg2.InterfaceError as e:
+        print("get_family_and_member_details get_health_screening InterfaceError",e)
+        reconnectToDB()
         
     finally:
         return data
@@ -206,9 +224,12 @@ def get_health_history(familyId, memberId):
             else:
                 return dict(data_list)
 
-    except Exception as e:
-        print("Error While fetching Medical History Data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error While fetching Medical History Data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("get_family_and_member_details get_health_history ProgrammingError",e)  
+        conn.rollback()
+    except psycopg2.InterfaceError as e:
+        print("get_family_and_member_details get_health_history InterfaceError",e)
+        reconnectToDB()
 
 
 def get_address_data(familyId):
@@ -249,9 +270,12 @@ def get_address_data(familyId):
                 }
                 #cloud_logger.debug("Data for Address: {}".format(str(data)))
                 
-    except Exception as e:
-        print("Error While fetching Address Details : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error While fetching Address Details : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("get_family_and_member_details get_address_data ProgrammingError",e)  
+        conn.rollback()
+    except psycopg2.InterfaceError as e:
+        print("get_family_and_member_details get_address_data InterfaceError",e)
+        reconnectToDB()
         
     finally:
         return data

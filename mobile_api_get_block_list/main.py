@@ -145,7 +145,18 @@ def get_block_list():
                         })
             # cloud_logger.error("The Request format should be in JSON.")
             print("The Request format should be in JSON.") 
-    except Exception as e:
+    except psycopg2.ProgrammingError as e:
+        print("get_block_list ProgrammingError",e)  
+        conn.rollback()
+        response =  json.dumps({
+                            "message": "Error while retrieving Block data, Please Retry.",
+                            "status": "FAILURE",
+                            "status_code": "401",
+                            "data": {}
+                        })
+    except psycopg2.InterfaceError as e:
+        print("get_block_list InterfaceError",e)
+        reconnectToDB()
         response =  json.dumps({
                             "message": "Error while retrieving Block data, Please Retry.",
                             "status": "FAILURE",

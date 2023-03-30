@@ -23,9 +23,13 @@ def fetchLastUpdate(memberId, familyId):
         else:
             return None
         
-    except Exception as e:
-        # cloud_logger.error("Error While Last Update Date : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        print("Error While Last Update Date : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("member_health_history fetchLastUpdate ProgrammingError",e)  
+        conn.rollback()
+        return None
+    except psycopg2.InterfaceError as e:
+        print("member_health_history fetchLastUpdate InterfaceError",e)
+        reconnectToDB()
         return None   
 
 def UpsertMedicalHistory(historyList):
@@ -186,9 +190,13 @@ def UpsertMedicalHistory(historyList):
 
         return True, ignores, upserts
 
-    except Exception as e:
-        # cloud_logger.error("Error while upsert of Medical History : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        print("Error while upsert of Medical History : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("member_health_history UpsertMedicalHistory ProgrammingError",e)  
+        conn.rollback()
+        return False, ignores, upserts
+    except psycopg2.InterfaceError as e:
+        print("member_health_history UpsertMedicalHistory InterfaceError",e)
+        reconnectToDB()
         return False, ignores, upserts
 
 
@@ -220,9 +228,12 @@ def getUpdateRegister(memberId, updateRegister, familyId):
         update_register.append(updateRegister)
         return json.dumps(update_register)
 
-    except Exception as e:
-        # cloud_logger.error("Error while Updating Register : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        print("Error while Updating Register : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("member_health_history getUpdateRegister ProgrammingError",e)  
+        conn.rollback()
+    except psycopg2.InterfaceError as e:
+        print("member_health_history getUpdateRegister InterfaceError",e)
+        reconnectToDB()
 
 
 def getUpdateRegisterForMemberMaster(memberId, updateRegister, familyId):
@@ -253,9 +264,12 @@ def getUpdateRegisterForMemberMaster(memberId, updateRegister, familyId):
         update_register.append(updateRegister)
         return json.dumps(update_register)
 
-    except Exception as e:
-        # cloud_logger.error("Error while Updating Register for Member : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        print("Error while Updating Register for Member : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("member_health_history getUpdateRegisterForMemberMaster ProgrammingError",e)  
+        conn.rollback()
+    except psycopg2.InterfaceError as e:
+        print("member_health_history getUpdateRegisterForMemberMaster InterfaceError",e)
+        reconnectToDB()
 
 
 def getUpdateRegisterForSocioMemberRef(memberId, updateRegister, familyId):
@@ -288,9 +302,12 @@ def getUpdateRegisterForSocioMemberRef(memberId, updateRegister, familyId):
         update_register.append(updateRegister)
         return json.dumps(update_register)
 
-    except Exception as e:
-        # cloud_logger.error("Error while Updating Register for social details : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        print("Error while Updating Register for social details : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("member_health_history getUpdateRegisterForSocioMemberRef ProgrammingError",e)  
+        conn.rollback()
+    except psycopg2.InterfaceError as e:
+        print("member_health_history getUpdateRegisterForSocioMemberRef InterfaceError",e)
+        reconnectToDB()
 
 
 def mtm_data_verification(memberId, history, familyId):

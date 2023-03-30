@@ -161,7 +161,18 @@ def get_clinical_data():
             print("No Clinical data available.")
             # cloud_logger.info("No Clinical data available.")
 
-    except Exception as e:
+    except psycopg2.ProgrammingError as e:
+        print("get_clinical_data ProgrammingError",e)  
+        conn.rollback()
+        response =  json.dumps({
+                    "message": ("Error while retrieving Clinical data, Please Retry."),
+                    "status": "FAILURE",
+                    "status_code":"401",
+                    "data": {}
+                })
+    except psycopg2.InterfaceError as e:
+        print("get_clinical_data InterfaceError",e)
+        reconnectToDB()
         response =  json.dumps({
                     "message": ("Error while retrieving Clinical data, Please Retry."),
                     "status": "FAILURE",
@@ -284,15 +295,12 @@ def retrieve_data(tables, lastUpdateTS):
                     diagnosis.append(diagnos)
                 data["DIAGNOSIS_MASTER"] = diagnosis
 
-    except Exception as e:
-        # response =  json.dumps({
-        #             "message": ("Error while retrieving Clinical data, Please Retry."),
-        #             "status": "FAILURE",
-        #             "status_code":"401",
-        #             "data": {}
-        #         })
-        # cloud_logger.error("Error while retrieving Clinical data : %s | %s | %s", str(e), guard.current_userId, guard.current_appversion)
-        print("Error while retrieving Clinical data : %s | %s | %s", str(e), guard.current_userId, guard.current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("get_clinical_data retrieve_data ProgrammingError",e)  
+        conn.rollback()
+    except psycopg2.InterfaceError as e:
+        print("get_clinical_data retrieve_data InterfaceError",e)
+        reconnectToDB()
     
     finally:
         return data
@@ -320,9 +328,13 @@ def update_user_last_syncTS(user_id):
             #     }
             # ) 
             return True
-        except Exception as e:
-            # cloud_logger.error("Error while Updating User Last Login time : %s | %s | %s", str(e), guard.current_userId, guard.current_appversion)
-            print("Error while Updating User Last Login time : %s | %s | %s", str(e), guard.current_userId, guard.current_appversion)
+        except psycopg2.ProgrammingError as e:
+            print("get_clinical_data update_user_last_syncTS ProgrammingError",e)  
+            conn.rollback()
+            return False
+        except psycopg2.InterfaceError as e:
+            print("get_clinical_data update_user_last_syncTS InterfaceError",e)
+            reconnectToDB()
             return False
         
     # spnDB.run_in_transaction(update_last_login_time)
@@ -367,9 +379,13 @@ def fetch_token_userId(userId, req_token):
 
         return valid
         
-    except Exception as e:
-        print("Unable to fetch token due to : %s | %s | %s", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Unable to fetch token due to : %s | %s | %s", str(e), guard.current_userId, guard.current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("get_clinical_data fetch_token_userId ProgrammingError",e)  
+        conn.rollback()
+        return valid
+    except psycopg2.InterfaceError as e:
+        print("get_clinical_data fetch_token_userId InterfaceError",e)
+        reconnectToDB()
         return valid
 
 if __name__=="__main__":    

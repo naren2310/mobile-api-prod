@@ -151,7 +151,18 @@ def get_facilities_data():
             print("The request format should be in JSON.")
             # cloud_logger.error("The request format should be in JSON.")
 
-    except Exception as e:
+    except psycopg2.ProgrammingError as e:
+        print("get_facilities_data user_token_validation ProgrammingError",e)  
+        conn.rollback()
+        response =  json.dumps({
+            "message": "Error while retrieving Facility Data.",
+            "status": "FAILURE",
+            "status_code":"401",
+            "data": facilities
+        })
+    except psycopg2.InterfaceError as e:
+        print("get_facilities_data user_token_validation InterfaceError",e)
+        reconnectToDB()
         response =  json.dumps({
             "message": "Error while retrieving Facility Data.",
             "status": "FAILURE",
@@ -183,9 +194,13 @@ def retrieve_streets(facilityId):
                 street = {"facility_id":row[0], "facility_gid":row[1], "facility_name":row[2],"facility_type":row[4]}
                 streets.append(street)
 
-    except Exception as e:
-        print("Error While retrieving Streets Data : %s | %s | %s", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error While retrieving Streets Data : %s | %s | %s", str(e), guard.current_userId, guard.current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("get_facilities_data retrieve_streets ProgrammingError",e)  
+        conn.rollback()
+        return False
+    except psycopg2.InterfaceError as e:
+        print("get_facilities_data retrieve_streets InterfaceError",e)
+        reconnectToDB()
         return False
     finally:
         return streets

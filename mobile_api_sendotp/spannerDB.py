@@ -25,9 +25,13 @@ def active_mobile_number(mobile_number):
                     
         return False, auth_key
 
-    except Exception as e:
-        print("Error while fetching the Active Mobile Numbers : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error while fetching the Active Mobile Numbers : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("sendotp active_mobile_number ProgrammingError",e)  
+        conn.rollback()
+        return False, auth_key
+    except psycopg2.InterfaceError as e:
+        print("sendotp active_mobile_number InterfaceError",e)
+        reconnectToDB()
         return False, auth_key
 
 
@@ -56,9 +60,12 @@ def read_write_transaction(jsonfile, mobile):
             conn.commit()
             return True
 
-        except Exception as e:
-            print("Error while storing the token : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-            # cloud_logger.error("Error while storing the token : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+        except psycopg2.ProgrammingError as e:
+            print("sendotp read_write_transaction ProgrammingError",e)  
+            conn.rollback()
+        except psycopg2.InterfaceError as e:
+            print("sendotp read_write_transaction InterfaceError",e)
+            reconnectToDB()
 
     # spnDB.run_in_transaction(store_auth_user)
 

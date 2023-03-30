@@ -136,7 +136,18 @@ def get_district_list():
             # cloud_logger.error("The Request Format should be in JSON.")
             print("The Request Format should be in JSON.")
         
-    except Exception as e:
+    except psycopg2.ProgrammingError as e:
+        print("get_district_list ProgrammingError",e)  
+        conn.rollback()
+        response =  json.dumps({
+                    "message": ("Error while retrieving District data, Please Retry."),
+                    "status": "FAILURE",
+                    "status_code": "401",
+                    "data": {}
+                })
+    except psycopg2.InterfaceError as e:
+        print("get_district_list InterfaceError",e)
+        reconnectToDB()
         response =  json.dumps({
                     "message": ("Error while retrieving District data, Please Retry."),
                     "status": "FAILURE",

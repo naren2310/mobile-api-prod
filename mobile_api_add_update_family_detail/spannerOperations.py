@@ -48,9 +48,12 @@ def get_hierarchy_field(streetId):
         # cloud_logger.debug("Address Details for Member : {}".format(str(hierarchy_fields)))
         return street_gid, hierarchy_fields
 
-    except Exception as e:
-        print("Error while retriving the address Data : %s", str(e))
-        # cloud_logger.error("Error while retriving the address Data : %s", str(e))
+    except psycopg2.ProgrammingError as e:
+        print("add_update_family_details get_hierarchy_field ProgrammingError",e)  
+        conn.rollback()
+    except psycopg2.InterfaceError as e:
+        print("add_update_family_details get_hierarchy_field InterfaceError",e)
+        reconnectToDB()
 
     finally:
         return street_gid, hierarchy_fields
@@ -142,9 +145,12 @@ def get_address(streetId, Query):
                     
         return street_gid, hierarchy_fields
 
-    except Exception as e:
-        print("Error while retriving the address Data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error while retriving the address Data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("add_update_family_details get_address ProgrammingError",e)  
+        conn.rollback()
+    except psycopg2.InterfaceError as e:
+        print("add_update_family_details get_address InterfaceError",e)
+        reconnectToDB()
 
     finally:
         return street_gid, hierarchy_fields
@@ -171,9 +177,12 @@ def get_shop(street_gid):
 
         return shop_id
 
-    except Exception as e:
-        print("Error while retriving the Shop Data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error while retriving the Shop Data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("add_update_family_details get_shop ProgrammingError",e)  
+        conn.rollback()
+    except psycopg2.InterfaceError as e:
+        print("add_update_family_details get_shop InterfaceError",e)
+        reconnectToDB()
 
     finally:
         return shop_id
@@ -210,9 +219,13 @@ def get_phr_family_id():
         cursor.execute(query,value)
         conn.commit()
 
-    except Exception as e:
-        print("Error Fetching Family Details : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error Fetching Family Details : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("add_update_family_details get_phr_family_id ProgrammingError",e)  
+        conn.rollback()
+        return False  
+    except psycopg2.InterfaceError as e:
+        print("add_update_family_details get_phr_family_id InterfaceError",e)
+        reconnectToDB()
         return False   
 
     finally:
@@ -254,10 +267,14 @@ def get_unique_health_id():
         uhid = uInitial+str(maxUHID)
         # cloud_logger.debug("UHID = {}".format(str(uuid)))
 
-    except Exception as e:
-        print("Error while fetching unique health id : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error while fetching unique health id : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        return False   
+    except psycopg2.ProgrammingError as e:
+        print("add_update_family_details get_unique_health_id ProgrammingError",e)  
+        conn.rollback()
+        return False  
+    except psycopg2.InterfaceError as e:
+        print("add_update_family_details get_unique_health_id InterfaceError",e)
+        reconnectToDB()
+        return False 
 
     finally:
         return uhid
@@ -281,9 +298,13 @@ def fetchSocioEconomicId(family_id):
 
         return data
 
-    except Exception as e:
-        print("Error While getting family's Last Update Date for : %s %s | %s | %s ", str(family_id),str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error While getting family's Last Update Date for : %s %s | %s | %s ", str(family_id),str(e), guard.current_userId, guard.current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("add_update_family_details fetchSocioEconomicId ProgrammingError",e)  
+        conn.rollback()
+        return None  
+    except psycopg2.InterfaceError as e:
+        print("add_update_family_details fetchSocioEconomicId InterfaceError",e)
+        reconnectToDB()
         return None   
 
 
@@ -308,9 +329,13 @@ def fetchLastUpdateFamily(family_id):
                 }
         return data
 
-    except Exception as e:
-        print("Error While getting family's Last Update Date for Family Id : %s %s | %s | %s ", str(family_id),str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error While getting family's Last Update Date for Family Id : %s %s | %s | %s ", str(family_id),str(e), guard.current_userId, guard.current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("add_update_family_details get_unique_health_id ProgrammingError",e)  
+        conn.rollback()
+        return False  
+    except psycopg2.InterfaceError as e:
+        print("add_update_family_details get_unique_health_id InterfaceError",e)
+        reconnectToDB()
         return False   
 
 def fetchLastUpdateMember(memberId, familyId):
@@ -344,10 +369,14 @@ def fetchLastUpdateMember(memberId, familyId):
 
         return data
         
-    except Exception as e:
-        print("Error While retreving member's Last Update Date for Member Id : %s %s | %s | %s ", str(memberId),str(e),guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error While retreving member's Last Update Date for Member Id : %s %s | %s | %s ", str(memberId),str(e),guard.current_userId, guard.current_appversion)
-        return False   
+    except psycopg2.ProgrammingError as e:
+        print("add_update_family_details fetchLastUpdateFamily ProgrammingError",e)  
+        conn.rollback()
+        return False  
+    except psycopg2.InterfaceError as e:
+        print("add_update_family_details fetchLastUpdateFamily InterfaceError",e)
+        reconnectToDB()
+        return False  
 
 #Important: Temp Fix the Mobile App to be changed.
 def isUpdatedFamily(updateRegister, reqUpdateRegister, userId):
@@ -602,10 +631,13 @@ def UpsertFamilyDetails(family_list, userId):
                     conn.commit()
             # spnDB.run_in_transaction(UpsertMember)   
 
-    except Exception as e:
-        # print(str(e))
-        print("Error while upsert of Family Details : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error while upsert of Family Details : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("add_update_family_details UpsertFamilyDetails ProgrammingError",e)  
+        conn.rollback()
+        is_success = False  
+    except psycopg2.InterfaceError as e:
+        print("add_update_family_details UpsertFamilyDetails InterfaceError",e)
+        reconnectToDB() 
         is_success = False
 
     finally:
@@ -711,10 +743,13 @@ def UpsertMemberDetails(member_list, phr_fid, address_details, userId):
                 cntIdx+=1
                 memberVals.append(mValues)
         
-    except Exception as e:
-        # print(str(e))
-        print("Error while upsert of Member : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error while upsert of Member : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("add_update_family_details UpsertMemberDetails ProgrammingError",e)  
+        conn.rollback()
+        return False, memberKeys, memberVals, member_details
+    except psycopg2.InterfaceError as e:
+        print("add_update_family_details UpsertMemberDetails InterfaceError",e)
+        reconnectToDB() 
         return False, memberKeys, memberVals, member_details
 
     finally:
@@ -749,6 +784,9 @@ def getUpdateRegisterForFamilySocioRef(familyId, updateRegister):
         # cloud_logger.debug("Update_Register Appended SEREF: {}".format(str(update_register)))
         return json.dumps(update_register)
 
-    except Exception as e:
-        print("Error while Updating register for Social Details : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error while Updating register for Social Details : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("add_update_family_details getUpdateRegisterForFamilySocioRef ProgrammingError",e)  
+        conn.rollback()
+    except psycopg2.InterfaceError as e:
+        print("add_update_family_details getUpdateRegisterForFamilySocioRef InterfaceError",e)
+        reconnectToDB() 

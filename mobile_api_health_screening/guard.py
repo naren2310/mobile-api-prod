@@ -131,9 +131,13 @@ def user_token_validation(userId, mobile, user_facility_id):
             # cloud_logger.info("Unregistered User/Inputs mismatch.")    
             print("Unregistered User/Inputs mismatch.")        
             return False
-    except Exception as error:
-        # cloud_logger.error("Error validating user token: %s | %s | %s ", str(error), current_userId, current_appversion)
-        print("Error validating user token: %s | %s | %s ", str(error), current_userId, current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("member_screening_details user_token_validation ProgrammingError",e)  
+        conn.rollback()
+        return False
+    except psycopg2.InterfaceError as e:
+        print("member_screening_details user_token_validation InterfaceError",e)
+        reconnectToDB()
         return False
 
 def validate_inputs(content):
@@ -180,3 +184,8 @@ def validate_inputs(content):
         # cloud_logger.error("Error in validating inputs : %s | %s | %s ", str(error), current_userId, current_appversion)
         print("Error in validating inputs : %s | %s | %s ", str(error), current_userId, current_appversion)
         return False
+
+def reconnectToDB():
+    global conn, cursor
+    conn = psycopg2.connect(host='142.132.206.93',database='postgres',user='tnphruser',password='TNphr@3Z4')
+    cursor = conn.cursor()

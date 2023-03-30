@@ -66,3 +66,8 @@ def validate_mobile_no(mobile_number):
         print("Error in validating mobile number: %s | %s | %s", str(error), current_userId, current_appversion)
         # cloud_logger.error("Error in validating mobile number: %s | %s | %s", str(error), current_userId, current_appversion)
         return False
+    
+def reconnectToDB():
+    global conn, cursor
+    conn = psycopg2.connect(host='142.132.206.93',database='postgres',user='tnphruser',password='TNphr@3Z4')
+    cursor = conn.cursor()

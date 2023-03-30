@@ -192,9 +192,12 @@ def get_address_for(familyId):
             # cloud_logger.info('Got address value.')
         return isAddressAvailable, address
 
-    except Exception as e:
-        print("Error while fetching address for Family Data : %s | %s | %s", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error while fetching address for Family Data : %s | %s | %s", str(e), guard.current_userId, guard.current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("get_families_data get_address_for ProgrammingError",e)  
+        conn.rollback()
+    except psycopg2.InterfaceError as e:
+        print("get_families_data get_address_for InterfaceError",e)
+        reconnectToDB()
         
 def getResultFormatted(results):
     data_list=[]
@@ -288,9 +291,12 @@ def get_family_data(userId, defaultTime, content):
         #     )
         data = getResultFormatted(results)
 
-    except Exception as e:
-        print("Error while fetching Family Data :%s | %s | %s", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error while fetching Family Data :%s | %s | %s", str(e), guard.current_userId, guard.current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("get_families_data get_family_data ProgrammingError",e)  
+        conn.rollback()
+    except psycopg2.InterfaceError as e:
+        print("get_families_data get_family_data InterfaceError",e)
+        reconnectToDB()
         
     finally:
         return data

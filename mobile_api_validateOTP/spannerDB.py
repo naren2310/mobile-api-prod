@@ -22,9 +22,13 @@ def fetch_from_spanner(mobile_number):
         print("detail",detail)
         return auth_key, detail
 
-    except Exception as e:
-        print("Error while fetching User Details : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error while fetching User Details : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("validateOTP fetch_from_spanner ProgrammingError",e)  
+        conn.rollback()
+        return auth_key, detail
+    except psycopg2.InterfaceError as e:
+        print("validateOTP fetch_from_spanner InterfaceError",e)
+        reconnectToDB()
         return auth_key, detail 
 
 def read_write_transaction(jsonfile, mobile):
@@ -52,9 +56,12 @@ def read_write_transaction(jsonfile, mobile):
             conn.commit()
             return True
         
-        except Exception as e:
-            print("Error while storing token in Database : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-            # cloud_logger.error("Error while storing token in Database : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+        except psycopg2.ProgrammingError as e:
+            print("validateOTP read_write_transaction ProgrammingError",e)  
+            conn.rollback()
+        except psycopg2.InterfaceError as e:
+            print("validateOTP read_write_transaction InterfaceError",e)
+            reconnectToDB()
             
     # spnDB.run_in_transaction(store_auth_user)
     

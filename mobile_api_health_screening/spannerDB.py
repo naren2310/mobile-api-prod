@@ -23,9 +23,13 @@ def fetchLastUpdate(familyId, memberId):
 
         return last_update_date
         
-    except Exception as e:
-        # cloud_logger.error("Error While Last Update Date : %s| %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        print("Error While Last Update Date : %s| %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("member_screening_details fetchLastUpdate ProgrammingError",e)  
+        conn.rollback()
+        return None
+    except psycopg2.InterfaceError as e:
+        print("member_screening_details fetchLastUpdate InterfaceError",e)
+        reconnectToDB()
         return None 
 
 def add_screening_details(screenings):
@@ -153,8 +157,11 @@ def add_screening_details(screenings):
                 conn.commit()
         return True
 
-    except Exception as e:       
-        print("Error While inserting Screening : %s| %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error While inserting Screening : %s| %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.debug('Error for Screening details : %s', str(screenings))
+    except psycopg2.ProgrammingError as e:
+        print("member_screening_details add_screening_details ProgrammingError",e)  
+        conn.rollback()
         return False
+    except psycopg2.InterfaceError as e:
+        print("member_screening_details add_screening_details InterfaceError",e)
+        reconnectToDB()
+        return False 

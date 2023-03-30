@@ -177,7 +177,18 @@ def get_screening_data():
             print("The Request Format should be in JSON.")
             # cloud_logger.error("The Request Format should be in JSON.")
         
-    except Exception as e:
+    except psycopg2.ProgrammingError as e:
+        print("get_screening_data user_token_validation ProgrammingError",e)  
+        conn.rollback()
+        response =  json.dumps({
+                    "message": "Error while retrieving Screening Data, Please Retry.", 
+                    "status": "FAILURE",
+                    "status_code": "401",
+                    "data": []
+                })
+    except psycopg2.InterfaceError as e:
+        print("get_screening_data user_token_validation InterfaceError",e)
+        reconnectToDB()
         response =  json.dumps({
                     "message": "Error while retrieving Screening Data, Please Retry.", 
                     "status": "FAILURE",

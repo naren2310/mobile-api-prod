@@ -210,15 +210,24 @@ def get_family_and_member_details():
             print("The Request Format must be in JSON.")
             # cloud_logger.error("The Request Format must be in JSON.")   
 
-    except Exception as e:
+    except psycopg2.ProgrammingError as e:
+        print("get_family_and_member_details ProgrammingError",e)  
+        conn.rollback()
         response =  json.dumps({
                     "message": "Error while retrieving family and member Data.", 
                     "status": "FAILURE",
                     "status_code": "401",
                     "data": {}
                 })
-        print("Error while retrieving family and member Data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error while retrieving family and member Data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+    except psycopg2.InterfaceError as e:
+        print("get_family_and_member_details InterfaceError",e)
+        reconnectToDB()
+        response =  json.dumps({
+                    "message": "Error while retrieving family and member Data.", 
+                    "status": "FAILURE",
+                    "status_code": "401",
+                    "data": {}
+                })
 
     finally :
         return response
