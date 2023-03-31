@@ -96,17 +96,17 @@ def get_village_list_from_block():
                     # cloud_logger.info("Token Validated.")
                     print("Token Validated.")
                     if (blockId is not None and blockId !=''):
-                        query = "SELECT facility_id,facility_level,country_id,state_id,region_id,district_id,hud_id,block_id FROM public.facility_registry WHERE facility_id = (SELECT facility_id FROM public.user_master WHERE user_id =%s) AND block_id =%s"                       
-                        value = (userId,blockId)
+                        query = "SELECT country_id ,state_id,district_id,hud_id,block_id from public.address_village_master WHERE block_id=%s"                       
+                        value = (blockId,)
                         cursor.execute(query,value)
                         results = cursor.fetchall()
                         for row in results:
                             facility_details = {
-                                "country_id": row[2] if row[2] is not None else '',
-                                "state_id": row[3] if row[3] is not None else '',
-                                "district_id": row[5] if row[5] is not None else '',
-                                "hud_id" : row[6] if row[6] is not None else '',
-                                "block_id" : row[7] if row[7] is not None else ''
+                                "country_id": row[0] if row[0] is not None else '',
+                                "state_id": row[1] if row[1] is not None else '',
+                                "district_id": row[2] if row[2] is not None else '',
+                                "hud_id" : row[3] if row[3] is not None else '',
+                                "block_id" : row[4] if row[4] is not None else ''
                             }
                             village_list = retrieve_villages_from(facility_details['country_id'], facility_details['state_id'], facility_details['district_id'], facility_details['hud_id'], facility_details['block_id'])
                             
