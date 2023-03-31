@@ -96,31 +96,20 @@ def get_village_list_from_block():
                     # cloud_logger.info("Token Validated.")
                     print("Token Validated.")
                     if (blockId is not None and blockId !=''):
-                        query = "SELECT DISTINCT village_name ,village_id FROM public.address_village_master WHERE block_id=%s"
-                        # with spnDB.snapshot() as snapshot:   
-
-                        #     results = snapshot.execute_sql(
-                        #         query,
-                        #         params={
-                        #             "block_id": blockId
-                        #         },
-                        #         param_types={
-                        #             "block_id": param_types.STRING,
-                        #         },                   
-                        #     )
-                        
-                        values = (blockId,)
-                        cursor.execute(query, values)
+                        query = "SELECT facility_id,facility_level,country_id,state_id,region_id,district_id,hud_id,block_id FROM public.facility_registry WHERE facility_id = (SELECT facility_id FROM public.user_master WHERE user_id =%s) AND block_id =%s"                       
+                        value = (userId,blockId)
+                        cursor.execute(query,value)
                         results = cursor.fetchall()
-                        print("results",results)
                         for row in results:
-
-                            village = {
-                                "village_name":row[0],
-                                "village_id":row[1]
+                            facility_details = {
+                                "country_id": row[2] if row[2] is not None else '',
+                                "state_id": row[3] if row[3] is not None else '',
+                                "district_id": row[5] if row[5] is not None else '',
+                                "hud_id" : row[6] if row[6] is not None else '',
+                                "block_id" : row[7] if row[7] is not None else ''
                             }
-                            village_list.append(village)          
-
+                            village_list = retrieve_villages_from(facility_details['country_id'], facility_details['state_id'], facility_details['district_id'], facility_details['hud_id'], facility_details['block_id'])
+                            
                         if len(village_list) == 0:
                             response =  json.dumps({
                                 "message": "There are no Villages available, Please Contact Administrator.", 
@@ -181,6 +170,73 @@ def get_village_list_from_block():
 
     finally:
         return response
-    
+
+def retrieve_villages_from(countryId, stateId, districtId, hudId, blockId):
+    try:
+        print("Retrieving the Villages from block id : %s", str(blockId))
+        # cloud_logger.info("Retrieving the Villages from block id : %s", str(blockId))
+        villages_list=[]
+        address_list=[]
+        # with spnDB.snapshot() as snapshot:   
+        query = "with village as (SELECT village_id,village_gid,village_name,country_id,state_id,district_id,hud_id,block_id FROM public.address_village_master WHERE village_name not like ('Unallocated%%') AND country_id =%s AND state_id =%s AND district_id =%s AND hud_id =%s AND block_id =%s),street as (SELECT v.village_id,v.village_gid,v.village_name,asm.street_id, asm.street_gid, asm.street_name, asm.facility_id FROM village v left join public.address_street_master asm on asm.village_id = v.village_id AND asm.country_id = v.country_id AND asm.state_id = v.state_id AND asm. district_id= v.district_id AND asm.hud_id = v. hud_id AND asm.block_id = v.block_id AND asm.active=true WHERE street_name not like ('Unallocated%%') AND facility_id is not NULL ) SELECT  S.village_id,S.village_gid,S.village_name,S.street_id, S.street_gid, S.street_name, fr.facility_id, fr.institution_gid, fr.facility_name, typ.facility_type_name FROM street s LEFT join public.facility_registry fr on S.facility_id=fr.facility_id LEFT JOIN public.facility_type_master typ on typ.facility_type_id=fr.facility_type_id order by S.village_name"
+        value = (countryId,stateId,districtId,hudId,blockId)
+        cursor.execute(query,value)
+        address_list = cursor.fetchall()
+        villages_list = get_villages_list(address_list)
+        
+    except psycopg2.ProgrammingError as e:
+        print("get_village_list_from_block retrieve_villages_from ProgrammingError",e)  
+        conn.rollback()
+    except psycopg2.InterfaceError as e:
+        print("get_village_list_from_block retrieve_villages_from InterfaceError",e)
+        reconnectToDB()
+
+    finally:
+        return villages_list
+
+
+def get_villages_list(address_list):
+    try:
+        villages=[]
+        streets_list=[]
+        villageId=""
+        tempVillageId=""
+        for row in address_list:
+            tempVillageId=row[0]
+            if tempVillageId!=villageId:
+                village = {
+                    "village_id":row[0],
+                    "village_gid":row[1],
+                    "village_name":row[2],
+                    }
+                streets_list=[]
+                if not any(tempVillageId in x for x in villages):
+                    villages.append(village) 
+                    
+            facility = {
+                "facility_id":row[6], 
+                "facility_gid":row[7],
+                "facility_name":row[8],
+                "facility_type":row[9],
+            }
+            street = {
+                "street_id":row[3], 
+                "street_gid":row[4],
+                "street_name":row[5],
+                "facility": [facility]
+            }
+            streets_list.append(street)
+            village["streets"]=streets_list
+
+            villageId=tempVillageId
+
+    except Exception as e:
+        print("Error while fetching Villages Data : %s", str(e))
+        # cloud_logger.error("Error while fetching Villages Data : %s", str(e))
+
+    finally:
+        return villages
+        
+  
 if __name__=="__main__":    
     app.run(host="0.0.0.0", port=8000)
