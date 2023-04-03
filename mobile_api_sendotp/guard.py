@@ -31,14 +31,14 @@ parameters = config.getParameters()
 #postgresql 
 import psycopg2
 
-conn = psycopg2.connect(
-    host='142.132.206.93',  # hostname of the server
-    database='postgres',  # database name
-    user='tnphruser',  # username
-    password='TNphr@3Z4'  # password
-)
+# conn = psycopg2.connect(
+#     host='142.132.206.93',  # hostname of the server
+#     database='postgres',  # database name
+#     user='tnphruser',  # username
+#     password='TNphr@3Z4'  # password
+# )
 
-cursor = conn.cursor()
+# cursor = conn.cursor()
 
 current_appversion = 'Prior V_3.1.4'
 current_userId = 'NA' 
@@ -64,8 +64,12 @@ def validate_mobile_no(mobile_number):
         print("Error in validating mobile number : %s | %s | %s", str(error), current_userId, current_appversion)
         # cloud_logger.error("Error in validating mobile number : %s | %s | %s", str(error), current_userId, current_appversion)
         return False
+
+def get_db_connection():
+    conn = psycopg2.connect(host='10.236.221.123',database='tnphrprod',user='tnphruser',password='P3@PHRmdHT1@123')
+    return conn
     
 def reconnectToDB():
     global conn, cursor
-    conn = psycopg2.connect(host='142.132.206.93',database='postgres',user='tnphruser',password='TNphr@3Z4')
+    conn = psycopg2.connect(host='10.236.221.123',database='tnphrprod',user='tnphruser',password='P3@PHRmdHT1@123')
     cursor = conn.cursor()

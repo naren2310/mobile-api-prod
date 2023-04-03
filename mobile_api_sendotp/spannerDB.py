@@ -12,8 +12,10 @@ def active_mobile_number(mobile_number):
 
         # with spnDB.snapshot() as snapshot:
         #     result = snapshot.execute_sql(fetch_query)
-        cursor.execute(fetch_query)
-        result = cursor.fetchall()
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            cursor.execute(fetch_query)
+            result = cursor.fetchall()
         for num in result:
                 if num[1] is not None:
                     auth_key = num[1]
@@ -33,6 +35,9 @@ def active_mobile_number(mobile_number):
         print("sendotp active_mobile_number InterfaceError",e)
         reconnectToDB()
         return False, auth_key
+    finally: 
+        cursor.close()
+        conn.close()
 
 
 def read_write_transaction(jsonfile, mobile):
@@ -54,11 +59,13 @@ def read_write_transaction(jsonfile, mobile):
             #         "mobile":spanner.param_types.INT64
             #     }
             # ) 
-            query = "UPDATE public.user_master SET auth_token=%s WHERE mobile_number=%s"
-            value = (json.dumps(jsonfile),mobile)
-            cursor.execute(query,value)
-            conn.commit()
-            return True
+            conn = get_db_connection()
+            with conn.cursor() as cursor:
+                query = "UPDATE public.user_master SET auth_token=%s WHERE mobile_number=%s"
+                value = (json.dumps(jsonfile),mobile)
+                cursor.execute(query,value)
+                conn.commit()
+                return True
 
         except psycopg2.ProgrammingError as e:
             print("sendotp read_write_transaction ProgrammingError",e)  
@@ -66,7 +73,9 @@ def read_write_transaction(jsonfile, mobile):
         except psycopg2.InterfaceError as e:
             print("sendotp read_write_transaction InterfaceError",e)
             reconnectToDB()
-
+        finally: 
+            cursor.close()
+            conn.close()
     # spnDB.run_in_transaction(store_auth_user)
 
 def generate_otp():
