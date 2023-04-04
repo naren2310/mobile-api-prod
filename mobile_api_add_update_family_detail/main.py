@@ -69,18 +69,15 @@ def token_required(request):
     if not token:
         if (str(request.headers['User-Agent']).count("UptimeChecks")!=0):
             print("Uptime check trigger.")
-            # cloud_logger.info("Uptime check trigger.")
             return False, json.dumps({"status":"API-ACTIVE", "status_code":"200","message":'Uptime check trigger.'})
         else:
             print("Invalid Token.")
-            # cloud_logger.critical("Invalid Token.")
             return False, json.dumps({'status':'FAILURE', "status_code":"401", 'message' : 'Invalid Token.'})
     try:
         token = token.strip() #Remove spaces at the beginning and at the end of the token
         token_format = re.compile(parameters['TOKEN_FORMAT'])
         if not token_format.match(token):
             print("Invalid Token format.")
-            # cloud_logger.critical("Invalid Token format.")
             return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token format.'})
         else:            
             # decoding the payload to fetch the stored details
@@ -89,7 +86,6 @@ def token_required(request):
 
     except jwt.ExpiredSignatureError as e:
         print("Token Expired: %s", str(e))
-        # cloud_logger.critical("Token Expired: %s", str(e))
         return False, json.dumps({'status':'FAILURE', "status_code":"401", 'message' : 'Token Expired.'})
 
     except Exception as e:
@@ -108,7 +104,6 @@ def add_update_family_details():
 
     try:
         print("********Add Update Family Details********")
-        # cloud_logger.info("********Add Update Family Details********")
         # Check the request data for JSON
         if request.is_json:
             content=request.get_json()
@@ -143,7 +138,6 @@ def add_update_family_details():
                                 })
                         return response
                     print("Token Validated.")
-                    # cloud_logger.info("Token Validated.")
                     is_valid_inputs, message = validate_inputs(content)
                     if not is_valid_inputs:
                         response =  json.dumps({
@@ -155,9 +149,7 @@ def add_update_family_details():
                         return response
                     else:
                         print('Inputs validated.')
-                        # cloud_logger.info('Inputs validated.')  
                         print('Starting Upsert of Family Details.')
-                        # cloud_logger.info('Starting Upsert of Family Details.')
                         is_success, family_details, member_details = UpsertFamilyDetails(family_list, userId)
 
                         if is_success:
@@ -168,7 +160,6 @@ def add_update_family_details():
                                 "data": [{"family_details":family_details},{"member_details":member_details}]
                             })
                             print("Family Details and additional parameters are Added/Updated.")
-                            # cloud_logger.info("Family Details and additional parameters are Added/Updated.")
                         else:
                             response = json.dumps({
                                 "message": "Error in Addition/Updation of Family Details.",
@@ -177,7 +168,6 @@ def add_update_family_details():
                                 "data": []
                             })
                             print("Error in Addition/Updation of Family Details.| %s | %s ", guard.current_userId, guard.current_appversion)
-                            # cloud_logger.error("Error in Addition/Updation of Family Details.| %s | %s ", guard.current_userId, guard.current_appversion)
             else:
                 response = json.dumps({
                 "message": "No Family Details were given.",
@@ -186,7 +176,6 @@ def add_update_family_details():
                 "data": []
                 })
                 print("No Family Details were given.")
-                # cloud_logger.error("No Family Details were given.")
         else:
             response = json.dumps({
                 "message": "Error!! The Request Format should be in JSON.",
@@ -195,7 +184,6 @@ def add_update_family_details():
                 "data": []
                 })
             print("The Request Format should be in JSON.")
-            # cloud_logger.error("The Request Format should be in JSON.")
 
     except Exception as e:
         response =  json.dumps({
@@ -205,7 +193,6 @@ def add_update_family_details():
                     "data": []
             })
         print("Error while updating family data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error while updating family data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
 
     finally:
         return response

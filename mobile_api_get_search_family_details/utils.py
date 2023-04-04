@@ -3,7 +3,6 @@ from guard import *
 def getResultFormatted(results):
     data_list=[]
     print("Formatting the Result.")
-    # cloud_logger.info("Formatting the Result.")
     for row in results:
         data={}
         fieldIdx=0
@@ -34,7 +33,6 @@ def getResultFormatted(results):
 def getUpdateRegister(update_register):
     try:
         print("Formatting Update Register.")
-        # cloud_logger.info("Formatting Update Register.")
         if isinstance(update_register, dict):
             update_register_list = [update_register]
             if len(update_register_list) == 1 or len(update_register_list) == 0:
@@ -53,5 +51,4 @@ def getUpdateRegister(update_register):
 
                 return update_register
     except Exception as e:
-        print("Error parsing Update Register : %s| %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error parsing Update Register : %s| %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+        print("Error parsing Update Register : %s| %s | %s ", str(e))

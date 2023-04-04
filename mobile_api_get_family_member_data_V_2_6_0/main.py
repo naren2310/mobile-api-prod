@@ -29,11 +29,9 @@ def token_required(request):
     if not token:
         if (str(request.headers['User-Agent']).count("UptimeChecks")!=0):
             print("Uptime check trigger.")
-            # cloud_logger.info("Uptime check trigger.")
             return False, json.dumps({"status":"API-ACTIVE", "status_code":"200","message":'Uptime check trigger.'})
         else:
             print("Invalid Token.")
-            # cloud_logger.critical("Invalid Token.")
             return False, json.dumps({'status':'FAILURE', "status_code":"401", 'message' : 'Invalid Token.'})
 
     try:
@@ -41,7 +39,6 @@ def token_required(request):
         token_format = re.compile(parameters['TOKEN_FORMAT'])
         if not token_format.match(token):
             print("Invalid Token format.")
-            # cloud_logger.critical("Invalid Token format.")
             return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token format.'})
         else:
             # decoding the payload to fetch the stored details
@@ -50,12 +47,10 @@ def token_required(request):
 
     except jwt.ExpiredSignatureError as e:
         print("Token Expired: %s", str(e))
-        # cloud_logger.critical("Token Expired: %s", str(e))
         return False, json.dumps({'status':'FAILURE', "status_code":"401", 'message' : 'Token Expired.'})
 
     except Exception as e:
         print("Invalid Token: %s", str(e))
-        # cloud_logger.critical("Invalid Token: %s", str(e))
         return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token.'})
 
 @app.route('/api/mobile_api_get_family_member_data', methods=['POST'])
@@ -69,7 +64,6 @@ def get_family_member_data():
 
     try:
         print("*********Get Family Member Data************")
-        # cloud_logger.info("*********Get Family Member Data************")
         family_members=[]
         defaultTime = datetime.strptime('2021-09-01 15:52:50+0530', "%Y-%m-%d %H:%M:%S%z")
         # Check the request data for JSON.
@@ -95,7 +89,6 @@ def get_family_member_data():
                             "data": []
                             })
                 print("Provided User ID is not valid : %s | %s", guard.current_userId, guard.current_appversion)
-                # cloud_logger.error("Provided User ID is not valid : %s | %s", guard.current_userId, guard.current_appversion)
                 return response
             else:
                 is_token_valid = user_token_validation(userId, token_data["mobile_number"])
@@ -106,12 +99,9 @@ def get_family_member_data():
                             "status_code":"401"
                             })
                     print("Unregistered User/Token-User mismatch : %s | %s", guard.current_userId, guard.current_appversion)
-                    # cloud_logger.error("Unregistered User/Token-User mismatch : %s | %s", guard.current_userId, guard.current_appversion)
                     return response
                 else:
-                    print("Token Validated.")
-                    # cloud_logger.info("Token Validated.")
-                    #print(lastUpdateTS)      
+                    print("Token Validated.")  
                     family_members = get_family_member_details(lastUpdateTS, userId, offset)     
                     if len(family_members) == 0:
                         response =  json.dumps({
@@ -121,7 +111,6 @@ def get_family_member_data():
                             "data": []
                         })
                         print("No family data available.")
-                        # cloud_logger.info("No family data available.")
 
                     elif len(family_members) > 0 and len(family_members) < 3000:
                         response =  json.dumps({
@@ -131,7 +120,6 @@ def get_family_member_data():
                             "data": family_members
                         })
                         print("Success retrieving Family Data.")
-                        # cloud_logger.info("Success retrieving Family Data.")
                     
                     else:
                         response =  json.dumps({
@@ -141,7 +129,6 @@ def get_family_member_data():
                             "data": family_members
                         })
                         print("Success retrieving Family Data.")
-                        # cloud_logger.info("Success retrieving Family Data.")
         else :
             response =  json.dumps({
                     "message": "Error!! The Request Format should be in JSON.", 
@@ -150,7 +137,6 @@ def get_family_member_data():
                     "data": []
                 })
             print("The Request Format should be in JSON.")
-            # cloud_logger.error("The Request Format should be in JSON.")
 
     except Exception as e:
         response =  json.dumps({
@@ -161,7 +147,6 @@ def get_family_member_data():
                 }
             )
         print("Error while retrieving Family Member Data :%s | %s | %s", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error while retrieving Family Member Data :%s | %s | %s", str(e), guard.current_userId, guard.current_appversion)
 
     finally:
         return response
@@ -171,17 +156,12 @@ def get_address_for(familyId):
     isAddressAvailable = False
     try:
         print('Getting address details from Family Id : %s', str(familyId))
-        # cloud_logger.info('Getting address details from Family Id : %s', str(familyId))
-        # with spnDB.snapshot() as snapshot:
-        query = "with Street as (SELECT street_id,country_id,state_id,district_id,hud_id,block_id,village_id,rev_village_id,area_id,ward_id,habitation_id,hsc_unit_id FROM public.address_street_master WHERE street_gid = (SELECT street_gid FROM public.address_shop_master WHERE shop_id = (SELECT  shop_id FROM public.family_master WHERE family_id = %s AND street_id is null)))SELECT S.country_id as country_id_new,S.state_id as state_id_new ,S.district_id as district_id_new,S.hud_id as hud_id_new, S.block_id as block_id_new,rev.taluk_id as taluk_id_new ,S.village_id as village_id_new,S.rev_village_id as rev_village_id_new ,S.habitation_id as habitation_id_new,S.area_id as area_id_new,S.ward_id as ward_id_new ,S.street_id as street_id_new ,hhg.hhg_id as hhg_id_new FROM Street S left join public.address_hhg_master HHG on S.street_id=HHG.street_id left join public.address_revenue_village_master REV on hhg.rev_village_id=rev.rev_village_id"
-            # result = snapshot.execute_sql(
-            # query,
-            #     params={"familyId": familyId},
-            #     param_types={"familyId": param_types.STRING},
-            # )
-        value = (familyId,)
-        cursor.execute(query,value)
-        result = cursor.fetchall()
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            query = "with Street as (SELECT street_id,country_id,state_id,district_id,hud_id,block_id,village_id,rev_village_id,area_id,ward_id,habitation_id,hsc_unit_id FROM public.address_street_master WHERE street_gid = (SELECT street_gid FROM public.address_shop_master WHERE shop_id = (SELECT  shop_id FROM public.family_master WHERE family_id = %s AND street_id is null)))SELECT S.country_id as country_id_new,S.state_id as state_id_new ,S.district_id as district_id_new,S.hud_id as hud_id_new, S.block_id as block_id_new,rev.taluk_id as taluk_id_new ,S.village_id as village_id_new,S.rev_village_id as rev_village_id_new ,S.habitation_id as habitation_id_new,S.area_id as area_id_new,S.ward_id as ward_id_new ,S.street_id as street_id_new ,hhg.hhg_id as hhg_id_new FROM Street S left join public.address_hhg_master HHG on S.street_id=HHG.street_id left join public.address_revenue_village_master REV on hhg.rev_village_id=rev.rev_village_id"
+            value = (familyId,)
+            cursor.execute(query,value)
+            result = cursor.fetchall()
         for row in result:
                 address["country_id_new"] = row[0]
                 address["state_id_new"]=row[1]
@@ -198,7 +178,6 @@ def get_address_for(familyId):
                 address["hhg_id_new"]=row[12]         
                 isAddressAvailable = True
                 print('Got address value.')
-                # cloud_logger.info('Got address value.')
         return isAddressAvailable, address
 
     except psycopg2.ProgrammingError as e:
@@ -207,6 +186,9 @@ def get_address_for(familyId):
     except psycopg2.InterfaceError as e:
         print("get_family_member_data get_address_for InterfaceError",e)
         reconnectToDB()
+    finally:
+        cursor.close()
+        conn.close()
 
 
 def getResultFormatted(results):
@@ -218,7 +200,6 @@ def getResultFormatted(results):
 
             if row[33] == None or row[33] == "": # This will get executed only when data for street id is null. - Shreyas G. 25 Feb 22
                 print('Street Id is not available for this family Id: %s', row[19])
-                # cloud_logger.info('Street Id is not available for this family Id: %s', row[19])
                 isAddressAvailable, address_details = get_address_for(row[0])
                 if isAddressAvailable:
                     row[22]=address_details["country_id_new"]
@@ -234,7 +215,6 @@ def getResultFormatted(results):
                     row[32]=address_details["area_id_new"]
                     row[33]=address_details["street_id_new"]
                     print("Current Updated Row # %s",str(row))
-                    # cloud_logger.info("Current Updated Row # %s",str(row))
 
             for column in cursor.description:
                 field_name=column.name
@@ -271,31 +251,17 @@ def get_family_member_details(lastUpdateTS, userId, offset):
     try:
         data={}
         print("Fetching Family Member Details.")
-        # cloud_logger.info("Fetching Family Member Details.")
-        # with spnDB.snapshot() as snapshot:
             # query = "SELECT fmm.family_id, fmm.member_id, fmm.unique_health_id, fmm.phr_family_id, fmm.makkal_number, fmm.ndhm_id, fmm.member_name, fmm.member_local_name, fmm.relationshipWith, fmm.relationship, fmm.birth_date, fmm.gender, fmm.mobile_number, fmm.alt_mobile_number, fmm.email, fmm.alt_email, fmm.aadhaar_number, fmm.voter_id, fmm.insurances, fmm.welfare_beneficiary_ids, fmm.program_ids, fmm.eligible_couple_id, fmm.country_id, fmm.state_id, fmm.district_id, fmm.hud_id, fmm.block_id, fmm.taluk_id, fmm.village_id, fmm.rev_village_id, fmm.habitation_id, fmm.ward_id, fmm.area_id, fmm.street_id, fmm.facility_id, fmm.resident_status, fmm.resident_status_details, fmm.consent_status, fmm.consent_details, seref.social_details, seref.economic_details, fmm.update_register, FORMAT_TIMESTAMP('%Y-%m-%d %H:%M:%S%z', fmm.last_update_date, 'Asia/Calcutta') as last_update_date from family_member_master@{FORCE_INDEX=MEMBER_BLOCK_ID_WITH_STORING_COLS_IDX} fmm INNER JOIN user_master usr on JSON_VALUE(usr.assigned_jurisdiction, '$.primary_block')=fmm.block_id  LEFT JOIN family_member_socio_economic_ref seref on seref.member_id=fmm.member_id WHERE fmm.facility_id is not NULL and user_id=@userId AND fmm.last_update_date>@lastUpdate order by fmm.member_id limit 3000 OFFSET @offset"
             # query = "with Query as (select fmm.family_id, fmm.member_id, fmm.unique_health_id, fmm.phr_family_id, fmm.makkal_number, fmm.ndhm_id, fmm.member_name, fmm.member_local_name, fmm.relationshipWith, fmm.relationship, fmm.birth_date, fmm.gender, fmm.mobile_number, fmm.alt_mobile_number, fmm.email, fmm.alt_email, fmm.aadhaar_number, fmm.voter_id, fmm.insurances, fmm.welfare_beneficiary_ids, fmm.program_ids, fmm.eligible_couple_id, fmm.country_id, fmm.state_id, fmm.district_id, fmm.hud_id, fmm.block_id, fmm.taluk_id, fmm.village_id, fmm.rev_village_id, fmm.habitation_id, fmm.ward_id,fmm.area_id, fmm.street_id, fmm.facility_id, fmm.resident_status, fmm.resident_status_details, fmm.consent_status, fmm.consent_details, fmm.update_register,  FORMAT_TIMESTAMP('%Y-%m-%d %H:%M:%S%z', fmm.last_update_date , 'Asia/Calcutta') AS last_update_date FROM family_member_master@{FORCE_INDEX=MEMBER_FACILITY_ID_IDX} fmm where fmm.last_update_date>@lastUpdate and facility_id in (select distinct facility_id from user_master where user_id =@userId)) select Q.family_id, Q.member_id, Q.unique_health_id, Q.phr_family_id, Q.makkal_number, Q.ndhm_id, Q.member_name, Q.member_local_name, Q.relationshipWith, Q.relationship, Q.birth_date, Q.gender, Q.mobile_number, Q.alt_mobile_number, Q.email, Q.alt_email, Q.aadhaar_number, Q.voter_id, Q.insurances, Q.welfare_beneficiary_ids, Q.program_ids, Q.eligible_couple_id, Q.country_id, Q.state_id, Q.district_id, Q.hud_id, Q.block_id, Q.taluk_id, Q.village_id, Q.rev_village_id, Q.habitation_id, Q.ward_id,Q.area_id, Q.street_id, Q.facility_id, Q.resident_status, Q.resident_status_details, Q.consent_status, Q.consent_details, Q.update_register, Q.last_update_date, seref.social_details,seref.economic_details from Query Q left join family_member_socio_economic_ref seref ON seref.member_id = Q.member_id limit 3000 OFFSET @offset"
             # query = "with Query as (select fmm.family_id, fmm.member_id, fmm.unique_health_id, fmm.phr_family_id, fmm.makkal_number, fmm.ndhm_id, fmm.member_name, fmm.member_local_name, fmm.relationshipWith, fmm.relationship, fmm.birth_date, fmm.gender, fmm.mobile_number, fmm.alt_mobile_number, fmm.email, fmm.alt_email, fmm.aadhaar_number, fmm.voter_id, fmm.insurances, fmm.welfare_beneficiary_ids, fmm.program_ids, fmm.eligible_couple_id, fmm.country_id, fmm.state_id, fmm.district_id, fmm.hud_id, fmm.block_id, fmm.taluk_id, fmm.village_id, fmm.rev_village_id, fmm.habitation_id, fmm.ward_id,fmm.area_id, fmm.street_id, fmm.facility_id, fmm.resident_status,fmm.resident_status_details, fmm.consent_status, fmm.consent_details, fmm.update_register,  FORMAT_TIMESTAMP('%Y-%m-%d %H:%M:%S%z', fmm.last_update_date , 'Asia/Calcutta') AS last_update_date FROM family_member_master@{FORCE_INDEX=MEMBER_FACILITY_ID_IDX} fmm where fmm.last_update_date>@lastUpdate and facility_id = (select distinct facility_id from user_master where user_id =@userId)) select Q.family_id, Q.member_id, Q.unique_health_id, Q.phr_family_id, Q.makkal_number, Q.ndhm_id, Q.member_name, Q.member_local_name, Q.relationshipWith, Q.relationship, Q.birth_date, Q.gender, Q.mobile_number, Q.alt_mobile_number, Q.email, Q.alt_email, Q.aadhaar_number, Q.voter_id, Q.insurances, Q.welfare_beneficiary_ids, Q.program_ids, Q.eligible_couple_id, Q.country_id, Q.state_id, Q.district_id, Q.hud_id, Q.block_id, Q.taluk_id, Q.village_id, Q.rev_village_id, Q.habitation_id, Q.ward_id,Q.area_id, Q.street_id, Q.facility_id, Q.resident_status, Q.resident_status_details, Q.consent_status, Q.consent_details, Q.update_register, Q.last_update_date, seref.social_details,seref.economic_details  from Query Q left join family_member_socio_economic_ref seref ON seref.member_id = Q.member_id limit 3000 offset @offset"
             # The above query is commented because it was hitting to entire block level families. We are now suppose to get it for hsc level only. - 20 April 2022.
-        query = "with Query as (SELECT fmm.family_id, fmm.member_id, fmm.unique_health_id, fmm.phr_family_id, fmm.makkal_number, fmm.ndhm_id, fmm.member_name, fmm.member_local_name, fmm.relationshipWith, fmm.relationship,to_char(fmm.birth_date,'YYYY-MM-DD') AS birth_date, fmm.gender, fmm.mobile_number, fmm.alt_mobile_number, fmm.email, fmm.alt_email, fmm.aadhaar_number, fmm.voter_id, fmm.insurances, fmm.welfare_beneficiary_ids, fmm.program_ids, fmm.eligible_couple_id, fmm.country_id, fmm.state_id, fmm.district_id, fmm.hud_id, fmm.block_id, fmm.taluk_id, fmm.village_id, fmm.rev_village_id, fmm.habitation_id, fmm.ward_id,fmm.area_id, fmm.street_id, fmm.facility_id, fmm.resident_status,fmm.resident_status_details, fmm.consent_status, fmm.consent_details, fmm.update_register, to_char(fmm.last_update_date AT TIME ZONE 'Asia/Calcutta', 'YYYY-MM-DD HH24:MI:SS') AS last_update_date FROM public.family_member_master fmm WHERE fmm.last_update_date>%s AND facility_id = (SELECT distinct facility_id FROM public.user_master WHERE user_id =%s)) SELECT Q.family_id, Q.member_id, Q.unique_health_id, Q.phr_family_id, Q.makkal_number, Q.ndhm_id, Q.member_name, Q.member_local_name, Q.relationshipWith, Q.relationship,Q.birth_date, Q.gender, Q.mobile_number, Q.alt_mobile_number, Q.email, Q.alt_email, Q.aadhaar_number, Q.voter_id, Q.insurances, Q.welfare_beneficiary_ids, Q.program_ids, Q.eligible_couple_id, Q.country_id, Q.state_id, Q.district_id, Q.hud_id, Q.block_id, Q.taluk_id, Q.village_id, Q.rev_village_id, Q.habitation_id, Q.ward_id,Q.area_id, Q.street_id, Q.facility_id, Q.resident_status, Q.resident_status_details, Q.consent_status, Q.consent_details, Q.update_register, Q.last_update_date, seref.social_details,seref.economic_details FROM Query Q left join public.family_member_socio_economic_ref seref ON seref.family_id=Q.family_id AND seref.member_id = Q.member_id limit 3000 offset %s"
-
-        # results = snapshot.execute_sql(
-        #             query,
-        #             params={
-        #                 "userId": userId,
-        #                 "offset": offset,
-        #                 "lastUpdate": lastUpdateTS
-        #             },
-        #             param_types={
-        #                 "userId": param_types.STRING,
-        #                 "offset": param_types.INT64,
-        #                 "lastUpdate": param_types.TIMESTAMP
-        #             },                   
-        #         )
-        value = (lastUpdateTS,userId,offset)
-        cursor.execute(query,value)
-        results = cursor.fetchall()
-        data = getResultFormatted(results)
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            query = "with Query as (SELECT fmm.family_id, fmm.member_id, fmm.unique_health_id, fmm.phr_family_id, fmm.makkal_number, fmm.ndhm_id, fmm.member_name, fmm.member_local_name, fmm.relationshipWith, fmm.relationship,to_char(fmm.birth_date,'YYYY-MM-DD') AS birth_date, fmm.gender, fmm.mobile_number, fmm.alt_mobile_number, fmm.email, fmm.alt_email, fmm.aadhaar_number, fmm.voter_id, fmm.insurances, fmm.welfare_beneficiary_ids, fmm.program_ids, fmm.eligible_couple_id, fmm.country_id, fmm.state_id, fmm.district_id, fmm.hud_id, fmm.block_id, fmm.taluk_id, fmm.village_id, fmm.rev_village_id, fmm.habitation_id, fmm.ward_id,fmm.area_id, fmm.street_id, fmm.facility_id, fmm.resident_status,fmm.resident_status_details, fmm.consent_status, fmm.consent_details, fmm.update_register, to_char(fmm.last_update_date AT TIME ZONE 'Asia/Calcutta', 'YYYY-MM-DD HH24:MI:SS') AS last_update_date FROM public.family_member_master fmm WHERE fmm.last_update_date>%s AND facility_id = (SELECT distinct facility_id FROM public.user_master WHERE user_id =%s)) SELECT Q.family_id, Q.member_id, Q.unique_health_id, Q.phr_family_id, Q.makkal_number, Q.ndhm_id, Q.member_name, Q.member_local_name, Q.relationshipWith, Q.relationship,Q.birth_date, Q.gender, Q.mobile_number, Q.alt_mobile_number, Q.email, Q.alt_email, Q.aadhaar_number, Q.voter_id, Q.insurances, Q.welfare_beneficiary_ids, Q.program_ids, Q.eligible_couple_id, Q.country_id, Q.state_id, Q.district_id, Q.hud_id, Q.block_id, Q.taluk_id, Q.village_id, Q.rev_village_id, Q.habitation_id, Q.ward_id,Q.area_id, Q.street_id, Q.facility_id, Q.resident_status, Q.resident_status_details, Q.consent_status, Q.consent_details, Q.update_register, Q.last_update_date, seref.social_details,seref.economic_details FROM Query Q left join public.family_member_socio_economic_ref seref ON seref.family_id=Q.family_id AND seref.member_id = Q.member_id limit 3000 offset %s"
+            value = (lastUpdateTS,userId,offset)
+            cursor.execute(query,value)
+            results = cursor.fetchall()
+            data = getResultFormatted(results)
 
     except psycopg2.ProgrammingError as e:
         print("get_family_member_data get_family_member_details ProgrammingError",e)  
@@ -305,6 +271,8 @@ def get_family_member_details(lastUpdateTS, userId, offset):
         reconnectToDB()
         
     finally:
+        cursor.close()
+        conn.close()
         return data
 
 
@@ -328,7 +296,6 @@ def getUpdateRegister(update_register):
 
     except Exception as e:
         print("Error while parsing Update Register :%s | %s | %s", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error while parsing Update Register :%s | %s | %s", str(e), guard.current_userId, guard.current_appversion)
 
 if __name__=="__main__":    
     app.run(host="0.0.0.0", port=8000)

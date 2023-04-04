@@ -1,40 +1,15 @@
 from pytz import timezone
-# from google.cloud import logging as cloudlogging
-# from google.cloud import spanner
-# from google.cloud.spanner_v1 import param_types
 
-import logging
 import os
 import json
 import config
 import jwt
 import re
 
-# instance_id = os.environ.get('instance_id')
-# database_id = os.environ.get('database_id')
-
-# client = spanner.Client()
-# instance = client.instance(instance_id)
-# spnDB = instance.database(database_id)
-
-# log_client = cloudlogging.Client()
-# log_handler = log_client.get_default_handler()
-# cloud_logger = logging.getLogger("cloudLogger")
-# cloud_logger.setLevel(logging.INFO)
-# cloud_logger.setLevel(logging.DEBUG)
-# cloud_logger.addHandler(log_handler)
 
 #postgresql 
 import psycopg2
 
-conn = psycopg2.connect(
-    host='142.132.206.93',  # hostname of the server
-    database='postgres',  # database name
-    user='tnphruser',  # username
-    password='TNphr@3Z4'  # password
-)
-
-cursor = conn.cursor()
 
 parameters = config.getParameters()
 
@@ -59,13 +34,11 @@ def validate_id_attribute(familyId, memberId):
     try:
         if familyId == "" and memberId == "":
             print("Both familyId and memberId are empty")
-            # cloud_logger.critical("Both familyId and memberId are empty")
             return is_valid_id
         else:
             return validate_id(familyId, memberId)
     except Exception as error:
         print("Error validating Id attribute format : %s | %s | %s ", str(error), current_userId, current_appversion)
-        # cloud_logger.error("Error validating Id attribute format : %s | %s | %s ", str(error), current_userId, current_appversion)
         return is_valid_id
 
 def validate_id(*ids):
@@ -92,17 +65,14 @@ def validate_id(*ids):
                     valid_ids.append(True)
                 else:
                     print("ID is not valid %s", str(id))
-                    # cloud_logger.critical("ID is not valid %s", str(id))
                     valid_ids.append(False)            
         if all(item == True for item in valid_ids) and len(valid_ids) != 0:
             return True
         else:
             print("One or more supplied ID not valid.")
-            # cloud_logger.info("One or more supplied ID not valid.")
             return False
     except Exception as error:
         print("Error in validating inputs : %s | %s | %s ", str(error), current_userId, current_appversion)
-        # cloud_logger.error("Error in validating inputs : %s | %s | %s ", str(error), current_userId, current_appversion)
         return False
 
 def check_id_registered(familyId, memberId):
@@ -133,11 +103,11 @@ def check_id_registered(familyId, memberId):
             param['member_id'] = memberId
             # types['member_id'] = param_types.STRING
 
-        # with spnDB.snapshot() as snapshot: 
-            # result = snapshot.execute_sql(query, params= param, param_types=types)
-        value = (familyId,memberId)
-        cursor.execute(query,value)
-        result = cursor.fetchall()
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            value = (familyId,memberId)
+            cursor.execute(query,value)
+            result = cursor.fetchall()
         for row in result:
             id_exist = row[0]
         return id_exist
@@ -150,7 +120,14 @@ def check_id_registered(familyId, memberId):
         print("get_family_and_member_details check_id_registered InterfaceError",e)
         reconnectToDB()
         return False
-    
+    finally:
+        cursor.close()
+        conn.close()
+
+def get_db_connection():
+    conn = psycopg2.connect(host='142.132.206.93',database='postgres',user='tnphruser',password='TNphr@3Z4')
+    return conn   
+   
 def reconnectToDB():
     global conn, cursor
     conn = psycopg2.connect(host='142.132.206.93',database='postgres',user='tnphruser',password='TNphr@3Z4')

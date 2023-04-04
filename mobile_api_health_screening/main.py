@@ -18,7 +18,8 @@ Output: Master data from health_history
 }]
 """
 app = Flask(__name__)
-
+    
+    
 # decorator for verifying the JWT
 def token_required(request):
     token = None
@@ -27,11 +28,9 @@ def token_required(request):
         token = request.headers['x-access-token']
     if not token:
         if (str(request.headers['User-Agent']).count("UptimeChecks")!=0):
-            # cloud_logger.info("Uptime check trigger.")
             print("Uptime check trigger.")
             return False, json.dumps({"status":"API-ACTIVE", "status_code":"200","message":'Uptime check trigger.'})
         else:
-            # cloud_logger.critical("Invalid Token.")
             print("Invalid Token.")
             return False, json.dumps({'status':'FAILURE', "status_code":"401", 'message' : 'Invalid Token.'})
 
@@ -39,7 +38,6 @@ def token_required(request):
         token = token.strip() #Remove spaces at the beginning and at the end of the token
         token_format = re.compile(parameters['TOKEN_FORMAT'])
         if not token_format.match(token):
-            # cloud_logger.critical("Invalid Token format.")
             print("Invalid Token format.")
             return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token format.'})
         else:            
@@ -48,15 +46,12 @@ def token_required(request):
             return True, data
 
     except jwt.ExpiredSignatureError as e:
-        # cloud_logger.critical("Token Expired: %s", str(e))
         print("Token Expired: %s", str(e))
-        # cloud_logger.error("Error adding Screening data : %s | Test User | V_3.1.4", str(e))
         return False, json.dumps({'status':'FAILURE', "status_code":"401", 'message' : 'Token Expired.'})
 
     except Exception as e:
         # cloud_logger.critical("Invalid Token.")
         print("Invalid Token.")
-        # cloud_logger.error("Error adding Screening data : %s | Test User | V_3.1.4", str(e))
         return False, json.dumps({'status':'FAILURE', "status_code":"401", 'message' : 'Invalid Token.'})
 
 @app.route('/api/mobile_api_health_screening', methods=['POST'])
@@ -69,7 +64,6 @@ def member_screening_details():
     response = None
 
     try:
-        # cloud_logger.info("**********Add Health Screening*********")
         print("**********Add Health Screening*********")
         # Check the request data for JSON
         if request.is_json:
@@ -99,7 +93,6 @@ def member_screening_details():
                                 "status_code":"401"
                                 })
                         return response
-                    # cloud_logger.info("Token Validated.")
                     print("Token Validated.")
                     is_valid_ids, message = validate_inputs(content)
                     if not is_valid_ids:
@@ -111,10 +104,8 @@ def member_screening_details():
                                 })
                         return response
                     else:
-                        # cloud_logger.info("Inputs Validated.")
                         print("Inputs Validated.")
                         screening_length = len(screenings)
-                        # cloud_logger.debug("Length of Screening List is: {}".format(str(screening_length)))
                         print("Length of Screening List is: {}".format(str(screening_length)))
                         is_updated = add_screening_details(screenings)
                         if is_updated:                            
@@ -124,7 +115,6 @@ def member_screening_details():
                                             "status_code": 200,
                                             "data": []
                                             })
-                            # cloud_logger.info("Screening Data for the member is added.")
                             print("Screening Data for the member is added.")
                         else:
                             
@@ -134,7 +124,7 @@ def member_screening_details():
                                             "status_code": 401,
                                             "data": []
                                             })
-                            # cloud_logger.error("Error while adding Screening Data.| %s | %s ", guard.current_userId, guard.current_appversion)
+
                             print("Error while adding Screening Data.| %s | %s ", guard.current_userId, guard.current_appversion)
             else :
                 response = json.dumps({
@@ -143,7 +133,6 @@ def member_screening_details():
                                     "status_code": 401,
                                     "data": []
                                     })
-                # cloud_logger.error("No Screening data is given.")
                 print("No Screening data is given.")
 
         else:
@@ -153,7 +142,6 @@ def member_screening_details():
                             "status_code": 401,
                             "data": []
                             })
-            # cloud_logger.error("The Request Format should be in JSON.")
             print("The Request Format should be in JSON.")
 
     except Exception as e:
@@ -163,7 +151,6 @@ def member_screening_details():
                             "status_code": 401,
                             "data": []
                             })
-        # cloud_logger.error("Error adding Screening data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
         print("Error adding Screening data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
 
     finally:

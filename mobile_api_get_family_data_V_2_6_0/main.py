@@ -28,11 +28,9 @@ def token_required(request):
         token = request.headers['x-access-token']
     if not token:
         if (str(request.headers['User-Agent']).count("UptimeChecks")!=0):
-            # cloud_logger.info("Uptime check trigger.")
             print("Uptime check trigger.")
             return False, json.dumps({"status":"API-ACTIVE", "status_code":"200","message":'Uptime check trigger.'})
         else:
-            # cloud_logger.critical("Invalid Token.")
             print("Invalid Token.")
             return False, json.dumps({'status':'FAILURE', "status_code":"401", 'message' : 'Invalid Token.'})
 
@@ -40,7 +38,6 @@ def token_required(request):
         token = token.strip() #Remove spaces at the beginning and at the end of the token
         token_format = re.compile(parameters['TOKEN_FORMAT'])
         if not token_format.match(token):
-            # cloud_logger.critical("Invalid Token format.")
             print("Invalid Token format.")
             return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token format.'})
         else:            
@@ -49,12 +46,10 @@ def token_required(request):
             return True, data
 
     except jwt.ExpiredSignatureError as e:
-        # cloud_logger.critical("Token Expired: %s", str(e))
         print("Token Expired: %s", str(e))
         return False, json.dumps({'status':'FAILURE', "status_code":"401", 'message' : 'Token Expired.'})
 
     except Exception as e:
-        # cloud_logger.critical("Invalid Token: %s", str(e))
         print("Invalid Token: %s", str(e))
         return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token.'})
 
@@ -67,7 +62,6 @@ def get_families_data():
     
     response = None
     try:
-        # cloud_logger.info("********Get Families Data*********")
         print("********Get Families Data*********")
         defaultTime = datetime.strptime('2021-09-01 15:52:50+0530', "%Y-%m-%d %H:%M:%S%z")
         # Check the request data for JSON
@@ -88,7 +82,6 @@ def get_families_data():
                             "data": []
                             })
                 print("Provided User ID is not valid. | %s | %s", guard.current_userId, guard.current_appversion)
-                # cloud_logger.error("Provided User ID is not valid. | %s | %s", guard.current_userId, guard.current_appversion)
                 return response
             else:
                 is_token_valid = user_token_validation(userId, token_data["mobile_number"])
@@ -99,11 +92,9 @@ def get_families_data():
                             "status_code":"401"
                             })
                     print("Unregistered User/Token-User mismatch. | %s | %s", guard.current_userId, guard.current_appversion)
-                    # cloud_logger.error("Unregistered User/Token-User mismatch. | %s | %s", guard.current_userId, guard.current_appversion)
                     return response
                 else:
                     print("Token Validated.")
-                    # cloud_logger.info("Token Validated.")
                     families = get_family_data(userId, defaultTime, request_data)
                     if len(families) == 0:
                         response =  json.dumps({
@@ -112,8 +103,7 @@ def get_families_data():
                             "status_code":"200",
                             "data": []
                         })
-                        print("No family data available.")
-                        # cloud_logger.info("No family data available.")   
+                        print("No family data available.") 
                     elif len(families) > 0 and len(families) < 3000:
                         response =  json.dumps({
                             "message": "Success retrieving Family Data.", 
@@ -122,7 +112,6 @@ def get_families_data():
                             "data": families
                         })
                         print("Success retrieving Family Data.")
-                        # cloud_logger.info("Success retrieving Family Data.")
                     
                     else:
                         response =  json.dumps({
@@ -132,7 +121,6 @@ def get_families_data():
                             "data": families
                         })
                         print("Success retrieving Family Data.")
-                        # cloud_logger.info("Success retrieving Family Data.")
         
         else :
             response =  json.dumps({
@@ -142,7 +130,6 @@ def get_families_data():
                     "data": []
                 })
             print("The request format should be in JSON.")
-            # cloud_logger.error("The request format should be in JSON.")
 
     except Exception as e:
         response =  json.dumps({
@@ -152,7 +139,6 @@ def get_families_data():
                     "data": []
                 })
         print("Error while retrieving Family Data : %s | %s | %s", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error while retrieving Family Data : %s | %s | %s", str(e), guard.current_userId, guard.current_appversion)
 
     finally:
         return response
@@ -161,18 +147,13 @@ def get_address_for(familyId):
     address = {}
     isAddressAvailable = False
     try:
-        # cloud_logger.info('Getting address details from Family Id : %s', str(familyId))
         print('Getting address details from Family Id : %s', str(familyId))
-        query = "with Street as (SELECT street_id,country_id,state_id,district_id,hud_id,block_id,village_id,rev_village_id,area_id,ward_id,habitation_id,hsc_unit_id FROM public.address_street_master WHERE street_gid = (SELECT street_gid FROM public.address_shop_master WHERE shop_id = (SELECT  shop_id FROM public.family_master WHERE family_id = %s AND street_id is null)))SELECT S.country_id as country_id_new,S.state_id as state_id_new ,S.district_id as district_id_new,S.hud_id as hud_id_new, S.block_id as block_id_new,rev.taluk_id as taluk_id_new ,S.village_id as village_id_new,S.rev_village_id as rev_village_id_new ,S.habitation_id as habitation_id_new,S.area_id as area_id_new,S.ward_id as ward_id_new ,S.street_id as street_id_new ,hhg.hhg_id as hhg_id_new FROM Street S left join public.address_hhg_master HHG on S.street_id=HHG.street_id left join public.address_revenue_village_master REV on hhg.rev_village_id=rev.rev_village_id"
-        # with spnDB.snapshot() as snapshot:
-        #     result = snapshot.execute_sql(
-        #     query,
-        #         params={"familyId": familyId},
-        #         param_types={"familyId": param_types.STRING},
-        #     )
-        values = (familyId,)
-        cursor.execute(query,values)
-        result = cursor.fetchall()
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            query = "with Street as (SELECT street_id,country_id,state_id,district_id,hud_id,block_id,village_id,rev_village_id,area_id,ward_id,habitation_id,hsc_unit_id FROM public.address_street_master WHERE street_gid = (SELECT street_gid FROM public.address_shop_master WHERE shop_id = (SELECT  shop_id FROM public.family_master WHERE family_id = %s AND street_id is null)))SELECT S.country_id as country_id_new,S.state_id as state_id_new ,S.district_id as district_id_new,S.hud_id as hud_id_new, S.block_id as block_id_new,rev.taluk_id as taluk_id_new ,S.village_id as village_id_new,S.rev_village_id as rev_village_id_new ,S.habitation_id as habitation_id_new,S.area_id as area_id_new,S.ward_id as ward_id_new ,S.street_id as street_id_new ,hhg.hhg_id as hhg_id_new FROM Street S left join public.address_hhg_master HHG on S.street_id=HHG.street_id left join public.address_revenue_village_master REV on hhg.rev_village_id=rev.rev_village_id"
+            values = (familyId,)
+            cursor.execute(query,values)
+            result = cursor.fetchall()
         for row in result:
             address["country_id_new"] = row[0]
             address["state_id_new"]=row[1]
@@ -189,7 +170,6 @@ def get_address_for(familyId):
             address["hhg_id_new"]=row[12]         
             isAddressAvailable = True
             print('Got address value.')
-            # cloud_logger.info('Got address value.')
         return isAddressAvailable, address
 
     except psycopg2.ProgrammingError as e:
@@ -198,6 +178,9 @@ def get_address_for(familyId):
     except psycopg2.InterfaceError as e:
         print("get_families_data get_address_for InterfaceError",e)
         reconnectToDB()
+    finally:
+        cursor.close()
+        conn.close()
         
 def getResultFormatted(results):
     data_list=[]
@@ -205,9 +188,7 @@ def getResultFormatted(results):
         for row in results:
             data={}
             fieldIdx=0
-            # cloud_logger.info('family Id: %s', row[0])
             if row[19] == None or row[19] == "": # This will get executed only when data for street id is null. - Shreyas G. 25 Feb 22
-                # cloud_logger.info('Street Id is not available for this family Id: %s', row[0])
                 print('Street Id is not available for this family Id: %s', row[0])
                 isAddressAvailable, address_details = get_address_for(row[0])
                 if isAddressAvailable:
@@ -225,7 +206,6 @@ def getResultFormatted(results):
                     row[19]=address_details["street_id_new"]
                     row[20]=address_details["hhg_id_new"]
                     print("Current Updated Row # %s",str(row))
-                    # cloud_logger.info("Current Updated Row # %s",str(row))
 
             for column in cursor.description:
                 field_name=column.name
@@ -249,7 +229,6 @@ def getResultFormatted(results):
 
     except Exception as e:
         print("Error While Formatting the Result : %s | %s | %s", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error While Formatting the Result : %s | %s | %s", str(e), guard.current_userId, guard.current_appversion)
     
     finally:
         return data_list
@@ -257,7 +236,6 @@ def getResultFormatted(results):
 def get_family_data(userId, defaultTime, content):
 
     data = {}
-    # cloud_logger.info("Fetching Family Data.")
     print("Fetching Family Data.")
     try:
         lastUpdate = content["LAST_UPDATE"]
@@ -271,24 +249,12 @@ def get_family_data(userId, defaultTime, content):
         # The above query is commented because it was hitting to entire block level families. We are now suppose to get it for hsc level only. - 20 April 2022.
         # query = "SELECT fmly.family_id,fmly.phr_family_id,fmly.family_head,fmly.family_members_count,fmly.pds_smart_card_id,fmly.pds_old_card_id,fmly.family_insurances,fmly.shop_id,fmly.country_id,fmly.state_id, fmly.district_id,fmly.hud_id,fmly.block_id,fmly.taluk_id,fmly.village_id,fmly.rev_village_id,fmly.habitation_id,fmly.area_id,fmly.ward_id,fmly.street_id,fmly.hhg_id,fmly.pincode,fmly.door_no,fmly.apartment_name,fmly.postal_address,fmly.facility_id, fmly.hsc_unit_id,fmly.reside_status,fmly.latitude,fmly.longitude,seref.social_details,seref.economic_details,fmly.update_register,FORMAT_TIMESTAMP('%Y-%m-%d %H:%M:%S%z', fmly.last_update_date, 'Asia/Calcutta') AS last_update_date FROM family_master@{FORCE_INDEX=FAMILY_FACILITY_ID_IDX} fmly LEFT JOIN family_socio_economic_ref seref ON seref.family_id=fmly.family_id WHERE fmly.facility_id = (SELECT facility_id FROM user_master usr WHERE user_id=@userId) AND fmly.last_update_date>@lastUpdate ORDER BY fmly.phr_family_id LIMIT 3000 OFFSET @offset"
         # The above query is optimised post discussion with Darshak (Spanner SPOC from Google.) - 29 April 2022
-        query = "SELECT fmly.family_id,fmly.phr_family_id,fmly.family_head,fmly.family_members_count,fmly.pds_smart_card_id,fmly.pds_old_card_id,fmly.family_insurances,fmly.shop_id,fmly.country_id,fmly.state_id, fmly.district_id,fmly.hud_id,fmly.block_id,fmly.taluk_id,fmly.village_id,fmly.rev_village_id,fmly.habitation_id,fmly.area_id,fmly.ward_id,fmly.street_id,fmly.hhg_id,fmly.pincode,fmly.door_no,fmly.apartment_name,fmly.postal_address,fmly.facility_id, fmly.hsc_unit_id,fmly.reside_status,fmly.latitude,fmly.longitude,seref.social_details,seref.economic_details,fmly.update_register,to_char(fmly.last_update_date AT TIME ZONE 'Asia/Calcutta', 'YYYY-MM-DD HH24:MI:SS') AS last_update_date FROM public.family_master fmly left join public.family_socio_economic_ref seref ON seref.family_id=fmly.family_id WHERE fmly.facility_id = (SELECT facility_id FROM public.user_master usr WHERE user_id=%s) AND fmly.last_update_date>%s ORDER BY fmly.phr_family_id LIMIT 3000 OFFSET %s"
-        values = (userId,lastUpdateTS, offset)
-        cursor.execute(query, values)
-        results = cursor.fetchall()
-        # with spnDB.snapshot() as snapshot: 
-        #     results = snapshot.execute_sql(
-        #         query,
-        #         params={
-        #             "userId": userId,
-        #             "offset": offset,
-        #             "lastUpdate": lastUpdateTS
-        #         },
-        #         param_types={
-        #             "userId": param_types.STRING,
-        #             "offset": param_types.INT64,
-        #             "lastUpdate": param_types.TIMESTAMP
-        #         },                   
-        #     )
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            query = "SELECT fmly.family_id,fmly.phr_family_id,fmly.family_head,fmly.family_members_count,fmly.pds_smart_card_id,fmly.pds_old_card_id,fmly.family_insurances,fmly.shop_id,fmly.country_id,fmly.state_id, fmly.district_id,fmly.hud_id,fmly.block_id,fmly.taluk_id,fmly.village_id,fmly.rev_village_id,fmly.habitation_id,fmly.area_id,fmly.ward_id,fmly.street_id,fmly.hhg_id,fmly.pincode,fmly.door_no,fmly.apartment_name,fmly.postal_address,fmly.facility_id, fmly.hsc_unit_id,fmly.reside_status,fmly.latitude,fmly.longitude,seref.social_details,seref.economic_details,fmly.update_register,to_char(fmly.last_update_date AT TIME ZONE 'Asia/Calcutta', 'YYYY-MM-DD HH24:MI:SS') AS last_update_date FROM public.family_master fmly left join public.family_socio_economic_ref seref ON seref.family_id=fmly.family_id WHERE fmly.facility_id = (SELECT facility_id FROM public.user_master usr WHERE user_id=%s) AND fmly.last_update_date>%s ORDER BY fmly.phr_family_id LIMIT 3000 OFFSET %s"
+            values = (userId,lastUpdateTS, offset)
+            cursor.execute(query, values)
+            results = cursor.fetchall()
         data = getResultFormatted(results)
 
     except psycopg2.ProgrammingError as e:
@@ -299,6 +265,8 @@ def get_family_data(userId, defaultTime, content):
         reconnectToDB()
         
     finally:
+        cursor.close()
+        conn.close()
         return data
     
 def getUpdateRegister(update_register):

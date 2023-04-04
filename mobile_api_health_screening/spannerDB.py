@@ -3,20 +3,16 @@ import guard
 
 def fetchLastUpdate(familyId, memberId):
     try:
-        # cloud_logger.info("Fetching Last Update Timestamp for memberId %s", str(memberId))
         print("Fetching Last Update Timestamp for memberId %s", str(memberId))
-        # query = "SELECT last_update_date FROM health_screening WHERE member_id=@member_id"
         # This will return the latest value. 15 March 2022.
         # This is done specifically to optimise CPU utilisation. 7 April 2022 (Shankar / Atul).
-        query = "SELECT MAX (last_update_date) FROM public.health_screening WHERE family_id=%s AND member_id=%s"
-        values = (familyId, memberId)
-        cursor.execute(query,values)
-        results = cursor.fetchall()
-        last_update_date = None    
-
-        # with spnDB.snapshot() as snapshot:
-        #     results = snapshot.execute_sql(query,params={"familyId": familyId, "memberId": memberId},
-        #     param_types={"familyId": param_types.STRING, "memberId": param_types.STRING})
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            query = "SELECT MAX (last_update_date) FROM public.health_screening WHERE family_id=%s AND member_id=%s"
+            values = (familyId, memberId)
+            cursor.execute(query,values)
+            results = cursor.fetchall()
+            last_update_date = None    
 
         for row in results:
             last_update_date = row[0]
@@ -31,10 +27,12 @@ def fetchLastUpdate(familyId, memberId):
         print("member_screening_details fetchLastUpdate InterfaceError",e)
         reconnectToDB()
         return None 
+    finally:
+        cursor.close()
+        conn.close()
 
 def add_screening_details(screenings):
 
-    # cloud_logger.info("Add Screening Details.")
     print("Add Screening Details.")
     vArray=[]
     kArray=[]
@@ -42,13 +40,13 @@ def add_screening_details(screenings):
     mem_add_serv={}
     
     try:
+        conn = get_db_connection()
         for screening in screenings:
             values=[]
             
             familyId = screening['family_id'] # This is added specifically for optimising the query. 7 April 2022. (Shankar/Atul)
             memberId = screening["member_id"]
-            # cloud_logger.info('Screening details from request: %s', str(screening))
-            # print('Screening details from request: %s', str(screening))
+            print('Screening details from request: %s', str(screening))
             lastUpdateDate = fetchLastUpdate(familyId,memberId)
             requestUpdateDate = datetime.strptime(screening['last_update_date'], "%Y-%m-%d %H:%M:%S%z")
             # This check is removed to allow all the screenings to be get inserted. 25 March 2022
@@ -127,7 +125,6 @@ def add_screening_details(screenings):
             else:
                 # cloud_logger.info("Already have an updated data for member id : %s", str(memberId))                
 
-        # with spnDB.batch() as batch:
                 # We were using an insert by batch.insert() till 11 April 2022, but since the app somehow is sending a duplicate screening id.
                 # We are changing the code to support the mobile app's screening id duplication. Hence we are doing upsert here. 11 April 2022.
                 # batch.insert_or_update('health_screening', columns=kArray, values=vArray)
@@ -141,17 +138,6 @@ def add_screening_details(screenings):
         if len(mem_add_serv)!=0:
             query="UPDATE public.health_history SET mtm_beneficiary=%s WHERE member_id=%s"
             for mkey, mvalue in mem_add_serv.items():                
-                # results = spnDB.execute_partitioned_dml(
-                #             query,
-                #             params={
-                #                 "mtm_beneficiary": json.dumps(mvalue),
-                #                 "member_id": mkey
-                #                 },
-                #             param_types={
-                #                 "mtm_beneficiary": param_types.JSON,
-                #                 "member_id": param_types.STRING
-                #                 }
-                #             )
                 value = (json.dumps(mvalue),mkey)
                 cursor.execute(query,value)
                 conn.commit()
@@ -165,3 +151,6 @@ def add_screening_details(screenings):
         print("member_screening_details add_screening_details InterfaceError",e)
         reconnectToDB()
         return False 
+    finally:
+        cursor.close()
+        conn.close()

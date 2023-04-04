@@ -7,7 +7,6 @@ app = Flask(__name__)
 def validateOTP():
     try:
         print("**********Validate OTP************")
-        # cloud_logger.info("**********Validate OTP************")
         if (request.is_json):
             request_data = request.get_json()
             mobile = request_data['mobile_number']
@@ -17,7 +16,6 @@ def validateOTP():
             is_valid_mobile, is_valid_otp = validate_inputs(mobile, otp)
             if not is_valid_mobile and not is_valid_otp:
                 print("Supplied mobile number and OTP is empty or not Valid.")
-                # cloud_logger.info("Supplied mobile number and OTP is empty or not Valid.")
                 response =  json.dumps({
                             "message": "Invalid Mobile Number and OTP. Please check.",
                             "status": "FAILURE",
@@ -27,7 +25,6 @@ def validateOTP():
                 return response
             elif not is_valid_mobile:
                 print("Supplied mobile number is empty or not Valid.")
-                # cloud_logger.info("Supplied mobile number is empty or not Valid.")
                 response =  json.dumps({
                             "message": "Invalid Mobile Number. Please check.",
                             "status": "FAILURE",
@@ -37,7 +34,6 @@ def validateOTP():
                 return response
             elif not is_valid_otp:
                 print("Supplied OTP is empty or not Valid.")
-                # cloud_logger.info("Supplied OTP is empty or not Valid.")
                 response =  json.dumps({
                             "message": "Incorrect OTP. Please check.",
                             "status": "FAILURE",
@@ -54,70 +50,57 @@ def validateOTP():
                 spanner_token_ts = auth_token["token_ts"]
 
                 print("OTP from User: {}. OTP from Spanner: {}".format(str(otp), str(spanner_otp)))
-                # cloud_logger.debug("OTP from User: {}. OTP from Spanner: {}".format(str(otp), str(spanner_otp)))
                 if otp == str(spanner_otp):
                     session_result = session_otp(spanner_otp_ts)
                     print("OTP is Valid and Timediff is: {}".format(str(session_result)))
-                    # cloud_logger.debug("OTP is Valid and Timediff is: {}".format(str(session_result)))
                     if session_result:
                         if spanner_token is not None:
                             if len(spanner_token) == parameters['TOKEN_DIGITS']: 
                                 token_expiry = session_token(spanner_token_ts)
                                 print("Token is Valid and Timediff is: {}".format(str(token_expiry)))
-                                # cloud_logger.debug("Token is Valid and Timediff is: {}".format(str(token_expiry)))
                                 if token_expiry:
                                     print("User validated succesfully.")
-                                    # cloud_logger.info("User validated succesfully.")
                                     response_data = [{"user_details": user_details,"token": spanner_token}]
                                     return json.dumps({"status":"SUCCESS","status_code":"200","message":"User validated succesfully.", "data":response_data})                                    
                                 else:
                                     print("User validated succesfully with new token.")
-                                    # cloud_logger.info("User validated succesfully with new token.")
                                     response_data = save_new_token(mobile, spanner_otp, spanner_otp_ts, user_details)
                                     return json.dumps({"status":"SUCCESS","status_code":"200","message":"User validated succesfully.", "data":response_data})                                    
                             else:
                                 print("Invalid Token with incorrect length.")
-                                # cloud_logger.error("Invalid Token with incorrect length.")
                                 return json.dumps({'status': 'FAILURE', "status_code":"401",
                                     'message':'Invalid Token with incorrect length. Please contact administrator.', "data": []})                                
                         else:
                             print("New User validated succesfully.")
-                            # cloud_logger.info("New User validated succesfully.")
                             response_data = save_new_token(mobile, spanner_otp, spanner_otp_ts, user_details)
                             return json.dumps({"status":"SUCCESS","status_code":"200","message":"New User validated succesfully.", "data":response_data})                            
                     else:
                         print("OTP Session timed out.")
-                        # cloud_logger.error("OTP Session timed out.")
                         return json.dumps({"status": "FAILURE", "status_code":"401",
                                 "message":'OTP Session timed out. Please try again.', "data": []})                        
                 else:
                     print("OTP is Mismatched.")
-                    # cloud_logger.error("OTP is Mismatched.")
                     return json.dumps({'status': 'FAILURE', "status_code":"401",
                         'message':'Error: OTP is not a match. Please Check.', "data": []})                 
                 
         else:
             if (str(request.headers['User-Agent']).count("UptimeChecks")!=0):
                 print("Uptime check trigger.")
-                # cloud_logger.info("Uptime check trigger.")
                 return json.dumps({"status":"API-ACTIVE", "status_code":"200",
                                     "message":'Uptime check trigger.'})
             else:
                 print("Error!! The Request Format Should be in JSON.")
-                # cloud_logger.error("Error!! The Request Format Should be in JSON.")
                 return json.dumps({"status":"FAILURE", "status_code":"401",
                                     "message":'The Request Format Should be in JSON.'})       
             
     except Exception as e:
         print("Error while validating otp : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error while validating otp : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
         return json.dumps({'status': 'FAILURE', "status_code":"401",
                             'message':'Unable to validate otp sent by user.', "data": []})
 
 def create_access_token(mobile_number):
     # generates the JWT Token
     print("Creating Access Token.")
-    # cloud_logger.info("Creating Access Token.")
     token = jwt.encode({
         'mobile_number': mobile_number,
         'exp' : datetime.utcnow() + timedelta(minutes = parameters['TOKEN_EXPIRY_TIME'])
@@ -128,7 +111,6 @@ def create_access_token(mobile_number):
 def save_new_token(mobile, spanner_otp, spanner_otp_ts, user_details):
     try:
         print("Creating and Saving New Token.")
-        # cloud_logger.info("Creating and Saving New Token.")
 
         access_token = create_access_token(mobile) 
         token_log_date = datetime.now()
@@ -143,7 +125,6 @@ def save_new_token(mobile, spanner_otp, spanner_otp_ts, user_details):
         
     except Exception as e:
         print("Error while creating and saving token : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error while creating and saving token : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
         
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000)

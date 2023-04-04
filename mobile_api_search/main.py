@@ -32,11 +32,9 @@ def token_required(request):
     if not token:
         if (str(request.headers['User-Agent']).count("UptimeChecks")!=0):
             print("Uptime check trigger.")
-            # cloud_logger.info("Uptime check trigger.")
             return False, json.dumps({"status":"API-ACTIVE", "status_code":"200","message":'Uptime check trigger.'})
         else:
             print("Invalid Token.")
-            # cloud_logger.critical("Invalid Token.")
             return False, json.dumps({'status':'FAILURE', "status_code":"401", 'message' : 'Invalid Token.'})
 
     try:
@@ -44,7 +42,6 @@ def token_required(request):
         token_format = re.compile(parameters['TOKEN_FORMAT'])
         if not token_format.match(token):
             print("Invalid Token format.")
-            # cloud_logger.critical("Invalid Token format.")
             return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token format.'})
         else:            
             # decoding the payload to fetch the stored details
@@ -53,12 +50,10 @@ def token_required(request):
 
     except jwt.ExpiredSignatureError as e:
         print("Token Expired: %s", str(e))
-        # cloud_logger.critical("Token Expired: %s", str(e))
         return False, json.dumps({'status':'FAILURE', "status_code":"401", 'message' : 'Token Expired.'})
 
     except Exception as e:
         print("Invalid Token.")
-        # cloud_logger.critical("Invalid Token.")
         return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token.'})
 
 @app.route('/api/mobile_api_search', methods=['POST'])
@@ -71,7 +66,6 @@ def get_search_details():
     response = None
     try:
         print("********Get Search Parameters Details**********")
-        # cloud_logger.info("********Get Search Parameters Details**********")
         # Check the request data for JSON
         if (request.is_json):
             content=request.get_json()
@@ -93,7 +87,6 @@ def get_search_details():
                             "data": {}
                             })
                 print("Search details are not valid. | %s | %s ", guard.current_userId, guard.current_appversion)
-                # cloud_logger.critical("Search details are not valid. | %s | %s ", guard.current_userId, guard.current_appversion)
                 return response
 
             elif not validate_id(userId):
@@ -104,7 +97,6 @@ def get_search_details():
                             "data": {}
                             })
                 print("User ID is not valid. | %s | %s ", guard.current_userId, guard.current_appversion)
-                # cloud_logger.critical("User ID is not valid. | %s | %s ", guard.current_userId, guard.current_appversion)
                 return response
             else:
                 is_token_valid = user_token_validation(userId, token_data["mobile_number"])
@@ -117,11 +109,9 @@ def get_search_details():
                     return response
                 else:
                     print("Token Validated.")
-                    # cloud_logger.info("Token Validated.")
                     search_parameter = content["search_parameter"]
                     if not validate_search_parameter(search_parameter):
                         print("Supplied search parameter is empty or not valid.")
-                        # cloud_logger.info("Supplied search parameter is empty or not valid.")
                         response =  json.dumps({
                                     "message": "Invalid search parameter. Please check it.",
                                     "status": "FAILURE",
@@ -135,7 +125,6 @@ def get_search_details():
                         unique_health_id = content["search_value"]
                         if not validate_unique_health_id(unique_health_id):
                             print("Supplied unique health ID is empty or not valid.")
-                            # cloud_logger.info("Supplied unique health ID is empty or not valid.")
                             response =  json.dumps({
                                         "message": "Invalid unique health ID. Please contact the Administrator.",
                                         "status": "FAILURE",
@@ -150,7 +139,6 @@ def get_search_details():
                             block_id = content["block_id"], village_id = content["village_id"])
                         if not is_valid_input:
                             print(message)
-                            # cloud_logger.info(message)
                             response =  json.dumps({
                                         "message": message,
                                         "status": "FAILURE",
@@ -161,7 +149,6 @@ def get_search_details():
                         is_id_exist = check_id_registered(content["district_id"], content["block_id"], content["village_id"])
                         if not is_id_exist:
                             print("Supplied IDs are not registered or provide the respective IDs.")
-                            # cloud_logger.info("Supplied IDs are not registered or provide the respective IDs.")
                             response =  json.dumps({
                                         "message": "Supplied IDs are not registered or provide the respective IDs. Please contact the Administrator.",
                                         "status": "FAILURE",
@@ -175,7 +162,6 @@ def get_search_details():
                         mobile_number = int(content["search_value"])
                         if not validate_mobile_no(mobile_number):
                             print("Supplied mobile number is empty or not valid.")
-                            # cloud_logger.info("Supplied mobile number is empty or not valid.")
                             response =  json.dumps({
                                         "message": "Invalid Mobile Number. Please contact the Administrator.",
                                         "status": "FAILURE",
@@ -189,7 +175,6 @@ def get_search_details():
                         pds_smart_card_id = content["search_value"]
                         if not validate_pds_smart_card_id(pds_smart_card_id):
                             print("Supplied pds smart card ID is empty or not valid.")
-                            # cloud_logger.info("Supplied pds smart card ID is empty or not valid.")
                             response =  json.dumps({
                                         "message": "Invalid pds smart card ID. Please contact the Administrator.",
                                         "status": "FAILURE",
@@ -200,7 +185,6 @@ def get_search_details():
                         result = search_by_smart_card_id(pds_smart_card_id)
                     else:
                         print("Search Parameter is Invalid.")
-                        # cloud_logger.critical("Search Parameter is Invalid.")
                         response =  json.dumps({
                                                 "message": "Search Parameter is Invalid.", 
                                                 "status": "FAILURE",
@@ -217,7 +201,6 @@ def get_search_details():
                         })
                         searchQuery = str(content['search_parameter'])+" "+str(content['search_value'])+" RETURN ZERO."
                         print("Search_Parameters : {}".format(str(searchQuery)))
-                        # cloud_logger.debug("Search_Parameters : {}".format(str(searchQuery)))
                     elif len(result) > 0 and len(result) < 100:
                         response =  json.dumps({
                             "message": "Success retrieving member.", 
@@ -226,7 +209,6 @@ def get_search_details():
                             "data": {"family_member_list":result}
                         })
                         print("Success retrieving member.")
-                        # cloud_logger.info("Success retrieving member.")
                     else:
                         response =  json.dumps({
                             "message": "Success retrieving member Data.", 
@@ -235,7 +217,6 @@ def get_search_details():
                             "data": {"family_member_list":result}
                         })
                         print("Success retrieving member Data.")
-                        # cloud_logger.info("Success retrieving member Data.")
         else :
             response =  json.dumps({
                     "message": "Error!! The Request should be in JSON format.", 
@@ -244,7 +225,6 @@ def get_search_details():
                     "data": {}
                 })
             print("The Request should be in JSON format.")
-            # cloud_logger.error("The Request should be in JSON format.")
 
     except Exception as e:
         response =  json.dumps({
@@ -254,7 +234,6 @@ def get_search_details():
                     "data": {}
                 })
         print("Error while retrieving member data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error while retrieving member data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
 
     finally:
         return response
@@ -289,16 +268,7 @@ def get_details_from(familyIdList, memberIdList):
     try:
         member_list=[]
         
-        # with spnDB.snapshot() as snapshot:
         query = "with Query_1 as (SELECT fmm.family_id ,fmm.member_id, fmm.member_name, fmm.gender, fmm.member_local_name, to_char(fmm.birth_date,'YYYY-MM-DD') AS birth_date, fmm.unique_health_id FROM public.family_member_master fmm WHERE family_id in unnest(%s) AND member_id in unnest(%s)), Query_2 as(SELECT family_id,member_id,MIN(screening_id) as screening_id, MIN(TO_JSONB(outcome)) as outcome, MAX(to_char(last_update_date AT TIME ZONE 'Asia/Calcutta', 'YYYY-MM-DD HH24:MI:SS')) AS last_update_date FROM public.health_screening WHERE family_id in unnest(%s) AND member_id in unnest(%s) AND concat(member_id, to_char(''%Y-%m-%d %H:%M:%S%z', TIMESTAMP(JSON_VALUE(update_register,'$[0].timestamp')), 'Asia/Calcutta) ) in (select concat(member_id, to_char('%Y-%m-%d %H:%M:%S%z', max_time, 'Asia/Calcutta') ) FROM (SELECT member_id,max(TIMESTAMP(JSON_VALUE(update_register,'$[0].timestamp'))) as max_time  FROM public.health_screening WHERE family_id  in  unnest(%s) AND member_id in unnest(%s) group by 1)) group by 1,2) SELECT  Q1.member_id, Q1.member_name, Q1.gender, Q1.member_local_name,to_char(Q1.birth_date,'YYYY-MM-DD') AS birth_date, Q1.unique_health_id, Q1.family_id, Q2.last_update_date, PARSE_JSON(Q2.outcome)as outcome from Query_1 Q1 left join Query_2 Q2 on Q1.family_id= Q2.family_id and Q1.member_id = Q2.member_id"
-            # results = snapshot.execute_sql(
-            #     query,
-            #     params= {
-            #     "familyIdList": familyIdList, "memberIdList":memberIdList
-            # },
-            # param_types={
-            #     "familyIdList": param_types.Array(param_types.STRING),"memberIdList": param_types.Array(param_types.STRING),
-            # })
         value = (familyIdList,memberIdList,familyIdList,memberIdList,familyIdList,memberIdList)
         cursor.execute(query,value)
         results = cursor.fetchall()
@@ -335,7 +305,6 @@ def get_details_from(familyIdList, memberIdList):
 def search_by_unique_health_id(unique_health_id):
     try:
         print("Search by Unique Health ID.")
-        # cloud_logger.info("Search by Unique Health ID.")
         family_details = []
         family_list =[]
         member_list =[]
@@ -346,14 +315,6 @@ def search_by_unique_health_id(unique_health_id):
             # query = 'SELECT fmm.family_id,fmm.member_id from family_member_master fmm WHERE  fmm.unique_health_id=@unique_health_id'
             # Below query is formulated as per discussion with Dr.V & Kiran for removing the outcome & last update date value. 26 May 2022 = b/233998552
         query = "SELECT fmm.family_id ,fmm.member_id, fmm.member_name, fmm.gender, fmm.member_local_name, to_char(fmm.birth_date,'YYYY-MM-DD') AS birth_date, fmm.unique_health_id,null as last_update_date,null as outcome  FROM public.family_member_master fmm WHERE fmm.unique_health_id=%s"
-            # results = snapshot.execute_sql(
-            #     query,
-            #     params= {
-            #     "unique_health_id": unique_health_id
-            # },
-            # param_types={
-            #     "unique_health_id": param_types.STRING,
-            # })
         value = (unique_health_id,)
         cursor.execute(query,value)
         results = cursor.fetchall()
@@ -382,7 +343,6 @@ def search_by_unique_health_id(unique_health_id):
 def search_by_mobile_number(mobile_number):
     try:
         print("Search by Mobile Number.")
-        # cloud_logger.info("Search by Mobile Number.")
         family_details = []
         family_list =[]
         member_list =[]

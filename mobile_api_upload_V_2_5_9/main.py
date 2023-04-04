@@ -14,11 +14,9 @@ def token_required(request):
     if not token:
         if (str(request.headers['User-Agent']).count("UptimeChecks")!=0):
             print("Uptime check trigger.")
-            # cloud_logger.info("Uptime check trigger.")
             return False, json.dumps({"status":"API-ACTIVE", "status_code":"200","message":'Uptime check trigger.'})
         else:
             print("Invalid Token.")
-            # cloud_logger.critical("Invalid Token.")
             return False, json.dumps({'status':'FAILURE', "status_code":"401", 'message' : 'Invalid Token.'})
 
     try:
@@ -26,7 +24,6 @@ def token_required(request):
         token_format = re.compile(parameters['TOKEN_FORMAT'])
         if not token_format.match(token):
             print("Invalid Token format.")
-            # cloud_logger.critical("Invalid Token format.")
             return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token format.'})
         else:
             # decoding the payload to fetch the stored details
@@ -35,12 +32,10 @@ def token_required(request):
 
     except jwt.ExpiredSignatureError as e:
         print("Token Expired: %s", str(e))
-        # cloud_logger.critical("Token Expired: %s", str(e))
         return False, json.dumps({'status':'FAILURE', "status_code":"401", 'message' : 'Token Expired.'})
 
     except Exception as e:
         print("Invalid Token: %s", str(e))
-        # cloud_logger.critical("Invalid Token: %s", str(e))
         return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token.'})
 
 @app.route('/api/mobile_api_upload', methods=['POST'])
@@ -68,7 +63,6 @@ def upload_files():
                             "data": []
                             })
                 print("Provided user id is not valid. | %s | %s", guard.current_userId, guard.current_appversion)
-                # cloud_logger.error("Provided user id is not valid. | %s | %s", guard.current_userId, guard.current_appversion)
                 return response
             else:
                 is_token_valid = user_token_validation(request.values["USER_ID"], token_data["mobile_number"])
@@ -79,7 +73,6 @@ def upload_files():
                             "status_code":"401"
                             })
                     print("Unregistered User/Token-User mismatch. | %s | %s", guard.current_userId, guard.current_appversion)
-                    # cloud_logger.error("Unregistered User/Token-User mismatch. | %s | %s", guard.current_userId, guard.current_appversion)
                     return response
 
             # if metadata == parameters['CONSENT_IMAGE']:
@@ -113,7 +106,6 @@ def upload_files():
                         "data": []
                         })
                 print("There is no Data to upload.")
-                # cloud_logger.info("There is no Data to upload.")
                 return response                
             else:                
                 is_valid_upload, file_list = uploadfiles()
@@ -126,7 +118,6 @@ def upload_files():
                                     "data": []
                                 })
                     print("Error while uploading files.")
-                    # cloud_logger.error("Error while uploading files.")
                 else:
                     response =  json.dumps({
                                         "message": "Upload successful",
@@ -134,8 +125,7 @@ def upload_files():
                                         "status_code":"200",
                                         "data": {"image_name": file_list}
                                     })
-                    print("Upload successful.")
-                    # cloud_logger.info("Upload successful.")   
+                    print("Upload successful.") 
         else :
             response =  json.dumps({
                         "message": "Invalid Request Format.", 
@@ -144,7 +134,6 @@ def upload_files():
                         "data": []
                     })
             print("The Request Format must be in Multipart Format.")
-            # cloud_logger.error("The Request Format must be in Multipart Format.")
 
     except Exception as e:
         response =  json.dumps({
@@ -154,10 +143,10 @@ def upload_files():
                             "data": []
                             })  
         print("Error while Uploading Data : %s | %s | %s", str(e), guard.current_userId, guard.current_appversion)      
-        # cloud_logger.error("Error while Uploading Data : %s | %s | %s", str(e), guard.current_userId, guard.current_appversion)        
+       
     finally:
         print(response)
-        # cloud_logger.info(response)
+
         return response
 
 # def uploadfiles(files, blob_name):

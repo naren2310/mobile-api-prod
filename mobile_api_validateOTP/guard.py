@@ -1,40 +1,15 @@
-# from google.cloud import spanner
+
 from datetime import datetime, timedelta
-# from google.cloud import logging as cloudlogging
 
 import json
-import logging
 import os
 import config
 import random
 import jwt
 import re
 
-# log_client = cloudlogging.Client()
-# log_handler = log_client.get_default_handler()
-# cloud_logger = logging.getLogger("cloudLogger")
-# cloud_logger.setLevel(logging.INFO)
-# cloud_logger.setLevel(logging.DEBUG)
-# cloud_logger.addHandler(log_handler)
-
-# instance_id = os.environ.get('instance_id')
-# database_id = os.environ.get('database_id')
-
-# client = spanner.Client()
-# instance = client.instance(instance_id)
-# spnDB = instance.database(database_id)
-
 #postgresql 
 import psycopg2
-
-conn = psycopg2.connect(
-    host='142.132.206.93',  # hostname of the server
-    database='postgres',  # database name
-    user='tnphruser',  # username
-    password='TNphr@3Z4'  # password
-)
-
-cursor = conn.cursor()
 
 parameters = config.getParameters()
 
@@ -64,8 +39,11 @@ def validate_inputs(mobile_number, otp):
         return is_valid_mobile, is_valid_otp
     except Exception as error:
         print("Error in validating mobile number and otp : %s | %s | %s", str(error), current_userId, current_appversion)
-        # cloud_logger.error("Error in validating mobile number and otp : %s | %s | %s", str(error), current_userId, current_appversion)
         return False
+
+def get_db_connection():
+    conn = psycopg2.connect(host='142.132.206.93',database='postgres',user='tnphruser',password='TNphr@3Z4')
+    return conn 
 
 def reconnectToDB():
     global conn, cursor

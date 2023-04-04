@@ -22,11 +22,9 @@ def token_required(request):
         token = request.headers['x-access-token']
     if not token:
         if (str(request.headers['User-Agent']).count("UptimeChecks")!=0):
-            # cloud_logger.info("Uptime check trigger.")
             print("Uptime check trigger.")
             return False, json.dumps({"status":"API-ACTIVE", "status_code":"200","message":'Uptime check trigger.'})
         else:
-            # cloud_logger.critical("Invalid Token.")
             print("Invalid Token.")
             return False, json.dumps({'status':'FAILURE', "status_code":"401", 'message' : 'Invalid Token.'})
 
@@ -35,7 +33,6 @@ def token_required(request):
         token_format = re.compile(parameters['TOKEN_FORMAT'])
         if not token_format.match(token):
             print("Invalid Token format.")
-            # cloud_logger.critical("Invalid Token format.")
             return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token format.'})
         else:
             # decoding the payload to fetch the stored details
@@ -44,12 +41,10 @@ def token_required(request):
 
     except jwt.ExpiredSignatureError as e:
         print("Token Expired: %s", str(e))
-        # cloud_logger.critical("Token Expired: %s", str(e))
         return False, json.dumps({'status':'FAILURE', "status_code":"401", 'message' : 'Token Expired.'})
 
     except Exception as e:
         print("Invalid Token: %s", str(e))
-        # cloud_logger.critical("Invalid Token: %s", str(e))
         return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token.'})
 
 @app.route('/api/mobile_api_get_village_list', methods=['POST'])
@@ -63,7 +58,6 @@ def get_village_list_from_block():
 
     try:
         print("********Get Village List*********")
-        # cloud_logger.info("********Get Village List*********")
         village_list=[]
         if (request.is_json):
             content=request.get_json()
@@ -93,13 +87,14 @@ def get_village_list_from_block():
                             })
                     return response
                 else:
-                    # cloud_logger.info("Token Validated.")
                     print("Token Validated.")
                     if (blockId is not None and blockId !=''):
-                        query = "SELECT country_id ,state_id,district_id,hud_id,block_id from public.address_village_master WHERE block_id=%s"                       
-                        value = (blockId,)
-                        cursor.execute(query,value)
-                        results = cursor.fetchall()
+                        conn = get_db_connection()
+                        with conn.cursor() as cursor:
+                            query = "SELECT country_id ,state_id,district_id,hud_id,block_id from public.address_village_master WHERE block_id=%s"                       
+                            value = (blockId,)
+                            cursor.execute(query,value)
+                            results = cursor.fetchall()
                         for row in results:
                             facility_details = {
                                 "country_id": row[0] if row[0] is not None else '',
@@ -118,7 +113,6 @@ def get_village_list_from_block():
                                 "data": {}
                             })
                             print("No Villages available.")
-                            # cloud_logger.info("No Villages available.")
                         else:
                             response =  json.dumps({
                                 "message": "Success retrieving Villages data.", 
@@ -127,7 +121,6 @@ def get_village_list_from_block():
                                 "data": {"village_list":village_list}
                             })
                             print("Success retrieving Villages data.")
-                            # cloud_logger.info("Success retrieving Villages data.")
                     else:
                         response =  json.dumps({
                                 "message": "Block ID should not be Empty.", 
@@ -136,7 +129,6 @@ def get_village_list_from_block():
                                 "data": {}
                             })
                         print("Block ID should not be Empty.")
-                        # cloud_logger.info("Block ID should not be Empty.")
         else :
             response =  json.dumps({
                     "message": "Error!! The Request Format should be in JSON.", 
@@ -145,7 +137,6 @@ def get_village_list_from_block():
                     "data": {}
                 })
             print("The Request Format should be in JSON.")
-            # cloud_logger.info("The Request Format should be in JSON.")
 
     except psycopg2.ProgrammingError as e:
         print("get_village_list_from_block get_village_list_from_block ProgrammingError",e)  
@@ -166,23 +157,24 @@ def get_village_list_from_block():
                     "data": {}
                 })
         print("Error while retrieving Villages data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.info("Error while retrieving Villages data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
 
     finally:
+        cursor.close()
+        conn.close()
         return response
 
 def retrieve_villages_from(countryId, stateId, districtId, hudId, blockId):
     try:
         print("Retrieving the Villages from block id : %s", str(blockId))
-        # cloud_logger.info("Retrieving the Villages from block id : %s", str(blockId))
         villages_list=[]
         address_list=[]
-        # with spnDB.snapshot() as snapshot:   
-        query = "with village as (SELECT village_id,village_gid,village_name,country_id,state_id,district_id,hud_id,block_id FROM public.address_village_master WHERE village_name not like ('Unallocated%%') AND country_id =%s AND state_id =%s AND district_id =%s AND hud_id =%s AND block_id =%s),street as (SELECT v.village_id,v.village_gid,v.village_name,asm.street_id, asm.street_gid, asm.street_name, asm.facility_id FROM village v left join public.address_street_master asm on asm.village_id = v.village_id AND asm.country_id = v.country_id AND asm.state_id = v.state_id AND asm. district_id= v.district_id AND asm.hud_id = v. hud_id AND asm.block_id = v.block_id AND asm.active=true WHERE street_name not like ('Unallocated%%') AND facility_id is not NULL ) SELECT  S.village_id,S.village_gid,S.village_name,S.street_id, S.street_gid, S.street_name, fr.facility_id, fr.institution_gid, fr.facility_name, typ.facility_type_name FROM street s LEFT join public.facility_registry fr on S.facility_id=fr.facility_id LEFT JOIN public.facility_type_master typ on typ.facility_type_id=fr.facility_type_id order by S.village_name"
-        value = (countryId,stateId,districtId,hudId,blockId)
-        cursor.execute(query,value)
-        address_list = cursor.fetchall()
-        villages_list = get_villages_list(address_list)
+        conn = get_db_connection()
+        with conn.cursor() as cursor: 
+            query = "with village as (SELECT village_id,village_gid,village_name,country_id,state_id,district_id,hud_id,block_id FROM public.address_village_master WHERE village_name not like ('Unallocated%%') AND country_id =%s AND state_id =%s AND district_id =%s AND hud_id =%s AND block_id =%s),street as (SELECT v.village_id,v.village_gid,v.village_name,asm.street_id, asm.street_gid, asm.street_name, asm.facility_id FROM village v left join public.address_street_master asm on asm.village_id = v.village_id AND asm.country_id = v.country_id AND asm.state_id = v.state_id AND asm. district_id= v.district_id AND asm.hud_id = v. hud_id AND asm.block_id = v.block_id AND asm.active=true WHERE street_name not like ('Unallocated%%') AND facility_id is not NULL ) SELECT  S.village_id,S.village_gid,S.village_name,S.street_id, S.street_gid, S.street_name, fr.facility_id, fr.institution_gid, fr.facility_name, typ.facility_type_name FROM street s LEFT join public.facility_registry fr on S.facility_id=fr.facility_id LEFT JOIN public.facility_type_master typ on typ.facility_type_id=fr.facility_type_id order by S.village_name"
+            value = (countryId,stateId,districtId,hudId,blockId)
+            cursor.execute(query,value)
+            address_list = cursor.fetchall()
+            villages_list = get_villages_list(address_list)
         
     except psycopg2.ProgrammingError as e:
         print("get_village_list_from_block retrieve_villages_from ProgrammingError",e)  
@@ -192,6 +184,8 @@ def retrieve_villages_from(countryId, stateId, districtId, hudId, blockId):
         reconnectToDB()
 
     finally:
+        cursor.close()
+        conn.close()
         return villages_list
 
 
@@ -232,7 +226,6 @@ def get_villages_list(address_list):
 
     except Exception as e:
         print("Error while fetching Villages Data : %s", str(e))
-        # cloud_logger.error("Error while fetching Villages Data : %s", str(e))
 
     finally:
         return villages

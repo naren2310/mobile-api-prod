@@ -1,10 +1,5 @@
-# from google.cloud import spanner
-# from google.cloud.spanner_v1 import param_types
-from datetime import datetime
 
-# from google.cloud.spanner_v1.param_types import INT64, JSON, STRING, TIMESTAMP
-# from google.cloud import logging as cloudlogging
-# from google.cloud import storage
+from datetime import datetime
 
 import json
 import os
@@ -15,35 +10,9 @@ import re
 
 parameters = config.getParameters()
 
-# log_client = cloudlogging.Client()
-# log_handler = log_client.get_default_handler()
-# cloud_logger = logging.getLogger("cloudLogger")
-# cloud_logger.setLevel(logging.INFO)
-# cloud_logger.setLevel(logging.DEBUG)
-# cloud_logger.addHandler(log_handler)
-
-# instance_id = os.environ.get('instance_id')
-# database_id = os.environ.get('database_id')
-# bucket_name = os.environ.get('bucket_name')
-# url = os.environ.get('fqdn')
-
-# client = spanner.Client()
-# instance = client.instance(instance_id)
-# spnDB = instance.database(database_id)
-
-# client_cs = storage.Client()
-# bucket = client_cs.get_bucket(bucket_name)
  #postgresql 
 import psycopg2
 
-conn = psycopg2.connect(
-    host='142.132.206.93',  # hostname of the server
-    database='postgres',  # database name
-    user='tnphruser',  # username
-    password='TNphr@3Z4'  # password
-)
-
-cursor = conn.cursor()
 
 current_appversion = 'Prior V_3.1.4'
 current_userId = ''
@@ -81,17 +50,14 @@ def validate_id(*ids):
                     valid_ids.append(True)
                 else:
                     print("ID is not valid %s", str(id))
-                    # cloud_logger.critical("ID is not valid %s", str(id))
                     valid_ids.append(False)
         if all(item == True for item in valid_ids) and len(valid_ids) != 0:
             return True
         else:
-            print("One or more supplied ID not valid.")
-            # cloud_logger.info("One or more supplied ID not valid.")            
+            print("One or more supplied ID not valid.")          
             return False
     except Exception as error:        
         print("Error validating Id attribute format : %s | %s | %s", str(error), current_userId, current_appversion)
-        # cloud_logger.error("Error validating Id attribute format : %s | %s | %s", str(error), current_userId, current_appversion)
         return False
 
 def user_token_validation(userId, mobile):
@@ -103,22 +69,12 @@ def user_token_validation(userId, mobile):
     """ 
     spnDB_userId = 0
     try:
-        query = "SELECT user_id FROM public.user_master WHERE mobile_number=%s AND user_id=%s"
-        # with spnDB.snapshot() as snapshot: 
-        #     results = snapshot.execute_sql(
-        #         query,
-        #         params={
-        #             "mobile": mobile,
-        #             "user_id": userId
-        #         },
-        #         param_types={
-        #             "mobile": param_types.INT64,
-        #             "user_id": param_types.STRING
-        #         },                   
-        #     )
-        value = (mobile,userId)
-        cursor.execute(query,value)
-        results = cursor.fetchall()
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            query = "SELECT user_id FROM public.user_master WHERE mobile_number=%s AND user_id=%s"
+            value = (mobile,userId)
+            cursor.execute(query,value)
+            results = cursor.fetchall()
         for row in results:
             spnDB_userId = row[0]       #user ID fetched from spannerDB using the mobile number
         if (spnDB_userId != 0):         #Condition to validate userId exist in spannerDB
@@ -126,11 +82,9 @@ def user_token_validation(userId, mobile):
                 return True
             else:
                 print("Token is not valid for this user.")
-                # cloud_logger.info("Token is not valid for this user.")  
                 return False
         else:
-            print("Unregistered User/Token-User mismatch.")
-            # cloud_logger.info("Unregistered User/Token-User mismatch.")            
+            print("Unregistered User/Token-User mismatch.")          
             return False
     except psycopg2.ProgrammingError as e:
         print("upload_files user_token_validation ProgrammingError",e)  
@@ -140,7 +94,14 @@ def user_token_validation(userId, mobile):
         print("upload_files user_token_validation InterfaceError",e)
         reconnectToDB()
         return False
-    
+    finally:
+        cursor.close()
+        conn.close()
+
+def get_db_connection():
+    conn = psycopg2.connect(host='142.132.206.93',database='postgres',user='tnphruser',password='TNphr@3Z4')
+    return conn 
+
 def reconnectToDB():
     global conn, cursor
     conn = psycopg2.connect(host='142.132.206.93',database='postgres',user='tnphruser',password='TNphr@3Z4')

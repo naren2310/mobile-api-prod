@@ -3,18 +3,16 @@ import guard
 
 def fetchLastUpdate(memberId, familyId):
     try:
-        # cloud_logger.info("Fetching Last Update Timestamp.")
         print("Fetching Last Update Timestamp.")
-        query = "SELECT to_char(last_update_date AT TIME ZONE 'Asia/Calcutta', 'YYYY-MM-DD HH24:MI:SS+05:30') as last_update_date FROM public.health_history WHERE family_id=%s AND member_id=%s"
-        values = (familyId, memberId)
-        cursor.execute(query,values)
-        results = cursor.fetchall()
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            query = "SELECT to_char(last_update_date AT TIME ZONE 'Asia/Calcutta', 'YYYY-MM-DD HH24:MI:SS+05:30') as last_update_date FROM public.health_history WHERE family_id=%s AND member_id=%s"
+            values = (familyId, memberId)
+            cursor.execute(query,values)
+            results = cursor.fetchall()
 
         last_update_date = None    
 
-        # with spnDB.snapshot() as snapshot:
-        #     results = snapshot.execute_sql(query,params={"memberId": memberId, "familyId": familyId},
-        #     param_types={"memberId": param_types.STRING, "familyId": param_types.STRING})
         for row in results:
             last_update_date = datetime.strptime(row[0], "%Y-%m-%d %H:%M:%S%z")
 
@@ -31,12 +29,14 @@ def fetchLastUpdate(memberId, familyId):
         print("member_health_history fetchLastUpdate InterfaceError",e)
         reconnectToDB()
         return None   
+    finally:
+        cursor.close()
+        conn.close()
 
 def UpsertMedicalHistory(historyList):
     ignores=0
     upserts=0
 
-    # cloud_logger.info("Adding Medical History.")
     print("Adding Medical History.")
     try:    
         #Key Arrays
@@ -49,6 +49,7 @@ def UpsertMedicalHistory(historyList):
         memberVals=[]
 
         cntIdx=0
+        conn = get_db_connection()
         for history in historyList:
             #Temp Value Arrays
             values=[]
@@ -129,61 +130,30 @@ def UpsertMedicalHistory(historyList):
                 
                 upserts+=1
 
-                # cloud_logger.debug("History = {}, Values = {}".format(str(historyKeys), str(historyVals)))
                 print('health_history inserting')
-                # print("History = {}, Values = {}".format(str(historyKeys), str(historyVals))) 
-                # print("historyKeys",historyKeys)
-                # print("historyVals",historyVals)
+                print("History = {}, Values = {}".format(str(historyKeys), str(historyVals))) 
                 for historyValss in historyVals:
                     value = tuple(historyValss)
                     query = f"INSERT INTO public.health_history ({','.join(historyKeys)}) VALUES ({','.join(['%s']*len(historyKeys))}) ON CONFLICT (medical_history_id) DO UPDATE SET {','.join([f'{key}=%s' for key in historyKeys])}"
                     cursor.execute(query,(value)*2)
                     conn.commit()
-                # def UpsertHistory(transaction):
-
-                    # transaction.insert_or_update(
-                    #     "health_history",
-                    #     columns=historyKeys,
-                    #     values=historyVals
-                    # )
-
-                # spnDB.run_in_transaction(UpsertHistory)   
-                # cloud_logger.debug("Member = {}, Values = {}".format(str(memberKeys), str(memberVals)))
+ 
                 print("family_member_master inserting")
-                # print("Member = {}, Values = {}".format(str(memberKeys), str(memberVals)))
-                # print("memberKeys",memberKeys)
-                # print("memberVals",memberVals)
+                print("Member = {}, Values = {}".format(str(memberKeys), str(memberVals)))
                 for memberValss in memberVals:
                     value = tuple(memberValss)
                     query = f"INSERT INTO public.family_member_master ({','.join(memberKeys)}) VALUES ({','.join(['%s']*len(memberKeys))}) ON CONFLICT (member_id) DO UPDATE SET {','.join([f'{key}=%s' for key in memberKeys])}"
                     cursor.execute(query,(value)*2)
                     conn.commit()
-                # def UpsertMember(transaction):
-                    # transaction.insert_or_update(
-                    #     "family_member_master",
-                    #     columns=memberKeys,
-                    #     values=memberVals
-                    # )
 
-                # spnDB.run_in_transaction(UpsertMember)   
-                # cloud_logger.debug("columns = {}, Values = {}".format(str(serefKeys), str(serefVals)))
                 print("family_member_socio_economic_ref inserting")
-                # print("serefKeys",serefKeys)
-                # print("serefVals",serefVals)
+                print("serefKeys",serefKeys)
+                print("serefVals",serefVals)
                 for serefValss in serefVals:
                     value = tuple(serefValss)
                     query = f"INSERT INTO public.family_member_socio_economic_ref ({','.join(serefKeys)}) VALUES ({','.join(['%s']*len(serefKeys))}) ON CONFLICT (member_id) DO UPDATE SET {','.join([f'{key}=%s' for key in serefKeys])}"
                     cursor.execute(query,(value)*2)
                     conn.commit()
-                # def UpsertSeref(transaction):
-                #     transaction.insert_or_update(
-                #         "family_member_socio_economic_ref",
-                #         columns=serefKeys,
-                #         values=serefVals
-                #     )
-
-                # spnDB.run_in_transaction(UpsertSeref)
-
                 
             else:
                 ignores+=1
@@ -202,20 +172,14 @@ def UpsertMedicalHistory(historyList):
 
 def getUpdateRegister(memberId, updateRegister, familyId):
     try:
-        # cloud_logger.info("Formatting Update Register.")
         print("Formatting Update Register.")
         update_register = None
-        query = "SELECT update_register FROM public.health_history WHERE family_id=%s AND member_id=%s"
-        values = (familyId, memberId)
-        cursor.execute(query,values)
-        results = cursor.fetchall()
-        # with spnDB.snapshot() as snapshot:
-            
-        #     results = snapshot.execute_sql(
-        #                 query,
-        #                 params={"familyId": familyId, "memberId": memberId},
-        #                 param_types={"familyId": param_types.STRING, "memberId": param_types.STRING}
-        #                 )
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            query = "SELECT update_register FROM public.health_history WHERE family_id=%s AND member_id=%s"
+            values = (familyId, memberId)
+            cursor.execute(query,values)
+            results = cursor.fetchall()
         for row in results:
             if row[0] is None:
                 update_register = []
@@ -234,24 +198,21 @@ def getUpdateRegister(memberId, updateRegister, familyId):
     except psycopg2.InterfaceError as e:
         print("member_health_history getUpdateRegister InterfaceError",e)
         reconnectToDB()
+    finally:
+        cursor.close()
+        conn.close()
 
 
 def getUpdateRegisterForMemberMaster(memberId, updateRegister, familyId):
     try:
-        # cloud_logger.info("Formatting Update Register for Member.")
         print("Formatting Update Register for Member.")
         update_register = None
-        query = "SELECT update_register FROM public.family_member_master WHERE family_id=%s AND member_id=%s"
-        values = (familyId, memberId)
-        cursor.execute(query,values)
-        results = cursor.fetchall()
-        # with spnDB.snapshot() as snapshot:
-            
-        #     results = snapshot.execute_sql(
-        #                 query,
-        #                 params={"familyId": familyId, "memberId": memberId},
-        #                 param_types={"familyId": param_types.STRING, "memberId": param_types.STRING}
-        #             )
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            query = "SELECT update_register FROM public.family_member_master WHERE family_id=%s AND member_id=%s"
+            values = (familyId, memberId)
+            cursor.execute(query,values)
+            results = cursor.fetchall()
         for row in results:
             if row[0] is None:
                 update_register = []
@@ -270,26 +231,23 @@ def getUpdateRegisterForMemberMaster(memberId, updateRegister, familyId):
     except psycopg2.InterfaceError as e:
         print("member_health_history getUpdateRegisterForMemberMaster InterfaceError",e)
         reconnectToDB()
+    finally:
+        cursor.close()
+        conn.close()
 
 
 def getUpdateRegisterForSocioMemberRef(memberId, updateRegister, familyId):
     try:
-        # cloud_logger.info("Formatting Update Register for social details.")
         print("Formatting Update Register for social details.")
         update_register = None
         userId = updateRegister["user_id"]
         timestamp = updateRegister["timestamp"]
-        query = "SELECT update_register FROM public.family_member_socio_economic_ref WHERE family_id=%s AND member_id=%s"
-        values = (familyId, memberId)
-        cursor.execute(query,values)
-        results = cursor.fetchall()
-        # with spnDB.snapshot() as snapshot:
-            
-        #     results = snapshot.execute_sql(
-        #                 query,
-        #                 params={"familyId": familyId, "memberId": memberId},
-        #                 param_types={"familyId": param_types.STRING, "memberId": param_types.STRING}
-        #                 )
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            query = "SELECT update_register FROM public.family_member_socio_economic_ref WHERE family_id=%s AND member_id=%s"
+            values = (familyId, memberId)
+            cursor.execute(query,values)
+            results = cursor.fetchall()
         for row in results:
             if row[0] is None:
                 update_register = []
@@ -308,6 +266,9 @@ def getUpdateRegisterForSocioMemberRef(memberId, updateRegister, familyId):
     except psycopg2.InterfaceError as e:
         print("member_health_history getUpdateRegisterForSocioMemberRef InterfaceError",e)
         reconnectToDB()
+    finally:
+        cursor.close()
+        conn.close()
 
 
 def mtm_data_verification(memberId, history, familyId):
@@ -318,19 +279,13 @@ def mtm_data_verification(memberId, history, familyId):
     Return: dict 
     """
     try:
-        query = "SELECT mtm_beneficiary FROM public.health_history WHERE family_id=%s AND member_id=%s"
-        values = (familyId, memberId)
-        cursor.execute(query,values)
-        results = cursor.fetchall()
-        # with spnDB.snapshot() as snapshot:
-        #     query = "SELECT mtm_beneficiary from health_history where family_id=@familyId and member_id=@memberId"
-        #     results = snapshot.execute_sql(
-        #                 query,
-        #                 params={"familyId": familyId, "memberId": memberId},
-        #                 param_types={"familyId": param_types.STRING, "memberId": param_types.STRING}
-        #                 )
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            query = "SELECT mtm_beneficiary FROM public.health_history WHERE family_id=%s AND member_id=%s"
+            values = (familyId, memberId)
+            cursor.execute(query,values)
+            results = cursor.fetchall()
         for mtm_values in results:
-                # cloud_logger.info("MTM_Values:")
                 print("MTM_Values:")
                 if mtm_values[0] is not None and mtm_values[0]!={}:
                     mtm_json_db = mtm_values[0]
@@ -365,7 +320,6 @@ def mtm_data_verification(memberId, history, familyId):
                                     mtm_json_db[key]=history['mtm_beneficiary'][key]
                                     return mtm_json_db
                     else: # This is when we don't have mtm data from request we will return db data.
-                        # cloud_logger.info('return the db value when request mtm value is null.')
                         print('return the db value when request mtm value is null.')
                         return mtm_json_db                
                 else:
@@ -373,7 +327,13 @@ def mtm_data_verification(memberId, history, familyId):
             # print ("Health history inserted for the first time.")
         return history['mtm_beneficiary']
             
-    except Exception as e:
-        print("Error while verifying the MTM data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error while verifying the MTM data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+    except psycopg2.ProgrammingError as e:
+        print("member_health_history mtm_data_verification ProgrammingError",e)  
+        conn.rollback()
+    except psycopg2.InterfaceError as e:
+        print("member_health_history mtm_data_verification InterfaceError",e)
+        reconnectToDB()
+    finally:
+        cursor.close()
+        conn.close()
         
