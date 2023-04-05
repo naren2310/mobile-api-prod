@@ -132,28 +132,31 @@ def UpsertMedicalHistory(historyList):
 
                 print('health_history inserting')
                 print("History = {}, Values = {}".format(str(historyKeys), str(historyVals))) 
-                for historyValss in historyVals:
-                    value = tuple(historyValss)
-                    query = f"INSERT INTO public.health_history ({','.join(historyKeys)}) VALUES ({','.join(['%s']*len(historyKeys))}) ON CONFLICT (medical_history_id) DO UPDATE SET {','.join([f'{key}=%s' for key in historyKeys])}"
-                    cursor.execute(query,(value)*2)
-                    conn.commit()
+                with conn.cursor() as cursor:
+                    for historyValss in historyVals:
+                        value = tuple(historyValss)
+                        query = f"INSERT INTO public.health_history ({','.join(historyKeys)}) VALUES ({','.join(['%s']*len(historyKeys))}) ON CONFLICT (medical_history_id) DO UPDATE SET {','.join([f'{key}=%s' for key in historyKeys])}"
+                        cursor.execute(query,(value)*2)
+                        conn.commit()
  
                 print("family_member_master inserting")
                 print("Member = {}, Values = {}".format(str(memberKeys), str(memberVals)))
-                for memberValss in memberVals:
-                    value = tuple(memberValss)
-                    query = f"INSERT INTO public.family_member_master ({','.join(memberKeys)}) VALUES ({','.join(['%s']*len(memberKeys))}) ON CONFLICT (member_id) DO UPDATE SET {','.join([f'{key}=%s' for key in memberKeys])}"
-                    cursor.execute(query,(value)*2)
-                    conn.commit()
+                with conn.cursor() as cursor:
+                    for memberValss in memberVals:
+                        value = tuple(memberValss)
+                        query = f"INSERT INTO public.family_member_master ({','.join(memberKeys)}) VALUES ({','.join(['%s']*len(memberKeys))}) ON CONFLICT (member_id) DO UPDATE SET {','.join([f'{key}=%s' for key in memberKeys])}"
+                        cursor.execute(query,(value)*2)
+                        conn.commit()
 
                 print("family_member_socio_economic_ref inserting")
                 print("serefKeys",serefKeys)
                 print("serefVals",serefVals)
-                for serefValss in serefVals:
-                    value = tuple(serefValss)
-                    query = f"INSERT INTO public.family_member_socio_economic_ref ({','.join(serefKeys)}) VALUES ({','.join(['%s']*len(serefKeys))}) ON CONFLICT (member_id) DO UPDATE SET {','.join([f'{key}=%s' for key in serefKeys])}"
-                    cursor.execute(query,(value)*2)
-                    conn.commit()
+                with conn.cursor() as cursor:
+                    for serefValss in serefVals:
+                        value = tuple(serefValss)
+                        query = f"INSERT INTO public.family_member_socio_economic_ref ({','.join(serefKeys)}) VALUES ({','.join(['%s']*len(serefKeys))}) ON CONFLICT (member_id) DO UPDATE SET {','.join([f'{key}=%s' for key in serefKeys])}"
+                        cursor.execute(query,(value)*2)
+                        conn.commit()
                 
             else:
                 ignores+=1
@@ -168,6 +171,9 @@ def UpsertMedicalHistory(historyList):
         print("member_health_history UpsertMedicalHistory InterfaceError",e)
         reconnectToDB()
         return False, ignores, upserts
+    finally:
+        cursor.close()
+        conn.close()
 
 
 def getUpdateRegister(memberId, updateRegister, familyId):

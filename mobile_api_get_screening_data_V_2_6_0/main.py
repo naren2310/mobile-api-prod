@@ -114,7 +114,7 @@ def get_screening_data():
                         value = (userId,lastUpdateTS,offset)
                         cursor.execute(query,value)
                         results = cursor.fetchall()
-                        screening = getResultFormatted(results)
+                        screening = getResultFormatted(results,cursor)
 
                     if len(screening) == 0:
                             response =  json.dumps({
@@ -176,7 +176,7 @@ def get_screening_data():
         conn.close()
         return response
 
-def getResultFormatted(results):
+def getResultFormatted(results,cursor):
     data_list=[]
     try:
         for row in results:

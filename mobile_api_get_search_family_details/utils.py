@@ -1,6 +1,6 @@
 from guard import *
 
-def getResultFormatted(results):
+def getResultFormatted(results,cursor):
     data_list=[]
     print("Formatting the Result.")
     for row in results:

@@ -191,7 +191,7 @@ def get_address_for(familyId):
         conn.close()
 
 
-def getResultFormatted(results):
+def getResultFormatted(results,cursor):
     data_list=[]
     try:
         for row in results:
@@ -261,7 +261,7 @@ def get_family_member_details(lastUpdateTS, userId, offset):
             value = (lastUpdateTS,userId,offset)
             cursor.execute(query,value)
             results = cursor.fetchall()
-            data = getResultFormatted(results)
+            data = getResultFormatted(results,cursor)
 
     except psycopg2.ProgrammingError as e:
         print("get_family_member_data get_family_member_details ProgrammingError",e)  

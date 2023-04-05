@@ -113,7 +113,7 @@ def get_medical_history():
                         value = (userId,lastUpdateTS,offset)
                         cursor.execute(query,value)
                         results = cursor.fetchall()
-                        member_history = getResultFormatted(results)
+                        member_history = getResultFormatted(results,cursor)
 
                     if len(member_history) == 0:
                             response =  json.dumps({
@@ -173,14 +173,13 @@ def get_medical_history():
         conn.close()
         return response
 
-def getResultFormatted(results):
+def getResultFormatted(results,cursor):
     data_list=[]
 
     try:
         for row in results:
             data={}
             fieldIdx=0
-
             for column in cursor.description:
                 field_name=column.name
                 # field_type=field.type_

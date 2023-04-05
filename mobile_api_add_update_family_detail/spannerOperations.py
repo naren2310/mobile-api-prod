@@ -509,27 +509,30 @@ def UpsertFamilyDetails(family_list, userId):
 
         if len(familyKeys)>0:      
             print("Initiating Family insertion.")
-            for familyValss in familyVals:
-                value = tuple(familyValss) 
-                query = f"INSERT INTO public.family_master ({','.join(familyKeys)}) VALUES ({','.join(['%s']*len(familyKeys))}) ON CONFLICT (family_id) DO UPDATE SET {','.join([f'{key}=%s' for key in familyKeys])}"
-                cursor.execute(query,(value)*2)
-                conn.commit()
+            with conn.cursor() as cursor:
+                for familyValss in familyVals:
+                    value = tuple(familyValss) 
+                    query = f"INSERT INTO public.family_master ({','.join(familyKeys)}) VALUES ({','.join(['%s']*len(familyKeys))}) ON CONFLICT (family_id) DO UPDATE SET {','.join([f'{key}=%s' for key in familyKeys])}"
+                    cursor.execute(query,(value)*2)
+                    conn.commit()
 
         if len(serefKeys)>0:
             print("Initiating SEREF insertion.")
-            for serefValss in serefVals:
-                value = tuple(serefValss)
-                query = f"INSERT INTO public.family_socio_economic_ref ({','.join(serefKeys)}) VALUES ({','.join(['%s']*len(serefKeys))}) ON CONFLICT (family_socio_economic_id) DO UPDATE SET {','.join([f'{key}=%s' for key in serefKeys])}"
-                cursor.execute(query,(value)*2)
-                conn.commit() 
+            with conn.cursor() as cursor:
+                for serefValss in serefVals:
+                    value = tuple(serefValss)
+                    query = f"INSERT INTO public.family_socio_economic_ref ({','.join(serefKeys)}) VALUES ({','.join(['%s']*len(serefKeys))}) ON CONFLICT (family_socio_economic_id) DO UPDATE SET {','.join([f'{key}=%s' for key in serefKeys])}"
+                    cursor.execute(query,(value)*2)
+                    conn.commit() 
 
         if len(memberKeys)>0:
                 print("Initiating Family Member insertion.")
-                for memberValss in memberVals:
-                    value = tuple(memberValss)
-                    query = f"INSERT INTO public.family_member_master ({','.join(memberKeys)}) VALUES ({','.join(['%s']*len(memberKeys))}) ON CONFLICT (member_id) DO UPDATE SET {','.join([f'{key}=%s' for key in memberKeys])}"
-                    cursor.execute(query,(value)*2)
-                    conn.commit()
+                with conn.cursor() as cursor:
+                    for memberValss in memberVals:
+                        value = tuple(memberValss)
+                        query = f"INSERT INTO public.family_member_master ({','.join(memberKeys)}) VALUES ({','.join(['%s']*len(memberKeys))}) ON CONFLICT (member_id) DO UPDATE SET {','.join([f'{key}=%s' for key in memberKeys])}"
+                        cursor.execute(query,(value)*2)
+                        conn.commit()
 
     except psycopg2.ProgrammingError as e:
         print("add_update_family_details UpsertFamilyDetails ProgrammingError",e)  

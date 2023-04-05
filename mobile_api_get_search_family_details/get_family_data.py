@@ -69,7 +69,7 @@ def get_family_data(familyId):
                 value = (familyId,)
                 cursor.execute(query,value)
                 results = cursor.fetchall()
-                data = getResultFormatted(results)
+                data = getResultFormatted(results,cursor)
                 family_data = data[0]
                 ref_details = get_socioEconomic_data(familyId)
 
@@ -106,7 +106,7 @@ def get_all_member_data(familyId):
                 value = (familyId,)
                 cursor.execute(query,value)
                 results = cursor.fetchall()
-                data_list = getResultFormatted(results)
+                data_list = getResultFormatted(results,cursor)
 
     except psycopg2.ProgrammingError as e:
         print("get_family_and_member_details get_all_member_data ProgrammingError",e)  
@@ -161,7 +161,7 @@ def get_health_screening(familyId,memberId):
             value = (familyId,memberId)
             cursor.execute(query,value)
             results = cursor.fetchall()
-            data_list = getResultFormatted(results) 
+            data_list = getResultFormatted(results,cursor) 
             data['data_list'] = data_list
 
     except psycopg2.ProgrammingError as e:
@@ -188,7 +188,7 @@ def get_health_history(familyId, memberId):
             value = (familyId,memberId)
             cursor.execute(query,value)
             results = cursor.fetchall()
-            data_list = getResultFormatted(results)
+            data_list = getResultFormatted(results,cursor)
             if len(data_list) > 0:
                 return data_list[0]
             else:
