@@ -66,6 +66,11 @@ def get_screening_data():
         print("*******Get Screening Data*********")
         screening=[]
         defaultTime = datetime.strptime('2021-09-01 15:52:50+0530', "%Y-%m-%d %H:%M:%S%z")
+        
+        ## DB Connection
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
         if request.is_json and isinstance(request.get_json(), dict):
             content=request.get_json()  
             userId = content["USER_ID"]  
@@ -100,21 +105,12 @@ def get_screening_data():
                     lastUpdate = content["LAST_UPDATE"]
                     is_valid_TS = re.match(parameters['TS_FORMAT'], lastUpdate) #Checks the TimeStamp format
                     lastUpdateTS = defaultTime if(lastUpdate is None or lastUpdate=='' or not is_valid_TS) else datetime.strptime(content["LAST_UPDATE"], "%Y-%m-%d %H:%M:%S%z")  
-                        # query = "SELECT scrn.member_id, scrn.screening_id, scrn.screening_values, scrn.lab_test, scrn.drugs, scrn.diseases, scrn.outcome, scrn.symptoms, scrn.update_register, FORMAT_TIMESTAMP('%Y-%m-%d %H:%M:%S%z', scrn.last_update_date, 'Asia/Calcutta') as last_update_date, scrn.advices, scrn.additional_services from health_screening@{FORCE_INDEX=SCREENING_LAST_UPDATE_IDX} scrn JOIN@{JOIN_METHOD=HASH_JOIN, HASH_JOIN_BUILD_SIDE=BUILD_RIGHT} family_member_master fmm USING(member_id) INNER JOIN user_master usr on JSON_VALUE(usr.assigned_jurisdiction, '$.primary_block')= fmm.block_id WHERE fmm.facility_id is not NULL and scrn.last_update_date>@lastUpdate and usr.user_id=@userId limit 3000 OFFSET @offset"
-                        # query = "SELECT scrn.member_id, scrn.screening_id, scrn.screening_values, scrn.lab_test, scrn.drugs, scrn.diseases, scrn.outcome, scrn.symptoms, scrn.update_register, FORMAT_TIMESTAMP('%Y-%m-%d %H:%M:%S%z', scrn.last_update_date, 'Asia/Calcutta') as last_update_date, scrn.advices, scrn.additional_services from health_screening@{FORCE_INDEX=SCREENING_LAST_UPDATE_IDX} scrn JOIN@{JOIN_METHOD=HASH_JOIN, HASH_JOIN_BUILD_SIDE=BUILD_RIGHT} (select distinct fmm.member_id  FROM  family_member_master@{FORCE_INDEX=MEMBER_FACILITY_ID_IDX} fmm where facility_id in (select distinct facility_id from user_master where user_id =@userId)) fmm using(member_id) where scrn.last_update_date>@lastUpdate limit 3000 OFFSET @offset;"                        
-                        # query = "SELECT scrn.member_id, scrn.screening_id, scrn.screening_values, scrn.lab_test, scrn.drugs, scrn.diseases, scrn.outcome, scrn.symptoms, scrn.update_register, FORMAT_TIMESTAMP('%Y-%m-%d %H:%M:%S%z', scrn.last_update_date, 'Asia/Calcutta') as last_update_date, scrn.advices, scrn.additional_services from health_screening@{FORCE_INDEX=SCREENING_LAST_UPDATE_IDX} scrn join@{JOIN_METHOD=HASH_JOIN, HASH_JOIN_BUILD_SIDE=BUILD_LEFT} ( select distinct fmm.family_id, fmm.member_id  FROM  family_member_master@{FORCE_INDEX=MEMBER_FACILITY_ID_IDX} fmm where facility_id = (select facility_id from user_master where user_id =@userId))fmm on scrn.family_id= fmm.family_id and scrn.member_id = fmm.member_id where scrn.last_update_date>@lastUpdate limit 3000 OFFSET @offset;"
-                        
-                        # Optimised the query as per discussion with Arun S. 29 March 2022.
-                        # TODO : This query is currently returning all screening till now. It should return latest 7 screening for each beneficiary. 25 March 2022 (AJ)
-                        # query = 'with family_details as (select DISTINCT fmm.family_id,fmm.member_id from family_member_master@{FORCE_INDEX=MEMBER_FACILITY_ID_IDX} fmm where fmm.facility_id = (SELECT facility_id FROM user_master WHERE user_id =@userId )) select scrn.member_id,scrn.screening_id,scrn.screening_values,scrn.lab_test, scrn.drugs,scrn.diseases, scrn.outcome, scrn.symptoms, scrn.update_register, FORMAT_TIMESTAMP("%Y-%m-%d %H:%M:%S%z", scrn.last_update_date, "Asia/Calcutta") AS last_update_date, scrn.advices, scrn.additional_services from family_details fd JOIN @{JOIN_METHOD=HASH_JOIN, HASH_JOIN_BUILD_SIDE=BUILD_LEFT}  health_screening scrn on scrn.family_id = fd.family_id and scrn.member_id = fd.member_id where scrn.last_update_date>@lastUpdate limit 3000 OFFSET @offset'
-                        # The above query is commented & updates as below as per suggestion of Darshak, Shankar provided the query. 29 April 22.
-                    conn = get_db_connection()
-                    with conn.cursor() as cursor:
-                        query = "with family_details as (SELECT DISTINCT fmm.family_id,fmm.member_id FROM public.family_member_master fmm WHERE fmm.facility_id = (SELECT facility_id FROM public.user_master WHERE user_id =%s )) SELECT scrn.member_id,scrn.screening_id,scrn.screening_values,scrn.lab_test, scrn.drugs,scrn.diseases, scrn.outcome, scrn.symptoms, scrn.update_register,to_char(scrn.last_update_date AT TIME ZONE 'Asia/Calcutta', 'YYYY-MM-DD HH24:MI:SS') AS last_update_date, scrn.advices, scrn.additional_services FROM family_details fd left join public.health_screening scrn on scrn.family_id = fd.family_id AND scrn.member_id = fd.member_id WHERE scrn.last_update_date>%s limit 3000 OFFSET %s"
-                        value = (userId,lastUpdateTS,offset)
-                        cursor.execute(query,value)
-                        results = cursor.fetchall()
-                        screening = getResultFormatted(results,cursor)
+ 
+                    query = "with family_details as (SELECT DISTINCT fmm.family_id,fmm.member_id FROM public.family_member_master fmm WHERE fmm.facility_id = (SELECT facility_id FROM public.user_master WHERE user_id =%s )) SELECT scrn.member_id,scrn.screening_id,scrn.screening_values,scrn.lab_test, scrn.drugs,scrn.diseases, scrn.outcome, scrn.symptoms, scrn.update_register,to_char(scrn.last_update_date AT TIME ZONE 'Asia/Calcutta', 'YYYY-MM-DD HH24:MI:SS') AS last_update_date, scrn.advices, scrn.additional_services FROM family_details fd left join public.health_screening scrn on scrn.family_id = fd.family_id AND scrn.member_id = fd.member_id WHERE scrn.last_update_date>%s limit 3000 OFFSET %s"
+                    value = (userId,lastUpdateTS,offset)
+                    cursor.execute(query,value)
+                    results = cursor.fetchall()
+                    screening = getResultFormatted(results,cursor)
 
                     if len(screening) == 0:
                             response =  json.dumps({

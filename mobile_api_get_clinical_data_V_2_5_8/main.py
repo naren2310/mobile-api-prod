@@ -56,6 +56,11 @@ def get_clinical_data():
         print("********Get Clinical Data*********")
         response = None
         tables=[]
+        
+        ## DB Connection
+        conn = get_db_connection()
+        cursor = conn.cursor()
+                        
         # Check the request data for JSON
         if request.is_json and isinstance(request.get_json(), dict):
             request_data =request.get_json()
@@ -93,12 +98,10 @@ def get_clinical_data():
                     lastUpdateTS = defaultTime if(lastUpdate is None or lastUpdate=='' or not is_valid_TS) else datetime.strptime(lastUpdate, "%Y-%m-%d %H:%M:%S%z")
                     
                     if(lastUpdate!=''):
-                        conn = get_db_connection()
-                        with conn.cursor() as cursor:
-                            query = "SELECT table_name FROM public.master_change_log WHERE last_update_date> %s"
-                            values = (lastUpdateTS,) 
-                            cursor.execute(query, values)
-                            results = cursor.fetchall()
+                        query = "SELECT table_name FROM public.master_change_log WHERE last_update_date> %s"
+                        values = (lastUpdateTS,) 
+                        cursor.execute(query, values)
+                        results = cursor.fetchall()
                         for row in results:
                             tables.append(row[0])
 
@@ -164,6 +167,8 @@ def get_clinical_data():
                 })
         print("Error while retrieving Clinical data : %s | %s | %s", str(e), guard.current_userId, guard.current_appversion)
     finally:
+        cursor.close()
+        conn.close()
         return response
     
 
@@ -171,15 +176,15 @@ def retrieve_data(tables, lastUpdateTS):
     data={}
     try:
         print("Retrieving Vaccination Data.")
+        conn = get_db_connection()
+        cursor = conn.cursor()
         for table in tables:
             if(table=="health_vaccination_master"):
                 vaccines=[]
-                conn = get_db_connection()
-                with conn.cursor() as cursor:
-                    query = "SELECT vaccination_id, vaccination_name FROM public.health_vaccination_master WHERE last_update_date> %s"
-                    values = (lastUpdateTS,) 
-                    cursor.execute(query, values)
-                    results = cursor.fetchall()
+                query = "SELECT vaccination_id, vaccination_name FROM public.health_vaccination_master WHERE last_update_date> %s"
+                values = (lastUpdateTS,) 
+                cursor.execute(query, values)
+                results = cursor.fetchall()
                 for row in results:
                     vaccine = {"vaccination_id":row[0], "vaccination_name":row[1]}
                     vaccines.append(vaccine)
@@ -188,12 +193,10 @@ def retrieve_data(tables, lastUpdateTS):
             elif(table=="health_protocol_master"):
                 protocols = []
                 print("Retrieving Health Protocol Data.")
-                conn = get_db_connection()
-                with conn.cursor() as cursor:
-                    query = "SELECT protocol_id, protocol_desc, protocol_value_high, protocol_value_low, protocol_type, protocol_inference FROM public.health_protocol_master where last_update_date> %s" 
-                    values = (lastUpdateTS,)
-                    cursor.execute(query, values)
-                    results = cursor.fetchall()
+                query = "SELECT protocol_id, protocol_desc, protocol_value_high, protocol_value_low, protocol_type, protocol_inference FROM public.health_protocol_master where last_update_date> %s" 
+                values = (lastUpdateTS,)
+                cursor.execute(query, values)
+                results = cursor.fetchall()
                 for row in results:
                     health_protocol = {"protocol_id":row[0], "protocol_desc":row[1], "protocol_value_high":row[2],
                         "protocol_value_low":row[3], "protocol_type":row[4], "protocol_inference":row[5],
@@ -204,12 +207,10 @@ def retrieve_data(tables, lastUpdateTS):
             elif(table=="health_drugs_master"):
                 drugs=[]
                 print("Retrieving Drugs Data.")
-                conn = get_db_connection()
-                with conn.cursor() as cursor:
-                    query = "SELECT  drug_id, drug_name, drug_type, dosage FROM public.health_drugs_master WHERE drug_usage_type!='Consumables' AND last_update_date>%s" 
-                    value = (lastUpdateTS,)
-                    cursor.execute(query,value)
-                    results = cursor.fetchall()
+                query = "SELECT  drug_id, drug_name, drug_type, dosage FROM public.health_drugs_master WHERE drug_usage_type!='Consumables' AND last_update_date>%s" 
+                value = (lastUpdateTS,)
+                cursor.execute(query,value)
+                results = cursor.fetchall()
                 for row in results:
                     drug = {"drug_id":row[0], "drug_name":row[1], "drug_type":row[2],"dosage":row[3]}
                     drugs.append(drug)
@@ -218,12 +219,10 @@ def retrieve_data(tables, lastUpdateTS):
             elif(table=="health_lab_tests_master"):
                 labtest = []
                 print("Retrieving Lab Tests Data.")
-                conn = get_db_connection()
-                with conn.cursor() as cursor:
-                    query = "SELECT lab_test_id, lab_test_name, specimen_type, specimen_type_id, result_entry_type, facility_level FROM public.health_lab_tests_master WHERE last_update_date>%s" 
-                    values  = (lastUpdateTS,)
-                    cursor.execute(query, values)
-                    results = cursor.fetchall()
+                query = "SELECT lab_test_id, lab_test_name, specimen_type, specimen_type_id, result_entry_type, facility_level FROM public.health_lab_tests_master WHERE last_update_date>%s" 
+                values  = (lastUpdateTS,)
+                cursor.execute(query, values)
+                results = cursor.fetchall()
                 for row in results:
                     lab_test = {"lab_test_id":row[0], "lab_test_name":row[1], "specimen_type":row[2],
                         "specimen_type_id":row[3], "result_entry_type":row[4], "facility_level":row[5]}
@@ -233,12 +232,10 @@ def retrieve_data(tables, lastUpdateTS):
             elif(table=="health_diagnosis_master"):
                 diagnosis=[]
                 print("Retrieving Diagnosis Data.")
-                conn = get_db_connection()
-                with conn.cursor() as cursor:
-                    query = "SELECT diagnosis_id, reference_id, diagnosis_name, service_name, service_id, revisit_days, duration_of_illness, default_drug_id FROM public.health_diagnosis_master WHERE last_update_date>%s" 
-                    values = (lastUpdateTS,)
-                    cursor.execute(query,values)
-                    results = cursor.fetchall()
+                query = "SELECT diagnosis_id, reference_id, diagnosis_name, service_name, service_id, revisit_days, duration_of_illness, default_drug_id FROM public.health_diagnosis_master WHERE last_update_date>%s" 
+                values = (lastUpdateTS,)
+                cursor.execute(query,values)
+                results = cursor.fetchall()
                 for row in results:
                     diagnos = {"diagnosis_id":row[0], "reference_id":row[1], "diagnosis_name":row[2],
                         "service_name":row[3], "service_id":row[4],"revisit_days":row[5],
@@ -254,6 +251,8 @@ def retrieve_data(tables, lastUpdateTS):
         reconnectToDB()
     
     finally:
+        cursor.close()
+        conn.close()
         return data
 
 def update_user_last_syncTS(user_id):
@@ -261,12 +260,12 @@ def update_user_last_syncTS(user_id):
         try:
             print("Updating Last Login TimeStamp for the User.")
             conn = get_db_connection()
-            with conn.cursor() as cursor:
-                login = datetime.now()
-                query = 'UPDATE public.user_master SET last_login_time=%s WHERE user_id= %s'
-                values = (login, user_id)
-                cursor.execute(query, values)
-                conn.commit()
+            cursor = conn.cursor()
+            login = datetime.now()
+            query = 'UPDATE public.user_master SET last_login_time=%s WHERE user_id= %s'
+            values = (login, user_id)
+            cursor.execute(query, values)
+            conn.commit()
             return True
         except psycopg2.ProgrammingError as e:
             print("get_clinical_data update_user_last_syncTS ProgrammingError",e)  
@@ -276,6 +275,9 @@ def update_user_last_syncTS(user_id):
             print("get_clinical_data update_user_last_syncTS InterfaceError",e)
             reconnectToDB()
             return False
+        finally:
+            cursor.close()
+            conn.close()
         
 
 def validate_token(token_log_date):
@@ -299,12 +301,12 @@ def fetch_token_userId(userId, req_token):
 
     try:
         conn = get_db_connection()
-        with conn.cursor() as cursor:
-            query = "SELECT auth_token FROM public.user_master WHERE user_id=%s"
-            valid = False
-            values = (userId,)
-            cursor.execute(query,values)
-            results = cursor.fetchall()
+        cursor = conn.cursor()
+        query = "SELECT auth_token FROM public.user_master WHERE user_id=%s"
+        valid = False
+        values = (userId,)
+        cursor.execute(query,values)
+        results = cursor.fetchall()
         for row in results:
             token = json.loads(row[0])
             key = token["auth_key"]["key"]

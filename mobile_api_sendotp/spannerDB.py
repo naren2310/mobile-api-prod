@@ -10,9 +10,9 @@ def active_mobile_number(mobile_number):
         auth_key = None
 
         conn = get_db_connection()
-        with conn.cursor() as cursor:
-            cursor.execute(fetch_query)
-            result = cursor.fetchall()
+        cursor = conn.cursor()
+        cursor.execute(fetch_query)
+        result = cursor.fetchall()
         for num in result:
                 if num[1] is not None:
                     auth_key = num[1]
@@ -42,12 +42,12 @@ def read_write_transaction(jsonfile, mobile):
         try:
             print("Updating Auth Token.")
             conn = get_db_connection()
-            with conn.cursor() as cursor:
-                query = "UPDATE public.user_master SET auth_token=%s WHERE mobile_number=%s"
-                value = (json.dumps(jsonfile),mobile)
-                cursor.execute(query,value)
-                conn.commit()
-                return True
+            cursor = conn.cursor()
+            query = "UPDATE public.user_master SET auth_token=%s WHERE mobile_number=%s"
+            value = (json.dumps(jsonfile),mobile)
+            cursor.execute(query,value)
+            conn.commit()
+            return True
 
         except psycopg2.ProgrammingError as e:
             print("sendotp read_write_transaction ProgrammingError",e)  

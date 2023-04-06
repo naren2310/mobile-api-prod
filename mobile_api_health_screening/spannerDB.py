@@ -7,12 +7,12 @@ def fetchLastUpdate(familyId, memberId):
         # This will return the latest value. 15 March 2022.
         # This is done specifically to optimise CPU utilisation. 7 April 2022 (Shankar / Atul).
         conn = get_db_connection()
-        with conn.cursor() as cursor:
-            query = "SELECT MAX (last_update_date) FROM public.health_screening WHERE family_id=%s AND member_id=%s"
-            values = (familyId, memberId)
-            cursor.execute(query,values)
-            results = cursor.fetchall()
-            last_update_date = None    
+        cursor = conn.cursor()
+        query = "SELECT MAX (last_update_date) FROM public.health_screening WHERE family_id=%s AND member_id=%s"
+        values = (familyId, memberId)
+        cursor.execute(query,values)
+        results = cursor.fetchall()
+        last_update_date = None    
 
         for row in results:
             last_update_date = row[0]
@@ -40,7 +40,11 @@ def add_screening_details(screenings):
     mem_add_serv={}
     
     try:
+        
+        ## DB Connection
         conn = get_db_connection()
+        cursor = conn.cursor()
+        
         for screening in screenings:
             values=[]
             
@@ -123,26 +127,20 @@ def add_screening_details(screenings):
             if "additional_services" in kArray:
                 kArray.remove("additional_services")
             else:
-                # cloud_logger.info("Already have an updated data for member id : %s", str(memberId))                
-
-                # We were using an insert by batch.insert() till 11 April 2022, but since the app somehow is sending a duplicate screening id.
-                # We are changing the code to support the mobile app's screening id duplication. Hence we are doing upsert here. 11 April 2022.
-                # batch.insert_or_update('health_screening', columns=kArray, values=vArray)
-                with conn.cursor() as cursor:
-                    for vArrays in vArray:
-                        value = tuple(vArrays)
-                        query = f"INSERT INTO public.health_screening ({','.join(kArray)}) VALUES ({','.join(['%s']*len(kArray))}) ON CONFLICT (screening_id) DO UPDATE SET {','.join([f'{key}=%s' for key in kArray])}"
-                        cursor.execute(query,(value)*2)
-                        conn.commit()
+                for vArrays in vArray:
+                    value = tuple(vArrays)
+                    query = f"INSERT INTO public.health_screening ({','.join(kArray)}) VALUES ({','.join(['%s']*len(kArray))}) ON CONFLICT (screening_id) DO UPDATE SET {','.join([f'{key}=%s' for key in kArray])}"
+                    cursor.execute(query,(value)*2)
+                    conn.commit()
+                    
         #API Versioning to handle the old APK request with additional services.
         #Updating the additional services data to mtm beneficiary on health history table.
         if len(mem_add_serv)!=0:
-            with conn.cursor() as cursor:
-                query="UPDATE public.health_history SET mtm_beneficiary=%s WHERE member_id=%s"
-                for mkey, mvalue in mem_add_serv.items():                
-                    value = (json.dumps(mvalue),mkey)
-                    cursor.execute(query,value)
-                    conn.commit()
+            query="UPDATE public.health_history SET mtm_beneficiary=%s WHERE member_id=%s"
+            for mkey, mvalue in mem_add_serv.items():                
+                value = (json.dumps(mvalue),mkey)
+                cursor.execute(query,value)
+                conn.commit()
         return True
 
     except psycopg2.ProgrammingError as e:

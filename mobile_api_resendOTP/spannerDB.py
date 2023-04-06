@@ -5,12 +5,11 @@ def active_mobile_number(mobile_number):
     try:
         print("Fetching Active Mobile Numbers.")
         conn = get_db_connection()
-        with conn.cursor() as cursor:
-            fetch_query = 'SELECT mobile_number, auth_token, active FROM public.user_master WHERE mobile_number={}'.format(mobile_number)
-
-            auth_key = None
-            cursor.execute(fetch_query)
-            result = cursor.fetchall()
+        cursor = conn.cursor()
+        fetch_query = 'SELECT mobile_number, auth_token, active FROM public.user_master WHERE mobile_number={}'.format(mobile_number)
+        auth_key = None
+        cursor.execute(fetch_query)
+        result = cursor.fetchall()
         for num in result:
                 if num[1] is not None:
                     auth_key = num[1]
@@ -40,12 +39,12 @@ def read_write_transaction(jsonfile, mobile):
         try:
             print("Updating Auth Token.")
             conn = get_db_connection()
-            with conn.cursor() as cursor:
-                query = "UPDATE public.user_master SET auth_token=%s WHERE mobile_number=%s"
-                value = (json.dumps(jsonfile),mobile)
-                cursor.execute(query,value)
-                conn.commit()
-                return True
+            cursor = conn.cursor()
+            query = "UPDATE public.user_master SET auth_token=%s WHERE mobile_number=%s"
+            value = (json.dumps(jsonfile),mobile)
+            cursor.execute(query,value)
+            conn.commit()
+            return True
 
         except psycopg2.ProgrammingError as e:
             print("resendOTP active_mobile_number ProgrammingError",e)  

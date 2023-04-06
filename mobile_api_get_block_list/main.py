@@ -89,11 +89,11 @@ def get_block_list():
                 else:
                     print("Token Validated.")
                     conn = get_db_connection()
-                    with conn.cursor() as cursor:
-                        query = "SELECT DISTINCT  block_name ,block_id FROM public.address_block_master WHERE district_id=%s"
-                        values = (districtId,)
-                        cursor.execute(query, values)
-                        results = cursor.fetchall()
+                    cursor = conn.cursor()
+                    query = "SELECT DISTINCT  block_name ,block_id FROM public.address_block_master WHERE district_id=%s"
+                    values = (districtId,)
+                    cursor.execute(query, values)
+                    results = cursor.fetchall()
                     for row in results:
                             block = {
                                     "block_name":row[0],

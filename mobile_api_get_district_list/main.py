@@ -60,6 +60,11 @@ def get_district_list():
     try:
         print("*********Get District List*********")
         district_list=[]
+        
+        ## DB Connection
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
         if (request.is_json):
             content=request.get_json()
             userId = content['USER_ID']
@@ -88,11 +93,9 @@ def get_district_list():
                     return response
                 else:
                     print("Token Validated.")
-                    conn = get_db_connection()
-                    with conn.cursor() as cursor:
-                        query = "SELECT DISTINCT district_name, district_id FROM public.address_district_master"
-                        cursor.execute(query)
-                        results = cursor.fetchall()
+                    query = "SELECT DISTINCT district_name, district_id FROM public.address_district_master"
+                    cursor.execute(query)
+                    results = cursor.fetchall()
                     for row in results:
 
                             district = {

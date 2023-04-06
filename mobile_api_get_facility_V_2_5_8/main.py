@@ -63,7 +63,11 @@ def get_facilities_data():
     try:
         print("*********Get Facilities Data************")
         defaultTime = datetime.strptime('2021-09-01 15:52:50+0530', "%Y-%m-%d %H:%M:%S%z")
-
+        
+        ## DB Connection
+        conn = get_db_connection()
+        cursor = conn.cursor()  
+        
         # Check the request data for JSON
         if request.is_json:
             content=request.get_json()
@@ -99,13 +103,11 @@ def get_facilities_data():
                     is_valid_TS = re.match(parameters['TS_FORMAT'], lastUpdate) #Checks the TimeStamp format
                     #TODO: If last updated timestamp is sent, check master_change_log to send only the changed data
                     # Logic to be changed with API design change.
-                    conn = get_db_connection()
-                    with conn.cursor() as cursor: 
-                        query = "SELECT fr.facility_id, fr.institution_gid, fr.facility_name, typ.facility_type_name FROM public.facility_registry fr LEFT JOIN public.facility_type_master typ ON typ.facility_type_id=fr.facility_type_id LEFT JOIN public.facility_category_master fcm ON fr.category_id= fcm.category_id WHERE fcm.reference_id NOT IN (40, 72, 65, 68, 66, 70, 62, 61, 71, 25, 67, 69, 64, 74, 73, 41, 16, 17, 51, 23, 75, 33, 35, 36, 56, 79) AND fr.last_update_date>%s" 
-                        dattime = {"lastUpdate": defaultTime if(lastUpdate is None or lastUpdate=='' or not is_valid_TS) else datetime.strptime(lastUpdate, "%Y-%m-%d %H:%M:%S%z")}
-                        value = (dattime['lastUpdate'],)
-                        cursor.execute(query,value)
-                        results = cursor.fetchall()
+                    query = "SELECT fr.facility_id, fr.institution_gid, fr.facility_name, typ.facility_type_name FROM public.facility_registry fr LEFT JOIN public.facility_type_master typ ON typ.facility_type_id=fr.facility_type_id LEFT JOIN public.facility_category_master fcm ON fr.category_id= fcm.category_id WHERE fcm.reference_id NOT IN (40, 72, 65, 68, 66, 70, 62, 61, 71, 25, 67, 69, 64, 74, 73, 41, 16, 17, 51, 23, 75, 33, 35, 36, 56, 79) AND fr.last_update_date>%s" 
+                    dattime = {"lastUpdate": defaultTime if(lastUpdate is None or lastUpdate=='' or not is_valid_TS) else datetime.strptime(lastUpdate, "%Y-%m-%d %H:%M:%S%z")}
+                    value = (dattime['lastUpdate'],)
+                    cursor.execute(query,value)
+                    results = cursor.fetchall()
                     for row in results:
                             facility = {"facility_id":row[0],"facility_gid":row[1],"facility_name":row[2], "facility_type":row[3]}
                             facilities.append(facility)
@@ -165,14 +167,14 @@ def retrieve_streets(facilityId):
         streets=[]
         print("Retrieving Street Data.")
         conn = get_db_connection()
-        with conn.cursor() as cursor:
-            query = "SELECT fr.facility_id, fr.institution_gid, fr.facility_name, typ.facility_type_name FROM public.facility_registry fr INNER JOIN public.facility_type_master typ on typ.facility_type_id=fr.facility_type_id WHERE fr.facility_id=%s" 
-            value = (facilityId,)
-            cursor.execute(query,value)
-            results = cursor.fetchall()
+        cursor = conn.cursor()
+        query = "SELECT fr.facility_id, fr.institution_gid, fr.facility_name, typ.facility_type_name FROM public.facility_registry fr INNER JOIN public.facility_type_master typ on typ.facility_type_id=fr.facility_type_id WHERE fr.facility_id=%s" 
+        value = (facilityId,)
+        cursor.execute(query,value)
+        results = cursor.fetchall()
         for row in results:
-                street = {"facility_id":row[0], "facility_gid":row[1], "facility_name":row[2],"facility_type":row[4]}
-                streets.append(street)
+            street = {"facility_id":row[0], "facility_gid":row[1], "facility_name":row[2],"facility_type":row[4]}
+            streets.append(street)
 
     except psycopg2.ProgrammingError as e:
         print("get_facilities_data retrieve_streets ProgrammingError",e)  

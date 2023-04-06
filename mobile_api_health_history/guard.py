@@ -70,11 +70,11 @@ def user_token_validation(userId, mobile):
     spnDB_userId = 0
     try:
         conn = get_db_connection()
-        with conn.cursor() as cursor:
-            query = "SELECT user_id FROM public.user_master WHERE mobile_number=%s AND user_id=%s"
-            values = (mobile, userId)
-            cursor.execute(query,values)
-            results = cursor.fetchall()
+        cursor = conn.cursor()
+        query = "SELECT user_id FROM public.user_master WHERE mobile_number=%s AND user_id=%s"
+        values = (mobile, userId)
+        cursor.execute(query,values)
+        results = cursor.fetchall()
         for row in results:
             spnDB_userId = row[0]       #user ID fetched from spannerDB using the mobile number
         if (spnDB_userId != 0):         #Condition to validate userId exist in spannerDB

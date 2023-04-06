@@ -82,6 +82,8 @@ def check_id_registered(familyId, memberId):
     Return: Boolean
     """
     try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
         query = 'SELECT EXISTS(SELECT family_id FROM public.family_member_master'
         param = {}
         types = {}
@@ -103,11 +105,9 @@ def check_id_registered(familyId, memberId):
             param['member_id'] = memberId
             # types['member_id'] = param_types.STRING
 
-        conn = get_db_connection()
-        with conn.cursor() as cursor:
-            value = (familyId,memberId)
-            cursor.execute(query,value)
-            result = cursor.fetchall()
+        value = (familyId,memberId)
+        cursor.execute(query,value)
+        result = cursor.fetchall()
         for row in result:
             id_exist = row[0]
         return id_exist

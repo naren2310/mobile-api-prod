@@ -268,12 +268,12 @@ def get_details_from(familyIdList, memberIdList):
     try:
         member_list=[]
         conn = get_db_connection()
-        with conn.cursor() as cursor:
-            query = "with Query_1 as (SELECT fmm.family_id ,fmm.member_id, fmm.member_name, fmm.gender, fmm.member_local_name, to_char(fmm.birth_date,'YYYY-MM-DD') AS birth_date, fmm.unique_health_id FROM public.family_member_master fmm WHERE family_id in unnest(%s) AND member_id in unnest(%s)), Query_2 as(SELECT family_id,member_id,MIN(screening_id) as screening_id, MIN(TO_JSONB(outcome)) as outcome, MAX(to_char(last_update_date AT TIME ZONE 'Asia/Calcutta', 'YYYY-MM-DD HH24:MI:SS')) AS last_update_date FROM public.health_screening WHERE family_id in unnest(%s) AND member_id in unnest(%s) AND concat(member_id, to_char(''%Y-%m-%d %H:%M:%S%z', TIMESTAMP(JSON_VALUE(update_register,'$[0].timestamp')), 'Asia/Calcutta) ) in (select concat(member_id, to_char('%Y-%m-%d %H:%M:%S%z', max_time, 'Asia/Calcutta') ) FROM (SELECT member_id,max(TIMESTAMP(JSON_VALUE(update_register,'$[0].timestamp'))) as max_time  FROM public.health_screening WHERE family_id  in  unnest(%s) AND member_id in unnest(%s) group by 1)) group by 1,2) SELECT  Q1.member_id, Q1.member_name, Q1.gender, Q1.member_local_name,to_char(Q1.birth_date,'YYYY-MM-DD') AS birth_date, Q1.unique_health_id, Q1.family_id, Q2.last_update_date, PARSE_JSON(Q2.outcome)as outcome from Query_1 Q1 left join Query_2 Q2 on Q1.family_id= Q2.family_id and Q1.member_id = Q2.member_id"
-            value = (familyIdList,memberIdList,familyIdList,memberIdList,familyIdList,memberIdList)
-            cursor.execute(query,value)
-            results = cursor.fetchall()
-            member_list = getResultFormatted(results,cursor)
+        cursor = conn.cursor()
+        query = "with Query_1 as (SELECT fmm.family_id ,fmm.member_id, fmm.member_name, fmm.gender, fmm.member_local_name, to_char(fmm.birth_date,'YYYY-MM-DD') AS birth_date, fmm.unique_health_id FROM public.family_member_master fmm WHERE family_id in unnest(%s) AND member_id in unnest(%s)), Query_2 as(SELECT family_id,member_id,MIN(screening_id) as screening_id, MIN(TO_JSONB(outcome)) as outcome, MAX(to_char(last_update_date AT TIME ZONE 'Asia/Calcutta', 'YYYY-MM-DD HH24:MI:SS')) AS last_update_date FROM public.health_screening WHERE family_id in unnest(%s) AND member_id in unnest(%s) AND concat(member_id, to_char(''%Y-%m-%d %H:%M:%S%z', TIMESTAMP(JSON_VALUE(update_register,'$[0].timestamp')), 'Asia/Calcutta) ) in (select concat(member_id, to_char('%Y-%m-%d %H:%M:%S%z', max_time, 'Asia/Calcutta') ) FROM (SELECT member_id,max(TIMESTAMP(JSON_VALUE(update_register,'$[0].timestamp'))) as max_time  FROM public.health_screening WHERE family_id  in  unnest(%s) AND member_id in unnest(%s) group by 1)) group by 1,2) SELECT  Q1.member_id, Q1.member_name, Q1.gender, Q1.member_local_name,to_char(Q1.birth_date,'YYYY-MM-DD') AS birth_date, Q1.unique_health_id, Q1.family_id, Q2.last_update_date, PARSE_JSON(Q2.outcome)as outcome from Query_1 Q1 left join Query_2 Q2 on Q1.family_id= Q2.family_id and Q1.member_id = Q2.member_id"
+        value = (familyIdList,memberIdList,familyIdList,memberIdList,familyIdList,memberIdList)
+        cursor.execute(query,value)
+        results = cursor.fetchall()
+        member_list = getResultFormatted(results,cursor)
             
     except psycopg2.ProgrammingError as e:
         print("get_search_details get_details_from ProgrammingError",e)  
@@ -293,29 +293,15 @@ def search_by_unique_health_id(unique_health_id):
         family_details = []
         family_list =[]
         member_list =[]
-        # with spnDB.snapshot() as snapshot:   
-            # query = "WITH subqry1 as (SELECT member_id, screening_id, outcome, FORMAT_TIMESTAMP('%Y-%m-%d %H:%M:%S%z', last_update_date, 'Asia/Calcutta') as last_update_date from health_screening order by last_update_date desc LIMIT 1),subqry2 as (SELECT fmm.member_id, fmm.member_name, fmm.gender, fmm.member_local_name, fmm.birth_date, fmm.unique_health_id, fmm.family_id from family_member_master fmm WHERE fmm.mobile_number=@mobile_number and fmm.facility_id is not NULL) select subqry2.member_id, subqry2.member_name, subqry2.gender, subqry2.member_local_name, subqry2.birth_date, subqry2.unique_health_id, subqry2.family_id, subqry1.last_update_date, subqry1.outcome from subqry2 LEFT join subqry1 ON subqry2.member_id=subqry1.member_id"
-            # query = 'SELECT fmm.family_id,fmm.member_id from family_member_master fmm WHERE fmm.mobile_number=@mobile_number'
-            # The above query was commented for the change in the design to optimised CPU & Also resolving the outcome response was comming null everytime. Check for function get_details_from for more info. 6 April 2022. (Shankar/Atul)
-            # query = 'SELECT fmm.family_id,fmm.member_id from family_member_master fmm WHERE  fmm.unique_health_id=@unique_health_id'
-            # Below query is formulated as per discussion with Dr.V & Kiran for removing the outcome & last update date value. 26 May 2022 = b/233998552
-        conn = get_db_connection()
-        with conn.cursor() as cursor:
-            query = "SELECT fmm.family_id ,fmm.member_id, fmm.member_name, fmm.gender, fmm.member_local_name, to_char(fmm.birth_date,'YYYY-MM-DD') AS birth_date, fmm.unique_health_id,null as last_update_date,null as outcome  FROM public.family_member_master fmm WHERE fmm.unique_health_id=%s"
-            value = (unique_health_id,)
-            cursor.execute(query,value)
-            results = cursor.fetchall()
-            family_details = getResultFormatted(results,cursor)
-            # for row in results:
-            #     if row[0] not in family_list:
-            #         family_list.append(row[0])
-            #     if row[1] not in member_list:
-            #         member_list.append(row[1])
 
-            # if len(family_list)>0 and len(member_list)>0:
-            #     family_details = get_details_from(family_list, member_list)
-            # else:
-            return family_details
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        query = "SELECT fmm.family_id ,fmm.member_id, fmm.member_name, fmm.gender, fmm.member_local_name, to_char(fmm.birth_date,'YYYY-MM-DD') AS birth_date, fmm.unique_health_id,null as last_update_date,null as outcome  FROM public.family_member_master fmm WHERE fmm.unique_health_id=%s"
+        value = (unique_health_id,)
+        cursor.execute(query,value)
+        results = cursor.fetchall()
+        family_details = getResultFormatted(results,cursor)
+        return family_details
 
     except psycopg2.ProgrammingError as e:
         print("get_search_details search_by_unique_health_id ProgrammingError",e)  
@@ -335,37 +321,14 @@ def search_by_mobile_number(mobile_number):
         family_details = []
         family_list =[]
         member_list =[]
-        # with spnDB.snapshot() as snapshot:   
-            # query = "with Main as ( SELECT fmm.member_id,fmm.member_name,fmm.gender,fmm.member_local_name,fmm.birth_date,fmm.unique_health_id,fmm.family_id FROM family_master fmly  INNER JOIN family_member_master fmm ON fmm.family_id=fmly.family_id  WHERE fmm.mobile_number=@mobile_number AND fmly.facility_id IS NOT NULL), Health as (select member_id,max(last_update_date)as last_update_date from health_screening where member_id in (select distinct member_id from Main) group by 1), Subquery as ( select hs.member_id,hs.screening_id,hs.outcome,hs.last_update_date from health_screening hs  join Health on hs.member_id = Health.member_id where CONCAT(hs.member_id,STRING(hs.last_update_date)) = CONCAT(Health.member_id,STRING(Health.last_update_date))) select Main.*,Subquery.screening_id,Subquery.outcome,Subquery.last_update_date from Main left join Subquery on Main.member_id = Subquery.member_id"
-            # query = "WITH subqry1 as (SELECT member_id, screening_id, outcome, FORMAT_TIMESTAMP('%Y-%m-%d %H:%M:%S%z', last_update_date, 'Asia/Calcutta') as last_update_date from health_screening order by last_update_date desc LIMIT 1),subqry2 as (SELECT fmm.member_id, fmm.member_name, fmm.gender, fmm.member_local_name, fmm.birth_date, fmm.unique_health_id, fmm.family_id from family_member_master fmm WHERE fmm.mobile_number=@mobile_number and fmm.facility_id is not NULL) select subqry2.member_id, subqry2.member_name, subqry2.gender, subqry2.member_local_name, subqry2.birth_date, subqry2.unique_health_id, subqry2.family_id, subqry1.last_update_date, subqry1.outcome from subqry2 LEFT join subqry1 ON subqry2.member_id=subqry1.member_id"
-            # The above query was commented for the change in the design to optimised CPU & Also resolving the outcome response was comming null everytime. Check for function get_details_from for more info. 6 April 2022. (Shankar/Atul)
-            # query = 'SELECT fmm.family_id,fmm.member_id from family_member_master fmm WHERE fmm.mobile_number=@mobile_number'
-            # Below query is formulated as per discussion with Dr.V & Kiran for removing the outcome & last update date value. 26 May 2022 = b/233998552
         conn = get_db_connection()
-        with conn.cursor() as cursor:
-            query = "SELECT fmm.family_id ,fmm.member_id, fmm.member_name, fmm.gender, fmm.member_local_name, to_char(fmm.birth_date,'YYYY-MM-DD') AS birth_date, fmm.unique_health_id,null as last_update_date,null as outcome FROM public.family_member_master fmm WHERE fmm.mobile_number=%s AND fmm.mobile_number != 0"
-                # results = snapshot.execute_sql(
-                #     query,
-                #     params= {
-                #     "mobile_number": mobile_number
-                # },
-                # param_types={
-                #     "mobile_number": param_types.INT64,
-                # })
-                # for row in results:
-                #     if row[0] not in family_list:
-                #         family_list.append(row[0])
-                #     if row[1] not in member_list:
-                #         member_list.append(row[1])
-                # if len(family_list)>0 and len(member_list)>0:
-                #     family_details = get_details_from(family_list, member_list)
-                # else:
-                #     return family_details
-            value = (mobile_number,)
-            cursor.execute(query,value)
-            results = cursor.fetchall()
-            family_details = getResultFormatted(results,cursor)
-            return family_details
+        cursor = conn.cursor()
+        query = "SELECT fmm.family_id ,fmm.member_id, fmm.member_name, fmm.gender, fmm.member_local_name, to_char(fmm.birth_date,'YYYY-MM-DD') AS birth_date, fmm.unique_health_id,null as last_update_date,null as outcome FROM public.family_member_master fmm WHERE fmm.mobile_number=%s AND fmm.mobile_number != 0"
+        value = (mobile_number,)
+        cursor.execute(query,value)
+        results = cursor.fetchall()
+        family_details = getResultFormatted(results,cursor)
+        return family_details
 
     except psycopg2.ProgrammingError as e:
         print("get_search_details search_by_mobile_number ProgrammingError",e)  
@@ -386,38 +349,14 @@ def search_by_smart_card_id(pds_smartcard_id):
         family_details = []
         family_list =[]
         member_list =[]
-        # with spnDB.snapshot() as snapshot:
-            # query = "with Main as ( SELECT fmm.member_id,fmm.member_name,fmm.gender,fmm.member_local_name,fmm.birth_date,fmm.unique_health_id,fmm.family_id FROM family_master fmly  INNER JOIN family_member_master fmm ON fmm.family_id=fmly.family_id  WHERE fmly.pds_smart_card_id=@pds_smartcard_id AND fmly.facility_id IS NOT NULL), Health as (select member_id,max(last_update_date)as last_update_date from health_screening where member_id in (select distinct member_id from Main) group by 1) , Subquery as ( select hs.member_id,hs.screening_id,hs.outcome,hs.last_update_date from health_screening hs join Health on hs.member_id = Health.member_id where CONCAT(hs.member_id,STRING(hs.last_update_date)) = CONCAT(Health.member_id,STRING(Health.last_update_date))) select Main.*,Subquery.screening_id,Subquery.outcome,Subquery.last_update_date from Main left join Subquery on Main.member_id = Subquery.member_id"
-            # query = "WITH subqry1 AS (SELECT member_id,screening_id, outcome,FORMAT_TIMESTAMP('%Y-%m-%d %H:%M:%S%z', last_update_date, 'Asia/Calcutta') AS last_update_date FROM health_screening@{FORCE_INDEX=SCREENING_LAST_UPDATE_IDX} ORDER BY last_update_date DESC LIMIT 1),subqry2 AS (SELECT fmm.member_id, fmm.member_name, fmm.gender, fmm.member_local_name, fmm.birth_date, fmm.unique_health_id,fmm.family_id FROM family_master@{FORCE_INDEX=FAMILY_PDS_SMART_NO_IDX} fmly INNER JOIN family_member_master fmm ON fmm.family_id=fmly.family_id WHERE fmly.pds_smart_card_id=@pds_smartcard_id and fmly.facility_id is not NULL) SELECT subqry2.member_id, subqry2.member_name, subqry2.gender, subqry2.member_local_name, subqry2.birth_date, subqry2.unique_health_id,subqry2.family_id, subqry1.last_update_date, subqry1.outcome FROM subqry2 LEFT JOIN subqry1 ON subqry2.member_id=subqry1.member_id"
-            # The above query was commented for the change in the design to optimised CPU & Also resolving the outcome response was comming null everytime. Check for function get_details_from for more info. 6 April 2022. (Shankar/Atul)
-            # query = 'SELECT fmm.family_id,fmm.member_id from family_member_master fmm WHERE  family_id in (select family_id from family_master fmly WHERE fmly.pds_smart_card_id=@pds_smartcard_id)'
-            # Below query is formulated as per discussion with Dr.V & Kiran for removing the outcome & last update date value. 26 May 2022 = b/233998552
         conn = get_db_connection()
-        with conn.cursor() as cursor:
-            query = "SELECT fmm.family_id ,fmm.member_id, fmm.member_name, fmm.gender, fmm.member_local_name, to_char(fmm.birth_date,'YYYY-MM-DD') AS birth_date, fmm.unique_health_id,null as last_update_date,null as outcome FROM public.family_member_master fmm WHERE family_id in (SELECT family_id FROM public.family_master fmly WHERE  fmly.pds_smart_card_id not in (333000000000,334000000000,0) AND fmly.pds_smart_card_id=%s)"
-                # results = snapshot.execute_sql(
-                #     query,
-                #     params= {
-                #     "pds_smartcard_id": pds_smartcard_id
-                # },
-                # param_types={
-                #     "pds_smartcard_id": param_types.INT64,
-                # })
-
-                # for row in results:
-                #     if row[0] not in family_list:
-                #         family_list.append(row[0])
-                #     if row[1] not in member_list:
-                #         member_list.append(row[1])
-
-                # if len(family_list)>0 and len(member_list)>0:
-                #     family_details = get_details_from(family_list, member_list)
-                # else:
-            value = (pds_smartcard_id,)
-            cursor.execute(query,value)
-            results = cursor.fetchall()
-            family_details = getResultFormatted(results,cursor)
-            return family_details
+        cursor = conn.cursor()
+        query = "SELECT fmm.family_id ,fmm.member_id, fmm.member_name, fmm.gender, fmm.member_local_name, to_char(fmm.birth_date,'YYYY-MM-DD') AS birth_date, fmm.unique_health_id,null as last_update_date,null as outcome FROM public.family_member_master fmm WHERE family_id in (SELECT family_id FROM public.family_master fmly WHERE  fmly.pds_smart_card_id not in (333000000000,334000000000,0) AND fmly.pds_smart_card_id=%s)"
+        value = (pds_smartcard_id,)
+        cursor.execute(query,value)
+        results = cursor.fetchall()
+        family_details = getResultFormatted(results,cursor)
+        return family_details
 
     except psycopg2.ProgrammingError as e:
         print("get_search_details search_by_smart_card_id ProgrammingError",e)  
@@ -435,62 +374,28 @@ def search_by_smart_card_id(pds_smartcard_id):
 def search_by_name(member_name, district_id, block_id, village_id, offset):
     try:
         print("Search by name.")
-        # cloud_logger.info("Search by name.")
         family_details = []
-        # family_list =[]
-        # member_list =[]
-
-        # query = "WITH subqry1 as (SELECT member_id, screening_id, outcome, FORMAT_TIMESTAMP('%Y-%m-%d %H:%M:%S%z', last_update_date, 'Asia/Calcutta') as last_update_date from health_screening@{FORCE_INDEX=SCREENING_LAST_UPDATE_IDX} order by last_update_date desc LIMIT 1),subqry2 as (SELECT fmm.member_id, fmm.member_name, fmm.gender, fmm.member_local_name, fmm.birth_date, fmm.unique_health_id, fmm.family_id from family_member_master@{FORCE_INDEX=MEMBER_BLOCK_ID_WITH_STORING_COLS_IDX} fmm WHERE fmm.district_id=@district_id"
-        # query = 'SELECT fmm.family_id,fmm.member_id from family_member_master fmm WHERE fmm.district_id=@district_id'
-        # Below query is formulated as per discussion with Dr.V & Kiran for removing the outcome & last update date value. 26 May 2022 = b/233998552
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
         query = "SELECT  fmm.family_id ,fmm.member_id, fmm.member_name, fmm.gender, fmm.member_local_name, to_char(fmm.birth_date,'YYYY-MM-DD') AS birth_date, fmm.unique_health_id,null as last_update_date,null as outcome FROM public.family_member_master fmm WHERE fmm.district_id=%s"
         if block_id is not None and block_id != '':
             query += " AND fmm.block_id=%s"
         if village_id is not None and village_id != '':
-            query += " AND fmm.village_id=%s"
-        # query += ' and STARTS_WITH (LOWER(fmm.member_name),lower(@member_name)' Since we also need to search by last name as well. 
+            query += " AND fmm.village_id=%s" 
         
         if(member_name):
                 appendStr = " AND lower(fmm.member_name) like LOWER(%s)"
                 query += appendStr
                 member_name = "%"+member_name+"%"
         query += ' order by fmm.member_name limit 3000 offset %s'
-        # with spnDB.snapshot() as snapshot:
-
-            # results = snapshot.execute_sql(
-            #     query,
-            #     params= {
-            #         "member_name": "%" + member_name + "%",    
-            #         "district_id": district_id,
-            #         "block_id": block_id,
-            #         "village_id": village_id,
-            #         "offset": offset
-            #     },
-            #     param_types={
-            #         "member_name": param_types.STRING,
-            #         "district_id": param_types.STRING,
-            #         "block_id": param_types.STRING,
-            #         "village_id": param_types.STRING,
-            #         "offset": param_types.INT64
-            #     })
-            
-            # for row in results:
-            #     if row[0] not in family_list:
-            #         family_list.append(row[0])
-            #     if row[1] not in member_list:
-            #         member_list.append(row[1])
-
-            # if len(family_list)>0 and len(member_list)>0:
-            #     family_details = get_details_from(family_list, member_list)
-            # else:
-            #     return family_details
-        conn = get_db_connection()
-        with conn.cursor() as cursor:
-            value = (district_id,block_id,village_id,member_name,offset)
-            cursor.execute(query,value)
-            results = cursor.fetchall()
-            family_details = getResultFormatted(results,cursor)
-            return family_details
+        
+        value = (district_id,block_id,village_id,member_name,offset)
+        cursor.execute(query,value)
+        results = cursor.fetchall()
+        family_details = getResultFormatted(results,cursor)
+        return family_details
 
     except psycopg2.ProgrammingError as e:
         print("get_search_details search_by_name ProgrammingError",e)  

@@ -76,11 +76,11 @@ def user_token_validation(userId, mobile):
     spnDB_userId = 0
     try:
         conn = get_db_connection()
-        with conn.cursor() as cursor:
-            query = "SELECT user_id FROM public.user_master WHERE mobile_number=%s AND user_id=%s"
-            value = (mobile,userId)
-            cursor.execute(query,value)
-            results = cursor.fetchall()
+        cursor = conn.cursor()
+        query = "SELECT user_id FROM public.user_master WHERE mobile_number=%s AND user_id=%s"
+        value = (mobile,userId)
+        cursor.execute(query,value)
+        results = cursor.fetchall()
         for row in results:
             spnDB_userId = row[0]       #user ID fetched from spannerDB using the mobile number
         if (spnDB_userId != 0):         #Condition to validate userId exist in spannerDB
@@ -193,6 +193,8 @@ def check_id_registered(districtId, blockId, villageId):
     Return: Boolean
     """
     try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
         query = 'SELECT EXISTS(SELECT district_id FROM public.address_village_master'
         param = {}
         # types = {}
@@ -215,13 +217,9 @@ def check_id_registered(districtId, blockId, villageId):
             # types['district_id'] = param_types.STRING
             # types['block_id'] = param_types.STRING
 
-        # with spnDB.snapshot() as snapshot: 
-            # result = snapshot.execute_sql(query, params= param, param_types=types)
-        conn = get_db_connection()
-        with conn.cursor() as cursor:
-            value = (districtId,blockId,villageId)
-            cursor.execute(query,value)
-            result = cursor.fetchall()
+        value = (districtId,blockId,villageId)
+        cursor.execute(query,value)
+        result = cursor.fetchall()
         for row in result:
             id_exist = row[0]
         return id_exist

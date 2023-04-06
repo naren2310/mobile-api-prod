@@ -4,14 +4,15 @@ import guard
 def fetchLastUpdate(memberId, familyId):
     try:
         print("Fetching Last Update Timestamp.")
+        last_update_date = None  
+          
         conn = get_db_connection()
-        with conn.cursor() as cursor:
-            query = "SELECT to_char(last_update_date AT TIME ZONE 'Asia/Calcutta', 'YYYY-MM-DD HH24:MI:SS+05:30') as last_update_date FROM public.health_history WHERE family_id=%s AND member_id=%s"
-            values = (familyId, memberId)
-            cursor.execute(query,values)
-            results = cursor.fetchall()
+        cursor = conn.cursor()
+        query = "SELECT to_char(last_update_date AT TIME ZONE 'Asia/Calcutta', 'YYYY-MM-DD HH24:MI:SS+05:30') as last_update_date FROM public.health_history WHERE family_id=%s AND member_id=%s"
+        values = (familyId, memberId)
+        cursor.execute(query,values)
+        results = cursor.fetchall()
 
-        last_update_date = None    
 
         for row in results:
             last_update_date = datetime.strptime(row[0], "%Y-%m-%d %H:%M:%S%z")
@@ -48,8 +49,11 @@ def UpsertMedicalHistory(historyList):
         serefVals=[]
         memberVals=[]
 
-        cntIdx=0
+        ## DB Connection
         conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cntIdx=0
         for history in historyList:
             #Temp Value Arrays
             values=[]
@@ -132,31 +136,28 @@ def UpsertMedicalHistory(historyList):
 
                 print('health_history inserting')
                 print("History = {}, Values = {}".format(str(historyKeys), str(historyVals))) 
-                with conn.cursor() as cursor:
-                    for historyValss in historyVals:
-                        value = tuple(historyValss)
-                        query = f"INSERT INTO public.health_history ({','.join(historyKeys)}) VALUES ({','.join(['%s']*len(historyKeys))}) ON CONFLICT (medical_history_id) DO UPDATE SET {','.join([f'{key}=%s' for key in historyKeys])}"
-                        cursor.execute(query,(value)*2)
-                        conn.commit()
+                for historyValss in historyVals:
+                    value = tuple(historyValss)
+                    query = f"INSERT INTO public.health_history ({','.join(historyKeys)}) VALUES ({','.join(['%s']*len(historyKeys))}) ON CONFLICT (medical_history_id) DO UPDATE SET {','.join([f'{key}=%s' for key in historyKeys])}"
+                    cursor.execute(query,(value)*2)
+                    conn.commit()
  
                 print("family_member_master inserting")
                 print("Member = {}, Values = {}".format(str(memberKeys), str(memberVals)))
-                with conn.cursor() as cursor:
-                    for memberValss in memberVals:
-                        value = tuple(memberValss)
-                        query = f"INSERT INTO public.family_member_master ({','.join(memberKeys)}) VALUES ({','.join(['%s']*len(memberKeys))}) ON CONFLICT (member_id) DO UPDATE SET {','.join([f'{key}=%s' for key in memberKeys])}"
-                        cursor.execute(query,(value)*2)
-                        conn.commit()
+                for memberValss in memberVals:
+                    value = tuple(memberValss)
+                    query = f"INSERT INTO public.family_member_master ({','.join(memberKeys)}) VALUES ({','.join(['%s']*len(memberKeys))}) ON CONFLICT (member_id) DO UPDATE SET {','.join([f'{key}=%s' for key in memberKeys])}"
+                    cursor.execute(query,(value)*2)
+                    conn.commit()
 
                 print("family_member_socio_economic_ref inserting")
                 print("serefKeys",serefKeys)
                 print("serefVals",serefVals)
-                with conn.cursor() as cursor:
-                    for serefValss in serefVals:
-                        value = tuple(serefValss)
-                        query = f"INSERT INTO public.family_member_socio_economic_ref ({','.join(serefKeys)}) VALUES ({','.join(['%s']*len(serefKeys))}) ON CONFLICT (member_id) DO UPDATE SET {','.join([f'{key}=%s' for key in serefKeys])}"
-                        cursor.execute(query,(value)*2)
-                        conn.commit()
+                for serefValss in serefVals:
+                    value = tuple(serefValss)
+                    query = f"INSERT INTO public.family_member_socio_economic_ref ({','.join(serefKeys)}) VALUES ({','.join(['%s']*len(serefKeys))}) ON CONFLICT (member_id) DO UPDATE SET {','.join([f'{key}=%s' for key in serefKeys])}"
+                    cursor.execute(query,(value)*2)
+                    conn.commit()
                 
             else:
                 ignores+=1
@@ -181,11 +182,11 @@ def getUpdateRegister(memberId, updateRegister, familyId):
         print("Formatting Update Register.")
         update_register = None
         conn = get_db_connection()
-        with conn.cursor() as cursor:
-            query = "SELECT update_register FROM public.health_history WHERE family_id=%s AND member_id=%s"
-            values = (familyId, memberId)
-            cursor.execute(query,values)
-            results = cursor.fetchall()
+        cursor = conn.cursor()
+        query = "SELECT update_register FROM public.health_history WHERE family_id=%s AND member_id=%s"
+        values = (familyId, memberId)
+        cursor.execute(query,values)
+        results = cursor.fetchall()
         for row in results:
             if row[0] is None:
                 update_register = []
@@ -214,11 +215,11 @@ def getUpdateRegisterForMemberMaster(memberId, updateRegister, familyId):
         print("Formatting Update Register for Member.")
         update_register = None
         conn = get_db_connection()
-        with conn.cursor() as cursor:
-            query = "SELECT update_register FROM public.family_member_master WHERE family_id=%s AND member_id=%s"
-            values = (familyId, memberId)
-            cursor.execute(query,values)
-            results = cursor.fetchall()
+        cursor = conn.cursor()
+        query = "SELECT update_register FROM public.family_member_master WHERE family_id=%s AND member_id=%s"
+        values = (familyId, memberId)
+        cursor.execute(query,values)
+        results = cursor.fetchall()
         for row in results:
             if row[0] is None:
                 update_register = []
@@ -249,11 +250,11 @@ def getUpdateRegisterForSocioMemberRef(memberId, updateRegister, familyId):
         userId = updateRegister["user_id"]
         timestamp = updateRegister["timestamp"]
         conn = get_db_connection()
-        with conn.cursor() as cursor:
-            query = "SELECT update_register FROM public.family_member_socio_economic_ref WHERE family_id=%s AND member_id=%s"
-            values = (familyId, memberId)
-            cursor.execute(query,values)
-            results = cursor.fetchall()
+        cursor = conn.cursor()
+        query = "SELECT update_register FROM public.family_member_socio_economic_ref WHERE family_id=%s AND member_id=%s"
+        values = (familyId, memberId)
+        cursor.execute(query,values)
+        results = cursor.fetchall()
         for row in results:
             if row[0] is None:
                 update_register = []
@@ -286,11 +287,11 @@ def mtm_data_verification(memberId, history, familyId):
     """
     try:
         conn = get_db_connection()
-        with conn.cursor() as cursor:
-            query = "SELECT mtm_beneficiary FROM public.health_history WHERE family_id=%s AND member_id=%s"
-            values = (familyId, memberId)
-            cursor.execute(query,values)
-            results = cursor.fetchall()
+        cursor = conn.cursor()
+        query = "SELECT mtm_beneficiary FROM public.health_history WHERE family_id=%s AND member_id=%s"
+        values = (familyId, memberId)
+        cursor.execute(query,values)
+        results = cursor.fetchall()
         for mtm_values in results:
                 print("MTM_Values:")
                 if mtm_values[0] is not None and mtm_values[0]!={}:

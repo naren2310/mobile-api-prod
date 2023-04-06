@@ -64,6 +64,7 @@ def get_families_data():
     try:
         print("********Get Families Data*********")
         defaultTime = datetime.strptime('2021-09-01 15:52:50+0530', "%Y-%m-%d %H:%M:%S%z")
+        
         # Check the request data for JSON
         if request.is_json:
             request_data =request.get_json()
@@ -149,11 +150,11 @@ def get_address_for(familyId):
     try:
         print('Getting address details from Family Id : %s', str(familyId))
         conn = get_db_connection()
-        with conn.cursor() as cursor:
-            query = "with Street as (SELECT street_id,country_id,state_id,district_id,hud_id,block_id,village_id,rev_village_id,area_id,ward_id,habitation_id,hsc_unit_id FROM public.address_street_master WHERE street_gid = (SELECT street_gid FROM public.address_shop_master WHERE shop_id = (SELECT  shop_id FROM public.family_master WHERE family_id = %s AND street_id is null)))SELECT S.country_id as country_id_new,S.state_id as state_id_new ,S.district_id as district_id_new,S.hud_id as hud_id_new, S.block_id as block_id_new,rev.taluk_id as taluk_id_new ,S.village_id as village_id_new,S.rev_village_id as rev_village_id_new ,S.habitation_id as habitation_id_new,S.area_id as area_id_new,S.ward_id as ward_id_new ,S.street_id as street_id_new ,hhg.hhg_id as hhg_id_new FROM Street S left join public.address_hhg_master HHG on S.street_id=HHG.street_id left join public.address_revenue_village_master REV on hhg.rev_village_id=rev.rev_village_id"
-            values = (familyId,)
-            cursor.execute(query,values)
-            result = cursor.fetchall()
+        cursor = conn.cursor()
+        query = "with Street as (SELECT street_id,country_id,state_id,district_id,hud_id,block_id,village_id,rev_village_id,area_id,ward_id,habitation_id,hsc_unit_id FROM public.address_street_master WHERE street_gid = (SELECT street_gid FROM public.address_shop_master WHERE shop_id = (SELECT  shop_id FROM public.family_master WHERE family_id = %s AND street_id is null)))SELECT S.country_id as country_id_new,S.state_id as state_id_new ,S.district_id as district_id_new,S.hud_id as hud_id_new, S.block_id as block_id_new,rev.taluk_id as taluk_id_new ,S.village_id as village_id_new,S.rev_village_id as rev_village_id_new ,S.habitation_id as habitation_id_new,S.area_id as area_id_new,S.ward_id as ward_id_new ,S.street_id as street_id_new ,hhg.hhg_id as hhg_id_new FROM Street S left join public.address_hhg_master HHG on S.street_id=HHG.street_id left join public.address_revenue_village_master REV on hhg.rev_village_id=rev.rev_village_id"
+        values = (familyId,)
+        cursor.execute(query,values)
+        result = cursor.fetchall()
         for row in result:
             address["country_id_new"] = row[0]
             address["state_id_new"]=row[1]
@@ -250,12 +251,12 @@ def get_family_data(userId, defaultTime, content):
         # query = "SELECT fmly.family_id,fmly.phr_family_id,fmly.family_head,fmly.family_members_count,fmly.pds_smart_card_id,fmly.pds_old_card_id,fmly.family_insurances,fmly.shop_id,fmly.country_id,fmly.state_id, fmly.district_id,fmly.hud_id,fmly.block_id,fmly.taluk_id,fmly.village_id,fmly.rev_village_id,fmly.habitation_id,fmly.area_id,fmly.ward_id,fmly.street_id,fmly.hhg_id,fmly.pincode,fmly.door_no,fmly.apartment_name,fmly.postal_address,fmly.facility_id, fmly.hsc_unit_id,fmly.reside_status,fmly.latitude,fmly.longitude,seref.social_details,seref.economic_details,fmly.update_register,FORMAT_TIMESTAMP('%Y-%m-%d %H:%M:%S%z', fmly.last_update_date, 'Asia/Calcutta') AS last_update_date FROM family_master@{FORCE_INDEX=FAMILY_FACILITY_ID_IDX} fmly LEFT JOIN family_socio_economic_ref seref ON seref.family_id=fmly.family_id WHERE fmly.facility_id = (SELECT facility_id FROM user_master usr WHERE user_id=@userId) AND fmly.last_update_date>@lastUpdate ORDER BY fmly.phr_family_id LIMIT 3000 OFFSET @offset"
         # The above query is optimised post discussion with Darshak (Spanner SPOC from Google.) - 29 April 2022
         conn = get_db_connection()
-        with conn.cursor() as cursor:
-            query = "SELECT fmly.family_id,fmly.phr_family_id,fmly.family_head,fmly.family_members_count,fmly.pds_smart_card_id,fmly.pds_old_card_id,fmly.family_insurances,fmly.shop_id,fmly.country_id,fmly.state_id, fmly.district_id,fmly.hud_id,fmly.block_id,fmly.taluk_id,fmly.village_id,fmly.rev_village_id,fmly.habitation_id,fmly.area_id,fmly.ward_id,fmly.street_id,fmly.hhg_id,fmly.pincode,fmly.door_no,fmly.apartment_name,fmly.postal_address,fmly.facility_id, fmly.hsc_unit_id,fmly.reside_status,fmly.latitude,fmly.longitude,seref.social_details,seref.economic_details,fmly.update_register,to_char(fmly.last_update_date AT TIME ZONE 'Asia/Calcutta', 'YYYY-MM-DD HH24:MI:SS') AS last_update_date FROM public.family_master fmly left join public.family_socio_economic_ref seref ON seref.family_id=fmly.family_id WHERE fmly.facility_id = (SELECT facility_id FROM public.user_master usr WHERE user_id=%s) AND fmly.last_update_date>%s ORDER BY fmly.phr_family_id LIMIT 3000 OFFSET %s"
-            values = (userId,lastUpdateTS, offset)
-            cursor.execute(query, values)
-            results = cursor.fetchall()
-            data = getResultFormatted(results,cursor)
+        cursor = conn.cursor()
+        query = "SELECT fmly.family_id,fmly.phr_family_id,fmly.family_head,fmly.family_members_count,fmly.pds_smart_card_id,fmly.pds_old_card_id,fmly.family_insurances,fmly.shop_id,fmly.country_id,fmly.state_id, fmly.district_id,fmly.hud_id,fmly.block_id,fmly.taluk_id,fmly.village_id,fmly.rev_village_id,fmly.habitation_id,fmly.area_id,fmly.ward_id,fmly.street_id,fmly.hhg_id,fmly.pincode,fmly.door_no,fmly.apartment_name,fmly.postal_address,fmly.facility_id, fmly.hsc_unit_id,fmly.reside_status,fmly.latitude,fmly.longitude,seref.social_details,seref.economic_details,fmly.update_register,to_char(fmly.last_update_date AT TIME ZONE 'Asia/Calcutta', 'YYYY-MM-DD HH24:MI:SS') AS last_update_date FROM public.family_master fmly left join public.family_socio_economic_ref seref ON seref.family_id=fmly.family_id WHERE fmly.facility_id = (SELECT facility_id FROM public.user_master usr WHERE user_id=%s) AND fmly.last_update_date>%s ORDER BY fmly.phr_family_id LIMIT 3000 OFFSET %s"
+        values = (userId,lastUpdateTS, offset)
+        cursor.execute(query, values)
+        results = cursor.fetchall()
+        data = getResultFormatted(results,cursor)
 
     except psycopg2.ProgrammingError as e:
         print("get_families_data get_family_data ProgrammingError",e)  
@@ -288,7 +289,6 @@ def getUpdateRegister(update_register):
                 return update_register
     except Exception as e:
         print("Error parsing Update Register : %s | %s | %s", str(e), guard.current_userId, guard.current_appversion)
-        # cloud_logger.error("Error parsing Update Register : %s | %s | %s", str(e), guard.current_userId, guard.current_appversion)
 
 if __name__=="__main__":    
     app.run(host="0.0.0.0", port=8000)

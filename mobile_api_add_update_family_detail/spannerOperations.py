@@ -15,11 +15,11 @@ def get_hierarchy_field(streetId):
         }
         street_gid = ""
         conn = get_db_connection()
-        with conn.cursor() as cursor:
-            query = "SELECT strt.facility_id, hhg.hhg_id, hhg.street_id, hhg.ward_id, hhg.area_id, hhg.habitation_id, hhg.rev_village_id, hhg.village_id, hhg.block_id, hhg.hud_id, rev.taluk_id, hhg.district_id, hhg.state_id, hhg.country_id, hhg.hsc_unit_id, strt.street_gid FROM public.address_hhg_master hhg LEFT JOIN public.address_street_master strt on hhg.street_id=strt.street_id LEFT JOIN public.address_revenue_village_master as rev on hhg.rev_village_id=rev.rev_village_id WHERE strt.street_id=%s" 
-            value = (streetId,)
-            cursor.execute(query,value)
-            result = cursor.fetchall()
+        cursor = conn.cursor()
+        query = "SELECT strt.facility_id, hhg.hhg_id, hhg.street_id, hhg.ward_id, hhg.area_id, hhg.habitation_id, hhg.rev_village_id, hhg.village_id, hhg.block_id, hhg.hud_id, rev.taluk_id, hhg.district_id, hhg.state_id, hhg.country_id, hhg.hsc_unit_id, strt.street_gid FROM public.address_hhg_master hhg LEFT JOIN public.address_street_master strt on hhg.street_id=strt.street_id LEFT JOIN public.address_revenue_village_master as rev on hhg.rev_village_id=rev.rev_village_id WHERE strt.street_id=%s" 
+        value = (streetId,)
+        cursor.execute(query,value)
+        result = cursor.fetchall()
         for row in result:
                 hierarchy_fields["facility_id"]=row[0]
                 hierarchy_fields["hhg_id"]=row[1]
@@ -102,11 +102,11 @@ def get_address(streetId, Query):
     try:
         print('Getting address details of Family for Street Id : %s by query : %s', str(streetId), str(Query))
         conn = get_db_connection()
-        with conn.cursor() as cursor:
-            query = Query
-            value = (streetId,)
-            cursor.execute(query,value)
-            result = cursor.fetchall()
+        cursor = conn.cursor()
+        query = Query
+        value = (streetId,)
+        cursor.execute(query,value)
+        result = cursor.fetchall()
         for row in result:  
                 street_id_value = row[2]
                 if street_id_value is not None and street_id_value !='':
@@ -150,11 +150,11 @@ def get_shop(street_gid):
         print('Getting Shop details from Street GId : %s', str(street_gid))
         shop_id = None
         conn = get_db_connection()
-        with conn.cursor() as cursor:
-            value = (street_gid,)
-            query = "SELECT shop_id FROM public.address_shop_master WHERE street_gid=%s"
-            cursor.execute(query,value)
-            result = cursor.fetchall()
+        cursor = conn.cursor()
+        value = (street_gid,)
+        query = "SELECT shop_id FROM public.address_shop_master WHERE street_gid=%s"
+        cursor.execute(query,value)
+        result = cursor.fetchall()
         for row in result:
                 shop_id = row[0]
 
@@ -178,18 +178,17 @@ def get_phr_family_id():
         print('Generating Unique health Id.')
         query = "SELECT value FROM public.operational_parameters WHERE parameter='MAX_PHR_FAMILY_ID'"
         conn = get_db_connection()
-        with conn.cursor() as cursor:
-            cursor.execute(query)
-            results = cursor.fetchall()
+        cursor = conn.cursor()
+        cursor.execute(query)
+        results = cursor.fetchall()
         for row in results:
                 maxPHRFamilyId = row[0]+1
 
-        conn = get_db_connection()
-        with conn.cursor() as cursor:
-            value = (maxPHRFamilyId,)
-            query = "UPDATE public.operational_parameters SET value=%s WHERE parameter='MAX_PHR_FAMILY_ID'"
-            cursor.execute(query,value)
-            conn.commit()
+
+        value = (maxPHRFamilyId,)
+        query = "UPDATE public.operational_parameters SET value=%s WHERE parameter='MAX_PHR_FAMILY_ID'"
+        cursor.execute(query,value)
+        conn.commit()
 
     except psycopg2.ProgrammingError as e:
         print("add_update_family_details get_phr_family_id ProgrammingError",e)  
@@ -212,21 +211,19 @@ def get_unique_health_id():
     try:
         print('Generating Unique health Id.')
         conn = get_db_connection()
-        with conn.cursor() as cursor:
-            query = "SELECT value FROM public.operational_parameters WHERE parameter='MAX_UHID'"
-            cursor.execute(query)
-            results = cursor.fetchall()
+        cursor = conn.cursor()
+        query = "SELECT value FROM public.operational_parameters WHERE parameter='MAX_UHID'"
+        cursor.execute(query)
+        results = cursor.fetchall()
         for row in results:
                 maxUHID = row[0]+1
 
-        conn = get_db_connection()
-        with conn.cursor() as cursor:
-            value = (maxUHID,)
-            query = "UPDATE public.operational_parameters SET value=%s WHERE parameter='MAX_UHID'"
-            cursor.execute(query,value)
-            conn.commit()
-            uInitial = "P0" if len(str(maxUHID))==8 else "P"
-            uhid = uInitial+str(maxUHID)
+        value = (maxUHID,)
+        query = "UPDATE public.operational_parameters SET value=%s WHERE parameter='MAX_UHID'"
+        cursor.execute(query,value)
+        conn.commit()
+        uInitial = "P0" if len(str(maxUHID))==8 else "P"
+        uhid = uInitial+str(maxUHID)
 
     except psycopg2.ProgrammingError as e:
         print("add_update_family_details get_unique_health_id ProgrammingError",e)  
@@ -247,11 +244,11 @@ def fetchSocioEconomicId(family_id):
     try:
         print("Fetching Socio Economic ID for Family.")
         conn = get_db_connection()
-        with conn.cursor() as cursor:
-            query = "SELECT family_socio_economic_id FROM public.family_socio_economic_ref WHERE family_id=%s"
-            value = (family_id,)
-            cursor.execute(query,value)
-            results = cursor.fetchall()
+        cursor = conn.cursor()
+        query = "SELECT family_socio_economic_id FROM public.family_socio_economic_ref WHERE family_id=%s"
+        value = (family_id,)
+        cursor.execute(query,value)
+        results = cursor.fetchall()
         for row in results:
                 data = row[0]
 
@@ -274,11 +271,11 @@ def fetchLastUpdateFamily(family_id):
     try:
         print("Fetching Last Update Timestamp for Family.")
         conn = get_db_connection()
-        with conn.cursor() as cursor:
-            query = "SELECT last_update_date, update_register FROM public.family_master WHERE family_id=%s"
-            value = (family_id,)
-            cursor.execute(query,value)
-            results = cursor.fetchall()
+        cursor = conn.cursor()
+        query = "SELECT last_update_date, update_register FROM public.family_master WHERE family_id=%s"
+        value = (family_id,)
+        cursor.execute(query,value)
+        results = cursor.fetchall()
         for row in results:
                 data = {
                     'last_update_date': row[0],
@@ -304,11 +301,11 @@ def fetchLastUpdateMember(memberId, familyId):
         print("Fetching Last Update Timestamp for Member.")
         print("Member Id = {}".format(memberId))
         conn = get_db_connection()
-        with conn.cursor() as cursor:
-            query = "SELECT last_update_date, update_register FROM public.family_member_master WHERE member_id=%s AND family_id=%s"
-            value = (memberId,familyId)
-            cursor.execute(query,value)
-            results = cursor.fetchall()
+        cursor = conn.cursor()
+        query = "SELECT last_update_date, update_register FROM public.family_member_master WHERE member_id=%s AND family_id=%s"
+        value = (memberId,familyId)
+        cursor.execute(query,value)
+        results = cursor.fetchall()
         for row in results:
                 data = {
                     'last_update_date': row[0],
@@ -362,8 +359,11 @@ def UpsertFamilyDetails(family_list, userId):
         serefVals=[]
         memberVals=[]
 
-        cntIdx=0
+        ## DB Conncection 
         conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cntIdx=0
         for family in family_list:
             #Temp Value Arrays
             fvalues=[]
@@ -509,30 +509,27 @@ def UpsertFamilyDetails(family_list, userId):
 
         if len(familyKeys)>0:      
             print("Initiating Family insertion.")
-            with conn.cursor() as cursor:
-                for familyValss in familyVals:
-                    value = tuple(familyValss) 
-                    query = f"INSERT INTO public.family_master ({','.join(familyKeys)}) VALUES ({','.join(['%s']*len(familyKeys))}) ON CONFLICT (family_id) DO UPDATE SET {','.join([f'{key}=%s' for key in familyKeys])}"
-                    cursor.execute(query,(value)*2)
-                    conn.commit()
+            for familyValss in familyVals:
+                value = tuple(familyValss) 
+                query = f"INSERT INTO public.family_master ({','.join(familyKeys)}) VALUES ({','.join(['%s']*len(familyKeys))}) ON CONFLICT (family_id) DO UPDATE SET {','.join([f'{key}=%s' for key in familyKeys])}"
+                cursor.execute(query,(value)*2)
+                conn.commit()
 
         if len(serefKeys)>0:
             print("Initiating SEREF insertion.")
-            with conn.cursor() as cursor:
-                for serefValss in serefVals:
-                    value = tuple(serefValss)
-                    query = f"INSERT INTO public.family_socio_economic_ref ({','.join(serefKeys)}) VALUES ({','.join(['%s']*len(serefKeys))}) ON CONFLICT (family_socio_economic_id) DO UPDATE SET {','.join([f'{key}=%s' for key in serefKeys])}"
-                    cursor.execute(query,(value)*2)
-                    conn.commit() 
+            for serefValss in serefVals:
+                value = tuple(serefValss)
+                query = f"INSERT INTO public.family_socio_economic_ref ({','.join(serefKeys)}) VALUES ({','.join(['%s']*len(serefKeys))}) ON CONFLICT (family_socio_economic_id) DO UPDATE SET {','.join([f'{key}=%s' for key in serefKeys])}"
+                cursor.execute(query,(value)*2)
+                conn.commit() 
 
         if len(memberKeys)>0:
                 print("Initiating Family Member insertion.")
-                with conn.cursor() as cursor:
-                    for memberValss in memberVals:
-                        value = tuple(memberValss)
-                        query = f"INSERT INTO public.family_member_master ({','.join(memberKeys)}) VALUES ({','.join(['%s']*len(memberKeys))}) ON CONFLICT (member_id) DO UPDATE SET {','.join([f'{key}=%s' for key in memberKeys])}"
-                        cursor.execute(query,(value)*2)
-                        conn.commit()
+                for memberValss in memberVals:
+                    value = tuple(memberValss)
+                    query = f"INSERT INTO public.family_member_master ({','.join(memberKeys)}) VALUES ({','.join(['%s']*len(memberKeys))}) ON CONFLICT (member_id) DO UPDATE SET {','.join([f'{key}=%s' for key in memberKeys])}"
+                    cursor.execute(query,(value)*2)
+                    conn.commit()
 
     except psycopg2.ProgrammingError as e:
         print("add_update_family_details UpsertFamilyDetails ProgrammingError",e)  
@@ -651,11 +648,11 @@ def getUpdateRegisterForFamilySocioRef(familyId, updateRegister):
     try:
         update_register = None
         conn = get_db_connection()
-        with conn.cursor() as cursor:
-            query = "SELECT update_register FROM public.family_socio_economic_ref WHERE family_id=%s"
-            value = (familyId,) 
-            cursor.execute(query,value)
-            results = cursor.fetchall()
+        cursor = conn.cursor()
+        query = "SELECT update_register FROM public.family_socio_economic_ref WHERE family_id=%s"
+        value = (familyId,) 
+        cursor.execute(query,value)
+        results = cursor.fetchall()
         for row in results:
                 if row[0] is None:
                     update_register = []
