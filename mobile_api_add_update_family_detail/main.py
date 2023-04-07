@@ -197,5 +197,10 @@ def add_update_family_details():
     finally:
         return response
     
+
+@app.route('/api/mobile_api_add_update_family_detail/hc', methods=['GET'])
+def add_update_family_details_health_check():
+    return {"status": "OK", "message": "success mobile_api_add_update_family_detail health check"}
+    
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000)

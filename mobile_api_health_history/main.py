@@ -152,5 +152,9 @@ def member_health_history():
     finally:
         return response
 
+@app.route('/api/mobile_api_health_history/hc', methods=['GET'])
+def mobile_api_health_history_health_check():
+    return {"status": "OK", "message": "success mobile_api_health_history health check"} 
+
 if __name__=="__main__":    
     app.run(host="0.0.0.0", port=8000)

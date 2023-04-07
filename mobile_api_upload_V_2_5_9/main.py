@@ -346,7 +346,10 @@ def getfiles(image_name):
         print('Error while retrieve files to storage : %s | %s | %s', str(e), guard.current_userId, guard.current_appversion)
         return False
     
-    
+
+@app.route('/api/mobile_api_upload/hc', methods=['GET'])
+def mobile_api_upload_health_check():
+    return {"status": "OK", "message": "success mobile_api_upload health check"} 
 
 if __name__=="__main__":    
     app.run(host="0.0.0.0", port=8000)

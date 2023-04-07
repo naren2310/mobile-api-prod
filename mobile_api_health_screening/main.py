@@ -156,6 +156,10 @@ def member_screening_details():
     finally:
         return response
 
+@app.route('/api/mobile_api_health_screening/hc', methods=['GET'])
+def mobile_api_health_screening_health_check():
+    return {"status": "OK", "message": "success mobile_api_health_screening health check"} 
+
 
 if __name__=="__main__":    
     app.run(host="0.0.0.0", port=8000)

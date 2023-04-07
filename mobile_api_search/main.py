@@ -283,9 +283,12 @@ def get_details_from(familyIdList, memberIdList):
         reconnectToDB()
     
     finally:
-        cursor.close()
-        conn.close()
-        return member_list
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("get_search_details get_details_from",e)
+    return member_list
 
 def search_by_unique_health_id(unique_health_id):
     try:
@@ -311,9 +314,12 @@ def search_by_unique_health_id(unique_health_id):
         reconnectToDB()
     
     finally:
-        cursor.close()
-        conn.close()
-        return family_details
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("get_search_details search_by_unique_health_id",e)
+    return family_details
 
 def search_by_mobile_number(mobile_number):
     try:
@@ -338,9 +344,12 @@ def search_by_mobile_number(mobile_number):
         reconnectToDB()
     
     finally:
-        cursor.close()
-        conn.close()
-        return family_details
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("get_search_details search_by_mobile_number",e)
+    return family_details
 
 def search_by_smart_card_id(pds_smartcard_id):
     try:
@@ -366,9 +375,12 @@ def search_by_smart_card_id(pds_smartcard_id):
         reconnectToDB()
     
     finally:
-        cursor.close()
-        conn.close()
-        return family_details
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("get_search_details search_by_smart_card_id",e)
+    return family_details
 
 
 def search_by_name(member_name, district_id, block_id, village_id, offset):
@@ -405,9 +417,16 @@ def search_by_name(member_name, district_id, block_id, village_id, offset):
         reconnectToDB()
     
     finally:
-        cursor.close()
-        conn.close()
-        return family_details
-    
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("get_search_details search_by_name",e)
+    return family_details
+
+@app.route('/api/mobile_api_search/hc', methods=['GET'])
+def mobile_api_search_health_check():
+    return {"status": "OK", "message": "success mobile_api_search health check"} 
+
 if __name__=="__main__":    
     app.run(host="0.0.0.0", port=8000)

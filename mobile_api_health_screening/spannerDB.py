@@ -28,8 +28,11 @@ def fetchLastUpdate(familyId, memberId):
         reconnectToDB()
         return None 
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("member_screening_details fetchLastUpdate",e)
 
 def add_screening_details(screenings):
 
@@ -152,5 +155,8 @@ def add_screening_details(screenings):
         reconnectToDB()
         return False 
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("member_screening_details add_screening_details",e)

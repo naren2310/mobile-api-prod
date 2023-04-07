@@ -180,8 +180,11 @@ def get_address_for(familyId):
         print("get_families_data get_address_for InterfaceError",e)
         reconnectToDB()
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("get_families_data get_address_for",e)
         
 def getResultFormatted(results,cursor):
     data_list=[]
@@ -266,9 +269,12 @@ def get_family_data(userId, defaultTime, content):
         reconnectToDB()
         
     finally:
-        cursor.close()
-        conn.close()
-        return data
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("get_families_data get_family_data",e)
+    return data
     
 def getUpdateRegister(update_register):
     try:
@@ -289,6 +295,10 @@ def getUpdateRegister(update_register):
                 return update_register
     except Exception as e:
         print("Error parsing Update Register : %s | %s | %s", str(e), guard.current_userId, guard.current_appversion)
+
+@app.route('/api/mobile_api_get_family_data/hc', methods=['GET'])
+def mobile_api_get_family_data_health_check():
+    return {"status": "OK", "message": "success mobile_api_get_family_data health check"}
 
 if __name__=="__main__":    
     app.run(host="0.0.0.0", port=8000)

@@ -48,9 +48,13 @@ def get_hierarchy_field(streetId):
         reconnectToDB()
 
     finally:
-        cursor.close()
-        conn.close()
-        return street_gid, hierarchy_fields
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("add_update_family_details get_hierarchy_field",e)
+    return street_gid, hierarchy_fields
+
 
 # New function to return address confirmely. 29 March 2022.
 def get_hierarchy_fields(streetId, userId):
@@ -140,9 +144,12 @@ def get_address(streetId, Query):
         reconnectToDB()
 
     finally:
-        cursor.close()
-        conn.close()
-        return street_gid, hierarchy_fields
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("add_update_family_details get_address",e)
+    return street_gid, hierarchy_fields
 
 def get_shop(street_gid):
 
@@ -168,9 +175,12 @@ def get_shop(street_gid):
         reconnectToDB()
 
     finally:
-        cursor.close()
-        conn.close()
-        return shop_id
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("add_update_family_details get_shop",e)
+    return shop_id
 
 def get_phr_family_id():
     maxPHRFamilyId = 0
@@ -200,9 +210,12 @@ def get_phr_family_id():
         return False   
 
     finally:
-        cursor.close()
-        conn.close()
-        return maxPHRFamilyId
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("add_update_family_details get_phr_family_id",e)
+    return maxPHRFamilyId
 
 def get_unique_health_id():
     
@@ -235,9 +248,12 @@ def get_unique_health_id():
         return False 
 
     finally:
-        cursor.close()
-        conn.close()
-        return uhid
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("add_update_family_details get_unique_health_id",e)
+    return uhid
 
 def fetchSocioEconomicId(family_id):
     data = None
@@ -263,8 +279,11 @@ def fetchSocioEconomicId(family_id):
         reconnectToDB()
         return None   
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("add_update_family_details fetchSocioEconomicId",e)
 
 def fetchLastUpdateFamily(family_id):
     data = None
@@ -284,16 +303,19 @@ def fetchLastUpdateFamily(family_id):
         return data
 
     except psycopg2.ProgrammingError as e:
-        print("add_update_family_details get_unique_health_id ProgrammingError",e)  
+        print("add_update_family_details fetchLastUpdateFamily ProgrammingError",e)  
         conn.rollback()
         return False  
     except psycopg2.InterfaceError as e:
-        print("add_update_family_details get_unique_health_id InterfaceError",e)
+        print("add_update_family_details fetchLastUpdateFamily InterfaceError",e)
         reconnectToDB()
         return False   
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("add_update_family_details fetchLastUpdateFamily",e)
 
 def fetchLastUpdateMember(memberId, familyId):
     data = None
@@ -315,16 +337,19 @@ def fetchLastUpdateMember(memberId, familyId):
         return data
         
     except psycopg2.ProgrammingError as e:
-        print("add_update_family_details fetchLastUpdateFamily ProgrammingError",e)  
+        print("add_update_family_details fetchLastUpdateMember ProgrammingError",e)  
         conn.rollback()
         return False  
     except psycopg2.InterfaceError as e:
-        print("add_update_family_details fetchLastUpdateFamily InterfaceError",e)
+        print("add_update_family_details fetchLastUpdateMember InterfaceError",e)
         reconnectToDB()
         return False  
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("add_update_family_details fetchLastUpdateMember",e)
 
 #Important: Temp Fix the Mobile App to be changed.
 def isUpdatedFamily(updateRegister, reqUpdateRegister, userId):
@@ -541,9 +566,13 @@ def UpsertFamilyDetails(family_list, userId):
         is_success = False
 
     finally:
-        cursor.close()
-        conn.close()
-        return is_success, family_details, member_details
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("add_update_family_details UpsertFamilyDetails",e)
+    return is_success, family_details, member_details
+
 
 
 def UpsertMemberDetails(member_list, phr_fid, address_details, userId):
@@ -672,5 +701,8 @@ def getUpdateRegisterForFamilySocioRef(familyId, updateRegister):
         print("add_update_family_details getUpdateRegisterForFamilySocioRef InterfaceError",e)
         reconnectToDB() 
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("add_update_family_details getUpdateRegisterForFamilySocioRef",e)

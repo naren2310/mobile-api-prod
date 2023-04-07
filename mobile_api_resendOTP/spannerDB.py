@@ -30,8 +30,11 @@ def active_mobile_number(mobile_number):
         reconnectToDB()
         return False, auth_key
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("resendOTP active_mobile_number",e)
 
 
 def read_write_transaction(jsonfile, mobile):
@@ -47,14 +50,17 @@ def read_write_transaction(jsonfile, mobile):
             return True
 
         except psycopg2.ProgrammingError as e:
-            print("resendOTP active_mobile_number ProgrammingError",e)  
+            print("resendOTP read_write_transaction ProgrammingError",e)  
             conn.rollback()
         except psycopg2.InterfaceError as e:
-            print("resendOTP active_mobile_number InterfaceError",e)
+            print("resendOTP read_write_transaction InterfaceError",e)
             reconnectToDB()
         finally:
-            cursor.close()
-            conn.close()
+            try:
+                cursor.close()
+                conn.close()
+            except Exception as e:
+                print("resendOTP read_write_transaction",e)
 
 def generate_otp():
     try:

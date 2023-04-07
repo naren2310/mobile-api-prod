@@ -97,8 +97,11 @@ def user_token_validation(userId, mobile, user_facility_id):
         reconnectToDB()
         return False
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("member_screening_details user_token_validation",e)
 
 def validate_inputs(content):
     """

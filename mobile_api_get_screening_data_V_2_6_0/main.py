@@ -168,9 +168,12 @@ def get_screening_data():
         print("Error while retrieving Screening Data, Please Retry :%s | %s | %s", str(e), guard.current_userId, guard.current_appversion)
 
     finally:
-        cursor.close()
-        conn.close()
-        return response
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("get_screening_data",e)
+    return response
 
 def getResultFormatted(results,cursor):
     data_list=[]
@@ -253,6 +256,10 @@ def getUpdateRegister(update_register):
                 
     except Exception as e:
         print("Error While parsing Update Register :%s | %s | %s", str(e), guard.current_userId, guard.current_appversion)
+
+@app.route('/api/mobile_api_get_screening_data/hc', methods=['GET'])
+def mobile_api_get_screening_data_health_check():
+    return {"status": "OK", "message": "success mobile_api_get_screening_data health check"}
 
 if __name__=="__main__":    
     app.run(host="0.0.0.0", port=8000)

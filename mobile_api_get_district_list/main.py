@@ -149,9 +149,16 @@ def get_district_list():
                 })
         print("Error while retrieving District data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
     finally:
-        cursor.close()
-        conn.close()
-        return response
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("get_district_list",e)
+    return response
+
+@app.route('/api/mobile_api_get_district_list/hc', methods=['GET'])
+def mobile_api_get_district_list_health_check():
+    return {"status": "OK", "message": "success mobile_api_get_district_list health check"}
 
 if __name__=="__main__":    
     app.run(host="0.0.0.0", port=8000)

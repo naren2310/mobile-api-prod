@@ -72,5 +72,9 @@ def sendotp():
                             "message":'Error in Login. Please contact the Administrator.',
                             "error": str(e)})
 
+@app.route('/api/mobile_api_sendotp/hc', methods=['GET'])
+def mobile_api_sendotp_health_check():
+    return {"status": "OK", "message": "success mobile_api_sendotp health check"} 
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000)

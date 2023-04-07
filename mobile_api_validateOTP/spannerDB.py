@@ -28,8 +28,11 @@ def fetch_from_spanner(mobile_number):
         reconnectToDB()
         return auth_key, detail 
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("validateOTP fetch_from_spanner",e)
 
 def read_write_transaction(jsonfile, mobile):
 
@@ -50,8 +53,11 @@ def read_write_transaction(jsonfile, mobile):
             print("validateOTP read_write_transaction InterfaceError",e)
             reconnectToDB()
         finally:
-            cursor.close()
-            conn.close()
+            try:
+                cursor.close()
+                conn.close()
+            except Exception as e:
+                print("validateOTP read_write_transaction",e)
             
     
 def session_otp(otp_log_date):

@@ -145,9 +145,17 @@ def get_block_list():
                         })
         print("Error while retrieving Block data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
     finally:
-        cursor.close()
-        conn.close()
-        return response
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("get_block_list",e)
+    return response
+
+@app.route('/api/mobile_api_get_block_list/hc', methods=['GET'])
+def mobile_api_get_block_list_health_check():
+    return {"status": "OK", "message": "success mobile_api_get_block_list health check"}
+
 
 if __name__=="__main__":    
     app.run(host="0.0.0.0", port=8000)

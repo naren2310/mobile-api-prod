@@ -25,9 +25,12 @@ def get_socioEconomic_data(familyId):
         reconnectToDB()
         
     finally:
-        cursor.close()
-        conn.close()
-        return data
+        try:
+            cursor.close()
+            conn.close()
+            return data
+        except Exception as e:
+            print("get_family_and_member_details get_socioEconomic_data",e)
 
 def get_member_socioEconomic_data(familyId, memberId):
     data = {}
@@ -53,9 +56,12 @@ def get_member_socioEconomic_data(familyId, memberId):
         reconnectToDB()
         
     finally:
-        cursor.close()
-        conn.close()
-        return data
+        try:
+            cursor.close()
+            conn.close()
+            return data
+        except Exception as e:
+            print("get_family_and_member_details get_member_socioEconomic_data",e)
 
 def get_family_data(familyId):
     family_data = None
@@ -90,9 +96,12 @@ def get_family_data(familyId):
         reconnectToDB()
         
     finally:
-        cursor.close()
-        conn.close()
-        return family_data
+        try:
+            cursor.close()
+            conn.close()
+            return family_data
+        except Exception as e:
+            print("get_family_and_member_details get_family_data",e)
 
 
 def get_all_member_data(familyId):
@@ -116,9 +125,12 @@ def get_all_member_data(familyId):
         reconnectToDB()
         
     finally:
-        cursor.close()
-        conn.close()
-        return data_list
+        try:
+            cursor.close()
+            conn.close()
+            return data_list
+        except Exception as e:
+            print("get_family_and_member_details get_all_member_data",e)
 
 def get_member_familyId(memberId):
     family_id=None
@@ -142,9 +154,12 @@ def get_member_familyId(memberId):
         reconnectToDB()
         
     finally:
-        cursor.close()
-        conn.close()
-        return family_id
+        try:
+            cursor.close()
+            conn.close()
+            return family_id
+        except Exception as e:
+            print("get_family_and_member_details get_member_familyId",e)
 
 
 def get_health_screening(familyId,memberId):
@@ -172,9 +187,12 @@ def get_health_screening(familyId,memberId):
         reconnectToDB()
         
     finally:
-        cursor.close()
-        conn.close()
-        return data
+        try:
+            cursor.close()
+            conn.close()
+            return data
+        except Exception as e:
+            print("get_family_and_member_details get_health_screening",e)
 
 
 def get_health_history(familyId, memberId):
@@ -201,8 +219,11 @@ def get_health_history(familyId, memberId):
         print("get_family_and_member_details get_health_history InterfaceError",e)
         reconnectToDB()
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("get_family_and_member_details get_health_history",e)
 
 
 def get_address_data(familyId):
@@ -243,6 +264,9 @@ def get_address_data(familyId):
         reconnectToDB()
     
     finally:
-        cursor.close()
-        conn.close()
-        return data
+        try:
+            cursor.close()
+            conn.close()
+            return data
+        except Exception as e:
+            print("get_family_and_member_details get_address_data",e)

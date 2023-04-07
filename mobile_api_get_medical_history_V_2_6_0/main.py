@@ -167,9 +167,12 @@ def get_medical_history():
         print("Error while retrieving Medical History :%s | %s | %s", str(e), guard.current_userId, guard.current_appversion)
 
     finally:
-        cursor.close()
-        conn.close()
-        return response
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("get_medical_history",e)
+    return response
 
 def getResultFormatted(results,cursor):
     data_list=[]
@@ -225,6 +228,10 @@ def getUpdateRegister(update_register):
 
     except Exception as e:
         print("Error While parsing Update Register :%s | %s | %s", str(e), guard.current_userId, guard.current_appversion)
+
+@app.route('/api/mobile_api_get_medical_history/hc', methods=['GET'])
+def mobile_api_get_medical_history_health_check():
+    return {"status": "OK", "message": "success mobile_api_get_medical_history health check"}
 
 if __name__ == '__main__':
     app.debug=False

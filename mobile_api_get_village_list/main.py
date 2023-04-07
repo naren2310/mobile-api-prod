@@ -143,7 +143,7 @@ def get_village_list_from_block():
             print("The Request Format should be in JSON.")
 
     except psycopg2.ProgrammingError as e:
-        print("get_village_list_from_block get_village_list_from_block ProgrammingError",e)  
+        print("get_village_list_from_block ProgrammingError",e)  
         conn.rollback()
         response =  json.dumps({
                     "message": "Error while retrieving Villages data, Please Retry.",
@@ -152,7 +152,7 @@ def get_village_list_from_block():
                     "data": {}
                 })
     except psycopg2.InterfaceError as e:
-        print("get_village_list_from_block get_village_list_from_block InterfaceError",e)
+        print("get_village_list_from_block InterfaceError",e)
         reconnectToDB()
         response =  json.dumps({
                     "message": "Error while retrieving Villages data, Please Retry.",
@@ -163,8 +163,11 @@ def get_village_list_from_block():
         print("Error while retrieving Villages data : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
 
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("get_village_list_from_block",e)
         return response
 
 def retrieve_villages_from(countryId, stateId, districtId, hudId, blockId):
@@ -188,9 +191,12 @@ def retrieve_villages_from(countryId, stateId, districtId, hudId, blockId):
         reconnectToDB()
 
     finally:
-        cursor.close()
-        conn.close()
-        return villages_list
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("get_village_list_from_block retrieve_villages_from",e)
+    return villages_list
 
 
 def get_villages_list(address_list):
@@ -233,7 +239,10 @@ def get_villages_list(address_list):
 
     finally:
         return villages
-        
+
+@app.route('/api/mobile_api_get_village_list/hc', methods=['GET'])
+def mobile_api_get_village_list_health_check():
+    return {"status": "OK", "message": "success mobile_api_get_village_list health check"}    
   
 if __name__=="__main__":    
     app.run(host="0.0.0.0", port=8000)

@@ -33,8 +33,11 @@ def active_mobile_number(mobile_number):
         reconnectToDB()
         return False, auth_key
     finally: 
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("sendotp active_mobile_number",e)
 
 
 def read_write_transaction(jsonfile, mobile):
@@ -56,8 +59,11 @@ def read_write_transaction(jsonfile, mobile):
             print("sendotp read_write_transaction InterfaceError",e)
             reconnectToDB()
         finally: 
-            cursor.close()
-            conn.close()
+            try:
+                cursor.close()
+                conn.close()
+            except Exception as e:
+                print("sendotp read_write_transaction",e)
 
 def generate_otp():
     try:

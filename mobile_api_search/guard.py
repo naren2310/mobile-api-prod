@@ -101,8 +101,11 @@ def user_token_validation(userId, mobile):
         reconnectToDB()
         return False
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("get_search_details user_token_validation",e)
 
 def validate_mobile_no(mobile_number):
     """
@@ -232,8 +235,11 @@ def check_id_registered(districtId, blockId, villageId):
         reconnectToDB()
         return False
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("get_search_details check_id_registered",e)
 
 def validate_search_parameter(search_parameter):
     """

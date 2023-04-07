@@ -92,8 +92,11 @@ def user_token_validation(userId, mobile):
         reconnectToDB()
         return False
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("get_clinical_data user_token_validation",e)
 
 def get_db_connection():
     conn = psycopg2.connect(host='142.132.206.93',database='postgres',user='tnphruser',password='TNphr@3Z4')

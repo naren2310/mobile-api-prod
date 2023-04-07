@@ -152,9 +152,12 @@ def get_village_street():
         print("Error while retrieving Village_street Data : %s | %s | %s", str(e), guard.current_userId, guard.current_appversion)
 
     finally:
-        cursor.close()
-        conn.close()
-        return response
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("Village_street",e)
+    return response
     
 
 def retrieve_villages_from(countryId, stateId, districtId, hudId, blockId):
@@ -178,9 +181,12 @@ def retrieve_villages_from(countryId, stateId, districtId, hudId, blockId):
         reconnectToDB()
 
     finally:
-        cursor.close()
-        conn.close()
-        return villages_list
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("Village_street retrieve_villages_from",e)
+    return villages_list
 
 def get_villages_list(address_list):
     try:
@@ -273,6 +279,10 @@ def get_villages_list(address_list):
 
 #     finally:
 #         return villages
+
+@app.route('/api/mobile_api_get_village_street/hc', methods=['GET'])
+def mobile_api_get_village_street_health_check():
+    return {"status": "OK", "message": "success mobile_api_get_village_street health check"} 
 
 
 if __name__=="__main__":    

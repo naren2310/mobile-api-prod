@@ -158,9 +158,12 @@ def get_facilities_data():
         print("Error while retrieving Facility Data : %s | %s | %s", str(e), guard.current_userId, guard.current_appversion)
 
     finally:
-        cursor.close()
-        conn.close()
-        return response
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("get_facilities_data",e)
+    return response
     
 def retrieve_streets(facilityId):
     try:
@@ -185,9 +188,16 @@ def retrieve_streets(facilityId):
         reconnectToDB()
         return False
     finally:
-        cursor.close()
-        conn.close()
-        return streets
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("get_facilities_data retrieve_streets",e)
+    return streets
+
+@app.route('/api/mobile_api_get_facility/hc', methods=['GET'])
+def mobile_api_get_facility_health_check():
+    return {"status": "OK", "message": "success mobile_api_get_facility health check"}
 
 if __name__=="__main__":    
     app.run(host="0.0.0.0", port=8000)

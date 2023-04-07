@@ -31,8 +31,11 @@ def fetchLastUpdate(memberId, familyId):
         reconnectToDB()
         return None   
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("member_health_history fetchLastUpdate",e)
 
 def UpsertMedicalHistory(historyList):
     ignores=0
@@ -173,8 +176,11 @@ def UpsertMedicalHistory(historyList):
         reconnectToDB()
         return False, ignores, upserts
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("member_health_history UpsertMedicalHistory",e)
 
 
 def getUpdateRegister(memberId, updateRegister, familyId):
@@ -206,8 +212,11 @@ def getUpdateRegister(memberId, updateRegister, familyId):
         print("member_health_history getUpdateRegister InterfaceError",e)
         reconnectToDB()
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("member_health_history getUpdateRegister",e)
 
 
 def getUpdateRegisterForMemberMaster(memberId, updateRegister, familyId):
@@ -239,8 +248,11 @@ def getUpdateRegisterForMemberMaster(memberId, updateRegister, familyId):
         print("member_health_history getUpdateRegisterForMemberMaster InterfaceError",e)
         reconnectToDB()
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("member_health_history getUpdateRegisterForMemberMaster",e)
 
 
 def getUpdateRegisterForSocioMemberRef(memberId, updateRegister, familyId):
@@ -274,8 +286,11 @@ def getUpdateRegisterForSocioMemberRef(memberId, updateRegister, familyId):
         print("member_health_history getUpdateRegisterForSocioMemberRef InterfaceError",e)
         reconnectToDB()
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("member_health_history getUpdateRegisterForSocioMemberRef",e)
 
 
 def mtm_data_verification(memberId, history, familyId):
@@ -341,6 +356,9 @@ def mtm_data_verification(memberId, history, familyId):
         print("member_health_history mtm_data_verification InterfaceError",e)
         reconnectToDB()
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("member_health_history mtm_data_verification",e)
         

@@ -64,6 +64,10 @@ def resendOTP():
         else:
             print("Unable to resend the OTP to the user due to : %s | %s | %s", str(e), guard.current_userId, guard.current_appversion)
             return json.dumps({"status":"FAILURE", "status_code":"401","message":'Error in Login. Please contact the Administrator.'})
-        
+
+@app.route('/api/mobile_api_resendOTP/hc', methods=['GET'])
+def mobile_api_resendOTP_health_check():
+    return {"status": "OK", "message": "success mobile_api_resendOTP health check"} 
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000)

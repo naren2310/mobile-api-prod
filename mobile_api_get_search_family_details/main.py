@@ -217,6 +217,10 @@ def get_family_and_member_details():
 
     finally :
         return response
-    
+
+@app.route('/api/mobile_api_get_search_family_details/hc', methods=['GET'])
+def mobile_api_get_search_family_details_health_check():
+    return {"status": "OK", "message": "success mobile_api_get_search_family_details health check"}
+
 if __name__=="__main__":    
     app.run(host="0.0.0.0", port=8000)
