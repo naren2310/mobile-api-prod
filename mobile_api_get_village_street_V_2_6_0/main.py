@@ -107,11 +107,11 @@ def get_village_street():
                     results = cursor.fetchall()
                     for row in results:
                             facility_details = {
-                                "country_id": row[2] if row[2] is not None else '',
-                                "state_id": row[3] if row[3] is not None else '',
-                                "district_id": row[5] if row[5] is not None else '',
-                                "hud_id" : row[6] if row[6] is not None else '',
-                                "block_id" : row[7] if row[7] is not None else ''
+                                "country_id": row[2] if row[2] is not None else None,
+                                "state_id": row[3] if row[3] is not None else None,
+                                "district_id": row[5] if row[5] is not None else None,
+                                "hud_id" : row[6] if row[6] is not None else None,
+                                "block_id" : row[7] if row[7] is not None else None
                             }
                             villages_list = retrieve_villages_from(facility_details['country_id'], facility_details['state_id'], facility_details['district_id'], facility_details['hud_id'], facility_details['block_id'])
 

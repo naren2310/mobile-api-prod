@@ -101,11 +101,11 @@ def get_village_list_from_block():
                         results = cursor.fetchall()
                         for row in results:
                             facility_details = {
-                                "country_id": row[0] if row[0] is not None else '',
-                                "state_id": row[1] if row[1] is not None else '',
-                                "district_id": row[2] if row[2] is not None else '',
-                                "hud_id" : row[3] if row[3] is not None else '',
-                                "block_id" : row[4] if row[4] is not None else ''
+                                "country_id": row[0] if row[0] is not None else None,
+                                "state_id": row[1] if row[1] is not None else None,
+                                "district_id": row[2] if row[2] is not None else None,
+                                "hud_id" : row[3] if row[3] is not None else None,
+                                "block_id" : row[4] if row[4] is not None else None
                             }
                             village_list = retrieve_villages_from(facility_details['country_id'], facility_details['state_id'], facility_details['district_id'], facility_details['hud_id'], facility_details['block_id'])
                             
