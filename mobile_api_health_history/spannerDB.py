@@ -106,8 +106,12 @@ def UpsertMedicalHistory(historyList):
                     elif key in ['last_update_date']:
                         if(cntIdx==0):
                             historyKeys.append(key)
+                            memberKeys.append(key)
+                            serefKeys.append(key)
                         last_update_date = datetime.strptime(val, "%Y-%m-%d %H:%M:%S%z") if(val is not None) else val
                         values.append(last_update_date)
+                        mValues.append(last_update_date)
+                        sValues.append(last_update_date)
                     elif key in ['family_id', 'member_id']:
                         if(cntIdx==0):
                             historyKeys.append(key)
