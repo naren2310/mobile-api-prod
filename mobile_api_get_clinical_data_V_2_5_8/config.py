@@ -3,7 +3,7 @@ def getParameters():
     parameters = {}
 
     parameters['OTP_SESSION_TIME'] = 15 # Minutes
-    parameters['TOKEN_EXPIRY_TIME'] = 131400 # Minutes #91/92 Days or 3months
+    parameters['TOKEN_EXPIRY_TIME'] = 30 # 30Minutes # Minutes #91/92 Days or 3months
     parameters['JWT_SECRET_KEY'] = b'_5#y2L"F4Q8z\n\xec]/'
     parameters['ID_LENGTH'] = 36
     parameters["TOKEN_LENGTH"] = 144

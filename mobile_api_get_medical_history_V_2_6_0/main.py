@@ -39,18 +39,37 @@ def token_required(request):
         if not token_format.match(token):
             print("Invalid Token format.")
             return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token format.'})
-        else:
-            # decoding the payload to fetch the stored details
+        else:        
             data = jwt.decode(token, parameters['JWT_SECRET_KEY'], algorithms=["HS256"])
-            return True, data
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            query = 'SELECT auth_token from public.user_master where mobile_number ={}'.format(data['mobile_number'])
+            cursor.execute(query,data['mobile_number'])    
+            result = cursor.fetchall()
+            for row in result:
+                DBToken = row[0]['token_key']
+            if DBToken == token:
+                print('Tokens are equal')
+                 # decoding the payload to fetch the stored details
+                return True, data
+            else:
+                print('Tokens are not equal')
+                raise ValueError("Invalid Token.")
 
     except jwt.ExpiredSignatureError as e:
+        print(str(e))
         print("Token Expired: %s", str(e))
         return False, json.dumps({'status':'FAILURE', "status_code":"401", 'message' : 'Token Expired.'})
 
     except Exception as e:
-        print("Invalid Token: %s", str(e))
-        return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token.'})
+        print("Invalid Token.")
+        return False, json.dumps({'status':'FAILURE', "status_code":"401", 'message' : 'Invalid Token.'})
+    finally:
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("mobile_api_get_medical_history token_required",e)
 
 @app.route('/api/mobile_api_get_medical_history', methods=['POST'])
 def get_medical_history():

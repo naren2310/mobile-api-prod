@@ -1,0 +1,6 @@
+# Function dependencies, for example:
+# package>=version
+PyJWT==2.1.0
+psycopg2-binary==2.9.5
+flask==2.0.3
+gunicorn==20.1.0

@@ -4,7 +4,7 @@ def getParameters():
         
     parameters['SECRET_KEY'] = "django-insecure-hy&qa*#t05*l1&nhfedamq4d#h+n4t1@auvr^b=+u1bcb()f-d"
     parameters['OTP_SESSION_TIME'] = 15 # Minutes
-    parameters['TOKEN_EXPIRY_TIME'] = 131400 # Minutes
+    parameters['TOKEN_EXPIRY_TIME'] = 30 # 30Minutes # Minutes
     parameters['MOBILE_NUMBER_DIGITS'] = 10
     parameters['MOBILE_NUMBER_FORMAT'] = "^[0-9]{10}$"
     parameters['OTP_DIGITS'] = 6

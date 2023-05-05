@@ -54,26 +54,26 @@ def validateOTP():
                     session_result = session_otp(spanner_otp_ts)
                     print("OTP is Valid and Timediff is: {}".format(str(session_result)))
                     if session_result:
-                        if spanner_token is not None:
-                            if len(spanner_token) == parameters['TOKEN_DIGITS']: 
-                                token_expiry = session_token(spanner_token_ts)
-                                print("Token is Valid and Timediff is: {}".format(str(token_expiry)))
-                                if token_expiry:
-                                    print("User validated succesfully.")
-                                    response_data = [{"user_details": user_details,"token": spanner_token}]
-                                    return json.dumps({"status":"SUCCESS","status_code":"200","message":"User validated succesfully.", "data":response_data})                                    
-                                else:
-                                    print("User validated succesfully with new token.")
-                                    response_data = save_new_token(mobile, spanner_otp, spanner_otp_ts, user_details)
-                                    return json.dumps({"status":"SUCCESS","status_code":"200","message":"User validated succesfully.", "data":response_data})                                    
-                            else:
-                                print("Invalid Token with incorrect length.")
-                                return json.dumps({'status': 'FAILURE', "status_code":"401",
-                                    'message':'Invalid Token with incorrect length. Please contact administrator.', "data": []})                                
-                        else:
-                            print("New User validated succesfully.")
-                            response_data = save_new_token(mobile, spanner_otp, spanner_otp_ts, user_details)
-                            return json.dumps({"status":"SUCCESS","status_code":"200","message":"New User validated succesfully.", "data":response_data})                            
+                        # if spanner_token is not None:
+                        #     if len(spanner_token) == parameters['TOKEN_DIGITS']: 
+                        #         token_expiry = session_token(spanner_token_ts)
+                        #         print("Token is Valid and Timediff is: {}".format(str(token_expiry)))
+                        #         if token_expiry:
+                        #             print("User validated succesfully.")
+                        #             response_data = [{"user_details": user_details,"token": spanner_token}]
+                        #             return json.dumps({"status":"SUCCESS","status_code":"200","message":"User validated succesfully.", "data":response_data})                                    
+                        #         else:
+                        #             print("User validated succesfully with new token.")
+                        #             response_data = save_new_token(mobile, spanner_otp, spanner_otp_ts, user_details)
+                        #             return json.dumps({"status":"SUCCESS","status_code":"200","message":"User validated succesfully.", "data":response_data})                                    
+                        #     else:
+                        #         print("Invalid Token with incorrect length.")
+                        #         return json.dumps({'status': 'FAILURE', "status_code":"401",
+                        #             'message':'Invalid Token with incorrect length. Please contact administrator.', "data": []})                                
+                        # else:
+                        #     print("New User validated succesfully.")
+                        response_data = save_new_token(mobile, spanner_otp, spanner_otp_ts, user_details)
+                        return json.dumps({"status":"SUCCESS","status_code":"200","message":"New User validated succesfully.", "data":response_data})                            
                     else:
                         print("OTP Session timed out.")
                         return json.dumps({"status": "FAILURE", "status_code":"401",
