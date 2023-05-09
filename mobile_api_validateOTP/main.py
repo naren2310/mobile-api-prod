@@ -1,6 +1,5 @@
 from spannerDB import *
 from flask import Flask, request
-
 app = Flask(__name__)
 
 @app.route('/api/mobile_api_validateOTP', methods=['POST'])
@@ -114,6 +113,7 @@ def save_new_token(mobile, spanner_otp, spanner_otp_ts, user_details):
 
         access_token = create_access_token(mobile) 
         token_log_date = datetime.now()
+        user_login_time(mobile,token_log_date)
         token_json = {"otp_key": spanner_otp,
             "otp_ts":str(spanner_otp_ts),
             "token_key": access_token,
