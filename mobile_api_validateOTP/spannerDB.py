@@ -107,13 +107,19 @@ def fetch_from_user_id(mobile):
         return user_id
     except Exception as e:
         print("Error while retrieve user id : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+    finally:
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("validateOTP fetch_from_user_id",e)
 
 def user_login_time(mobile,userLoginTime):
     try:
         print("Creating and Saving New user login time.")
         conn = get_db_connection()
         cursor = conn.cursor()
-        query = "SELECT mobile_number,user_login_time FROM user_login_master where mobile_number =%s ORDER BY user_login_time DESC"
+        query = "SELECT mobile_number,in_time FROM user_login_master where mobile_number =%s ORDER BY in_time DESC"
         value = (mobile,)
         cursor.execute(query,value)
         results = cursor.fetchone()
@@ -122,7 +128,7 @@ def user_login_time(mobile,userLoginTime):
         if(results is None):
                 conn = get_db_connection()
                 cursor = conn.cursor()
-                query = "INSERT INTO user_login_master (user_id,mobile_number,user_login_time) VALUES (%s,%s,%s)"
+                query = "INSERT INTO user_login_master (user_id,mobile_number,in_time) VALUES (%s,%s,%s)"
                 value = (user_id,mobile,userLoginTime)
                 cursor.execute(query,value)
                 conn.commit()
@@ -132,18 +138,25 @@ def user_login_time(mobile,userLoginTime):
             if(userLoginDate == dbUserLoginDate):
                 conn = get_db_connection()  
                 cursor = conn.cursor()
-                query = "UPDATE user_login_master SET user_login_time =%s WHERE mobile_number=%s AND user_login_time= %s"
+                query = "UPDATE user_login_master SET out_time =%s WHERE mobile_number=%s AND in_time= %s"
                 value = (userLoginTime,mobile,userDateTime)
                 cursor.execute(query,value)
                 conn.commit()
             else:
                 conn = get_db_connection()
                 cursor = conn.cursor()
-                query = "INSERT INTO user_login_master (user_id,mobile_number,user_login_time) VALUES (%s,%s,%s)"
+                query = "INSERT INTO user_login_master (user_id,mobile_number,in_time) VALUES (%s,%s,%s)"
                 value = (user_id,mobile,userLoginTime)
                 cursor.execute(query,value)
                 conn.commit()                   
                 
     except Exception as e:
         print("Error while creating and saving user login time : %s | %s | %s ", str(e), guard.current_userId, guard.current_appversion)
+        
+    finally:
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("validateOTP user_login_time",e)
 

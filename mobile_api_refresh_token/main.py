@@ -82,6 +82,9 @@ def create_Refresh_token(token):
             # save new token 
             save_new_token(new_token,PayloadToken['mobile_number'])
             
+            # log out time store in userloginmaster table
+            user_log_time(mobile_number,current_time)
+            
             # Return the new token
             return True, new_token
         else:
@@ -147,17 +150,43 @@ def read_write_transaction(jsonfile, mobile):
             return True
         
         except psycopg2.ProgrammingError as e:
-            print("validateOTP fetch_from_spanner ProgrammingError",e)  
+            print("RefreshToken fetch_from_spanner ProgrammingError",e)  
             conn.rollback()
         except psycopg2.InterfaceError as e:
-            print("validateOTP fetch_from_spanner InterfaceError",e)
+            print("RefreshToken fetch_from_spanner InterfaceError",e)
             reconnectToDB() 
         finally:
             try:
                 cursor.close()
                 conn.close()
             except Exception as e:
-                print("validateOTP fetch_from_spanner",e)
+                print("RefreshToken fetch_from_spanner",e)
+
+def user_log_time(mobile,userLogOutTime):
+    try:
+        print("Creating and Saving New user log time.")
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        query = "SELECT mobile_number,in_time FROM user_login_master where mobile_number =%s ORDER BY in_time DESC"
+        value = (mobile,)
+        cursor.execute(query,value)
+        results = cursor.fetchone()
+        
+        query = "UPDATE user_login_master SET out_time =%s WHERE mobile_number=%s AND in_time= %s"
+        value = (userLogOutTime,mobile,results[1])
+        cursor.execute(query,value)
+        conn.commit()                 
+                
+    except Exception as e:
+        print("Error while creating and saving user login time : %s | %s | %s ", str(e))
+        
+    finally:
+        try:
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print("RefreshToken user_log_time",e)
+
                   
 @app.route('/api/mobile_api_refresh_token/hc', methods=['GET'])
 def admin_api_refresh_token_health_check():
