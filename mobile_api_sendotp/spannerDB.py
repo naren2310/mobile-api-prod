@@ -16,13 +16,14 @@ def active_mobile_number(mobile_number):
         for num in result:
                 if num[1] is not None:
                     auth_key = num[1]
+                    activeUser = num[2]
 
                 if mobile_number == str(num[0]) and num[2]:
-                    return True, auth_key
+                    return True, auth_key, activeUser
                 else:
-                    return False, auth_key
+                    return False, auth_key, activeUser
                     
-        return False, auth_key
+        return False, auth_key, activeUser
 
     except psycopg2.ProgrammingError as e:
         print("sendotp active_mobile_number ProgrammingError",e)  

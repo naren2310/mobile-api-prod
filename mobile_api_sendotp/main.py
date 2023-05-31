@@ -23,39 +23,43 @@ def sendotp():
                 return response
             else:
                 print("Mobile number validated successfully.")
-                active_number, auth_token = active_mobile_number(mobile)
+                active_number, auth_token, activeUser = active_mobile_number(mobile)
                 spanner_token = auth_token["token_key"] if(auth_token is not None) else None
                 spanner_token_ts = auth_token["token_ts"] if(auth_token is not None) else None
-                print("active_number",active_number)
-                if active_number:
-                    #Below if condition for playstore user.
-                    if mobile==parameters['PlayStore_User']:
-                        flag =True
-                        otp = parameters['PlayStore_OTP']
-                        otp_log_date = str(datetime.now())
-                    else:
-                        flag, otp, otp_log_date = send_sms_primary(mobile)
-                    if flag:
-                        otp_json = {
-                            "otp_key": otp,
-                            "otp_ts": str(otp_log_date),
-                            "token_key": spanner_token,
-                            "token_ts": str(spanner_token_ts) if(spanner_token_ts is not None) else None
-                        }
+                if activeUser:
+                    if active_number:
+                        #Below if condition for playstore user.
+                        if mobile==parameters['PlayStore_User']:
+                            flag =True
+                            otp = parameters['PlayStore_OTP']
+                            otp_log_date = str(datetime.now())
+                        else:
+                            flag, otp, otp_log_date = send_sms_primary(mobile)
+                        if flag:
+                            otp_json = {
+                                "otp_key": otp,
+                                "otp_ts": str(otp_log_date),
+                                "token_key": spanner_token,
+                                "token_ts": str(spanner_token_ts) if(spanner_token_ts is not None) else None
+                            }
 
-                        read_write_transaction(otp_json, mobile)
-                        print("OTP sent successfully to your Mobile Number.")
-                        return json.dumps({"status":"SUCCESS", "status_code":"200", "message":"OTP sent successfully to your Mobile Number."})
+                            read_write_transaction(otp_json, mobile)
+                            print("OTP sent successfully to your Mobile Number.")
+                            return json.dumps({"status":"SUCCESS", "status_code":"200", "message":"OTP sent successfully to your Mobile Number."})
 
+                        else:
+                            print("Unable to send OTP to Mobile Number.")
+                            return json.dumps({"status":"FAILURE", "status_code":"401",
+                                    "message":"Unable to send OTP to this {} Mobile Number. Please contact the Administrator.".format(mobile)})
+                    
                     else:
-                        print("Unable to send OTP to Mobile Number.")
+                        print("User does not exist.")
                         return json.dumps({"status":"FAILURE", "status_code":"401",
-                                "message":"Unable to send OTP to this {} Mobile Number. Please contact the Administrator.".format(mobile)})
-                
+                                        "message":'User does not exist. Please contact the Administrator.'})
                 else:
-                    print("User does not exist.")
+                    print("User inactive.")
                     return json.dumps({"status":"FAILURE", "status_code":"401",
-                                    "message":'User does not exist. Please contact the Administrator.'})
+                                    "message":'User inactive. Please contact the Administrator.'})
         else:            
             if (str(request.headers['User-Agent']).count("UptimeChecks")!=0):
                 print("Uptime check trigger.")
