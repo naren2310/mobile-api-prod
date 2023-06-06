@@ -8,6 +8,8 @@ def active_mobile_number(mobile_number):
         fetch_query = 'SELECT mobile_number, auth_token, active FROM public.user_master WHERE mobile_number={}'.format(mobile_number)
 
         auth_key = None
+        
+        activeUser = True
 
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -28,11 +30,11 @@ def active_mobile_number(mobile_number):
     except psycopg2.ProgrammingError as e:
         print("sendotp active_mobile_number ProgrammingError",e)  
         conn.rollback()
-        return False, auth_key
+        return False, auth_key, activeUser
     except psycopg2.InterfaceError as e:
         print("sendotp active_mobile_number InterfaceError",e)
         reconnectToDB()
-        return False, auth_key
+        return False, auth_key, activeUser
     finally: 
         try:
             cursor.close()
