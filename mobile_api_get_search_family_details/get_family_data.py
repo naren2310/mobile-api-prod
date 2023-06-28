@@ -111,7 +111,7 @@ def get_all_member_data(familyId):
             results=None
             conn = get_db_connection()
             cursor = conn.cursor()
-            query = "SELECT family_id,member_id,unique_health_id,phr_family_id,makkal_number,ndhm_id,member_name,member_local_name,relationshipWith,relationship,to_char(birth_date,'YYYY-MM-DD') AS birth_date,gender,mobile_number,alt_mobile_number,email,alt_email,aadhaar_number,voter_id,insurances,welfare_beneficiary_ids,program_ids,eligible_couple_id,country_id,state_id,district_id,hud_id,block_id,taluk_id,village_id,rev_village_id,habitation_id,ward_id,area_id,street_id,facility_id,resident_status,resident_status_details,update_register,to_char(last_update_date AT TIME ZONE 'Asia/Calcutta', 'YYYY-MM-DD HH24:MI:SS') AS last_update_date,consent_status,consent_details,hims_id,abha_id FROM public.family_member_master WHERE family_id=%s"
+            query = "SELECT family_id,member_id,unique_health_id,phr_family_id,makkal_number,ndhm_id,member_name,member_local_name,relationshipWith,relationship,to_char(birth_date,'YYYY-MM-DD') AS birth_date,gender,mobile_number,alt_mobile_number,email,alt_email,aadhaar_number,voter_id,insurances,welfare_beneficiary_ids,program_ids,eligible_couple_id,country_id,state_id,district_id,hud_id,block_id,taluk_id,village_id,rev_village_id,habitation_id,ward_id,area_id,street_id,facility_id,resident_status,resident_status_details,update_register,to_char(last_update_date AT TIME ZONE 'Asia/Calcutta', 'YYYY-MM-DD HH24:MI:SS') AS last_update_date,consent_status,consent_details,hims_id,abha_id,abha_address FROM public.family_member_master WHERE family_id=%s"
             value = (familyId,)
             cursor.execute(query,value)
             results = cursor.fetchall()
