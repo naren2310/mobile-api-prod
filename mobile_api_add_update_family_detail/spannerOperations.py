@@ -104,7 +104,7 @@ def get_address(streetId, Query):
     street_gid = None
     
     try:
-        print('Getting address details of Family for Street Id : %s by query : %s', str(streetId), str(Query))
+        # print('Getting address details of Family for Street Id : %s by query : %s', str(streetId), str(Query))
         conn = get_db_connection()
         cursor = conn.cursor()
         query = Query
@@ -130,7 +130,7 @@ def get_address(streetId, Query):
                     hierarchy_fields["country_id"]=row[13]
                     hierarchy_fields["hsc_unit_id"]=row[14]
                     street_gid = row[15]
-                    print("Address Details from hierarchy : {}".format(str(hierarchy_fields)))
+                    # print("Address Details from hierarchy : {}".format(str(hierarchy_fields)))
                 else:
                     return street_gid, hierarchy_fields
                     
@@ -359,8 +359,6 @@ def isUpdatedFamily(updateRegister, reqUpdateRegister, userId):
     reqUpdateRegTS = datetime.strptime(reqUpdateRegister['timestamp'], "%Y-%m-%d %H:%M:%S%z")
     for register in updateRegister:
         updateRegTS = datetime.strptime(register['timestamp'], "%Y-%m-%d %H:%M:%S%z")
-        print("Time from request: ", reqUpdateRegTS, " TS from Spanner: ", updateRegTS)
-        print("User from request: ", userId, " User from Spanner: ", register['user_id'])
         if updateRegTS==reqUpdateRegTS and register['user_id'] == userId:
             return False
         
@@ -513,11 +511,11 @@ def UpsertFamilyDetails(family_list, userId):
                     family_details.append({"family_id": family_id, "phr_family_id":phr_fid})
                 if len(members_list) != 0:
                     isMemberUpdates, member_keys, mValues, member_details_current_family = UpsertMemberDetails(members_list, phr_fid, address_details, userId)
-                    print("Keys from Member Function:", member_keys)
-                    print("Values from Member Function:", mValues)
-                    print("member_details",member_details_current_family)
-                    print("PHR FID Values from update Member Function: {}".format(str(phr_fid)))
-                    print("ADDRESS DETAILS: {}".format(str(address_details)))
+                    # print("Keys from Member Function:", member_keys)
+                    # print("Values from Member Function:", mValues)
+                    # print("member_details",member_details_current_family)
+                    # print("PHR FID Values from update Member Function: {}".format(str(phr_fid)))
+                    # print("ADDRESS DETAILS: {}".format(str(address_details)))
                     if isMemberUpdates:
                         if len(memberKeys)==0:
                             memberKeys = member_keys
@@ -646,6 +644,15 @@ def UpsertMemberDetails(member_list, phr_fid, address_details, userId):
                         if(cntIdx==0):
                             memberKeys.append(key)
                         mValues.append(val)
+                    elif key in ['immunization_status','premature_baby','congenital_defects','blood_group','attended_age','ifa_tablet_provided','sanitary_napkin_provided','anemia_yes_or_no','pregnant_yes_or_no','antenatal_postnatal','prolonged_disease','Consanguineous_marriage','rch_id']:
+                        if(cntIdx==0):
+                            memberKeys.append(key)
+                        mValues.append(val) 
+                    elif key in ['non_communicable_disease','communicable_disease']:
+                        if(cntIdx==0):
+                            memberKeys.append(key)
+                        jsonVal = json.dumps(val) if(val is not None) else val
+                        mValues.append(jsonVal)  
                     elif key=='update_register' and val is not None:
                         if(cntIdx==0):
                             memberKeys.append(key)
