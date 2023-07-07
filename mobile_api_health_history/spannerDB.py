@@ -93,7 +93,7 @@ def UpsertMedicalHistory(historyList):
                             memberKeys.append(key)
                         jsonVal = json.dumps(val) if(val is not None) else val
                         mValues.append(jsonVal)         
-                    elif key in ['immunization_status','premature_baby','congenital_defects','blood_group','attended_age','ifa_tablet_provided','sanitary_napkin_provided','anemia_yes_or_no','pregnant_yes_or_no','antenatal_postnatal','prolonged_disease']:
+                    elif key in ['immunization_status','premature_baby','congenital_defects','blood_group','attended_age','ifa_tablet_provided','sanitary_napkin_provided','anemia_yes_or_no','pregnant_yes_or_no','antenatal_postnatal','prolonged_disease','Consanguineous_marriage','rch_id']:
                         if(cntIdx==0):
                             memberKeys.append(key)
                         mValues.append(val) 
