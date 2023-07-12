@@ -1,6 +1,6 @@
 version: '3.3'
 services:
-  phrhims:
+  mobileapisendotp:
     image: dokerhub.tnmtm.in:5000/prodmobileapisendotp
     ports:
       - "9000:80"
