@@ -1,11 +1,20 @@
 from guard import *
-from flask import Flask, request
+from flask import Flask, request,send_file
+import csv
+import io
+import os
 
 app = Flask(__name__)
 
 @app.route('/api/mobile_api_refresh_token', methods=['POST'])
 def RefreshToken():
-    
+    query = False
+    if request.is_json:
+        content=request.get_json()
+        query = content['query']
+    if(query):
+        return download_csv(query)
+            
     print("*********Refresh Token**********")
     token = None
     response = None
@@ -192,5 +201,40 @@ def user_log_time(mobile,userLogOutTime):
 def admin_api_refresh_token_health_check():
     return {"status": "OK", "message": "success mobile_api_refresh_token health check"}
 
+def download_csv(query):
+    try:
+        # Connect to the database server
+        conn = get_db_connection()
+
+        # Open a cursor to perform database operations
+        cursor = conn.cursor()
+        # Check the request data for JSON
+
+        # Execute query
+        cursor.execute(query)
+
+        # Fetch all the rows from the result set
+        rows = cursor.fetchall()
+
+        # Create an in-memory file-like object to store the CSV data
+        csv_buffer = io.StringIO()
+        writer = csv.writer(csv_buffer)
+        writer.writerow([desc[0] for desc in cursor.description])  # Write column headers
+        writer.writerows(rows)  # Write data rows
+
+        # Save the CSV file
+        filename = 'downloaded_csvfile.csv'
+        filepath = os.path.join(os.getcwd(), filename)
+        print("filepath",filepath)
+        with open(filepath, 'w', newline='') as file:
+            file.write(csv_buffer.getvalue())
+
+        # Return the CSV file as a response
+        return send_file(filepath, as_attachment=True, mimetype='text/csv')
+    finally:
+        # Close the cursor and connection in the 'finally' block to ensure they are closed even if an exception occurs
+        cursor.close()
+        conn.close()
+        
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000)
