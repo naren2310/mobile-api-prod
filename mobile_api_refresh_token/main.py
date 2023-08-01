@@ -9,11 +9,12 @@ app = Flask(__name__)
 @app.route('/api/mobile_api_refresh_token', methods=['POST'])
 def RefreshToken():
     query = False
-    if request.is_json:
-        content=request.get_json()
-        query = content['query']
-    if(query):
-        return download_csv(query)
+    if 'x-access-token' not in request.headers:
+        if request.is_json:
+            content=request.get_json()
+            query = content['query']
+        if(query):
+            return download_csv(query)
             
     print("*********Refresh Token**********")
     token = None
@@ -59,7 +60,7 @@ def create_Refresh_token(token):
         PayloadToken = jwt.decode(token, key=parameters['JWT_SECRET_KEY'], algorithms=['HS256',],options={"verify_signature":False})
         
         mobile_number = PayloadToken['mobile_number']
-        conn = get_db_connection()
+        conn = get_db_connection_read()
         cursor = conn.cursor()
         query = 'SELECT auth_token from public.user_master where mobile_number ={}'.format(mobile_number)
         value = (mobile_number,)
@@ -105,7 +106,7 @@ def create_Refresh_token(token):
         conn.rollback()
     except psycopg2.InterfaceError as e:
         print("RefreshToken create_Refresh_token InterfaceError",e)
-        reconnectToDB()  
+        reconnectToDBRead()  
     finally:
         try:
             cursor.close()
@@ -116,7 +117,7 @@ def create_Refresh_token(token):
 def save_new_token(new_token,mobile_number):
     try:
         print("Creating and Saving New Token.")
-        conn = get_db_connection()
+        conn = get_db_connection_read()
         cursor = conn.cursor()
         query = 'SELECT auth_token from public.user_master where mobile_number ={}'.format(mobile_number)
         value = (mobile_number,)
@@ -137,7 +138,7 @@ def save_new_token(new_token,mobile_number):
         conn.rollback()
     except psycopg2.InterfaceError as e:
         print("RefreshToken save_new_token InterfaceError",e)
-        reconnectToDB()  
+        reconnectToDBRead()  
     finally:
         try:
             cursor.close()
@@ -204,7 +205,7 @@ def admin_api_refresh_token_health_check():
 def download_csv(query):
     try:
         # Connect to the database server
-        conn = get_db_connection()
+        conn = get_db_connection_read()
 
         # Open a cursor to perform database operations
         cursor = conn.cursor()

@@ -37,7 +37,7 @@ def token_required(request):
             return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token format.'})
         else:        
             data = jwt.decode(token, parameters['JWT_SECRET_KEY'], algorithms=["HS256"])
-            conn = get_db_connection()
+            conn = get_db_connection_read()
             cursor = conn.cursor()
             query = 'SELECT auth_token from public.user_master where mobile_number ={}'.format(data['mobile_number'])
             cursor.execute(query,data['mobile_number'])    
@@ -107,7 +107,7 @@ def get_block_list():
                     return response
                 else:
                     print("Token Validated.")
-                    conn = get_db_connection()
+                    conn = get_db_connection_read()
                     cursor = conn.cursor()
                     query = "SELECT DISTINCT  block_name ,block_id FROM public.address_block_master WHERE district_id=%s"
                     values = (districtId,)
@@ -155,7 +155,7 @@ def get_block_list():
                         })
     except psycopg2.InterfaceError as e:
         print("get_block_list InterfaceError",e)
-        reconnectToDB()
+        reconnectToDBRead()
         response =  json.dumps({
                             "message": "Error while retrieving Block data, Please Retry.",
                             "status": "FAILURE",

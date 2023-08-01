@@ -6,7 +6,7 @@ def fetchLastUpdate(memberId, familyId):
         print("Fetching Last Update Timestamp.")
         last_update_date = None  
           
-        conn = get_db_connection()
+        conn = get_db_connection_read()
         cursor = conn.cursor()
         query = "SELECT to_char(last_update_date AT TIME ZONE 'Asia/Calcutta', 'YYYY-MM-DD HH24:MI:SS+05:30') as last_update_date FROM public.health_history WHERE family_id=%s AND member_id=%s"
         values = (familyId, memberId)
@@ -28,7 +28,7 @@ def fetchLastUpdate(memberId, familyId):
         return None
     except psycopg2.InterfaceError as e:
         print("member_health_history fetchLastUpdate InterfaceError",e)
-        reconnectToDB()
+        reconnectToDBRead()
         return None   
     finally:
         try:
@@ -200,7 +200,7 @@ def getUpdateRegister(memberId, updateRegister, familyId):
     try:
         print("Formatting Update Register.")
         update_register = None
-        conn = get_db_connection()
+        conn = get_db_connection_read()
         cursor = conn.cursor()
         query = "SELECT update_register FROM public.health_history WHERE family_id=%s AND member_id=%s"
         values = (familyId, memberId)
@@ -223,7 +223,7 @@ def getUpdateRegister(memberId, updateRegister, familyId):
         conn.rollback()
     except psycopg2.InterfaceError as e:
         print("member_health_history getUpdateRegister InterfaceError",e)
-        reconnectToDB()
+        reconnectToDBRead()
     finally:
         try:
             cursor.close()
@@ -236,7 +236,7 @@ def getUpdateRegisterForMemberMaster(memberId, updateRegister, familyId):
     try:
         print("Formatting Update Register for Member.")
         update_register = None
-        conn = get_db_connection()
+        conn = get_db_connection_read()
         cursor = conn.cursor()
         query = "SELECT update_register FROM public.family_member_master WHERE family_id=%s AND member_id=%s"
         values = (familyId, memberId)
@@ -259,7 +259,7 @@ def getUpdateRegisterForMemberMaster(memberId, updateRegister, familyId):
         conn.rollback()
     except psycopg2.InterfaceError as e:
         print("member_health_history getUpdateRegisterForMemberMaster InterfaceError",e)
-        reconnectToDB()
+        reconnectToDBRead()
     finally:
         try:
             cursor.close()
@@ -274,7 +274,7 @@ def getUpdateRegisterForSocioMemberRef(memberId, updateRegister, familyId):
         update_register = None
         userId = updateRegister["user_id"]
         timestamp = updateRegister["timestamp"]
-        conn = get_db_connection()
+        conn = get_db_connection_read()
         cursor = conn.cursor()
         query = "SELECT update_register FROM public.family_member_socio_economic_ref WHERE family_id=%s AND member_id=%s"
         values = (familyId, memberId)
@@ -297,7 +297,7 @@ def getUpdateRegisterForSocioMemberRef(memberId, updateRegister, familyId):
         conn.rollback()
     except psycopg2.InterfaceError as e:
         print("member_health_history getUpdateRegisterForSocioMemberRef InterfaceError",e)
-        reconnectToDB()
+        reconnectToDBRead()
     finally:
         try:
             cursor.close()
@@ -314,7 +314,7 @@ def mtm_data_verification(memberId, history, familyId):
     Return: dict 
     """
     try:
-        conn = get_db_connection()
+        conn = get_db_connection_read()
         cursor = conn.cursor()
         query = "SELECT mtm_beneficiary FROM public.health_history WHERE family_id=%s AND member_id=%s"
         values = (familyId, memberId)
@@ -367,7 +367,7 @@ def mtm_data_verification(memberId, history, familyId):
         conn.rollback()
     except psycopg2.InterfaceError as e:
         print("member_health_history mtm_data_verification InterfaceError",e)
-        reconnectToDB()
+        reconnectToDBRead()
     finally:
         try:
             cursor.close()

@@ -68,7 +68,7 @@ def user_token_validation(userId, mobile):
     """ 
     spnDB_userId = 0
     try:
-        conn = get_db_connection()
+        conn = get_db_connection_read()
         cursor = conn.cursor()
         query = "SELECT user_id FROM public.user_master WHERE mobile_number=%s AND user_id=%s"
         value = (mobile,userId)
@@ -91,7 +91,7 @@ def user_token_validation(userId, mobile):
         return False
     except psycopg2.InterfaceError as e:
         print("get_facilities_data user_token_validation InterfaceError",e)
-        reconnectToDB()
+        reconnectToDBRead()
         return False
     finally:
         try:
@@ -100,11 +100,12 @@ def user_token_validation(userId, mobile):
         except Exception as e:
             print("get_facilities_data",e)
  
-def get_db_connection():
-    conn = psycopg2.connect(host='142.132.206.93',database='postgres',user='tnphruser',password='TNphr@3Z4')
-    return conn  
- 
-def reconnectToDB():
+    
+def get_db_connection_read():
+    conn = psycopg2.connect(host='10.236.220.126',database='tnphrprod',user='tnphruser',password='P3@PHRmdHT1@123')
+    return conn 
+
+def reconnectToDBRead():
     global conn, cursor
-    conn = psycopg2.connect(host='142.132.206.93',database='postgres',user='tnphruser',password='TNphr@3Z4')
+    conn = psycopg2.connect(host='10.236.220.126',database='tnphrprod',user='tnphruser',password='P3@PHRmdHT1@123')
     cursor = conn.cursor()

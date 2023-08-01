@@ -41,7 +41,7 @@ def token_required(request):
             return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token format.'})
         else:        
             data = jwt.decode(token, parameters['JWT_SECRET_KEY'], algorithms=["HS256"])
-            conn = get_db_connection()
+            conn = get_db_connection_read()
             cursor = conn.cursor()
             query = 'SELECT auth_token from public.user_master where mobile_number ={}'.format(data['mobile_number'])
             cursor.execute(query,data['mobile_number'])    
@@ -86,7 +86,7 @@ def get_medical_history():
         defaultTime = datetime.strptime('2021-09-01 15:52:50+0530', "%Y-%m-%d %H:%M:%S%z")
         
         ## DB Connection
-        conn = get_db_connection()
+        conn = get_db_connection_read()
         cursor = conn.cursor()
         
         # Check the request data for JSON
@@ -176,7 +176,7 @@ def get_medical_history():
                 })
     except psycopg2.InterfaceError as e:
         print("get_medical_history InterfaceError",e)
-        reconnectToDB()
+        reconnectToDBRead()
         response =  json.dumps({
                     "message": "Error while retrieving Medical History Data.", 
                     "status": "FAILURE",

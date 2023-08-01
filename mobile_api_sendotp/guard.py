@@ -42,11 +42,22 @@ def validate_mobile_no(mobile_number):
         print("Error in validating mobile number : %s | %s | %s", str(error), current_userId, current_appversion)
         return False
 
+# Write connection string 
 def get_db_connection():
-    conn = psycopg2.connect(host='142.132.206.93',database='postgres',user='tnphruser',password='TNphr@3Z4')
+    conn = psycopg2.connect(host='10.236.221.123',database='tnphrprod',user='tnphruser',password='P3@PHRmdHT1@123')
     return conn
-    
+
 def reconnectToDB():
     global conn, cursor
-    conn = psycopg2.connect(host='142.132.206.93',database='postgres',user='tnphruser',password='TNphr@3Z4')
+    conn = psycopg2.connect(host='10.236.221.123',database='tnphrprod',user='tnphruser',password='P3@PHRmdHT1@123')
+    cursor = conn.cursor()
+    
+# Read connection string 
+def get_db_connection_read():
+    conn = psycopg2.connect(host='10.236.220.126',database='tnphrprod',user='tnphruser',password='P3@PHRmdHT1@123')
+    return conn 
+
+def reconnectToDBRead():
+    global conn, cursor
+    conn = psycopg2.connect(host='10.236.220.126',database='tnphrprod',user='tnphruser',password='P3@PHRmdHT1@123')
     cursor = conn.cursor()

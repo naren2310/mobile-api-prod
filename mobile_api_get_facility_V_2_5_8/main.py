@@ -41,7 +41,7 @@ def token_required(request):
             return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token format.'})
         else:        
             data = jwt.decode(token, parameters['JWT_SECRET_KEY'], algorithms=["HS256"])
-            conn = get_db_connection()
+            conn = get_db_connection_read()
             cursor = conn.cursor()
             query = 'SELECT auth_token from public.user_master where mobile_number ={}'.format(data['mobile_number'])
             cursor.execute(query,data['mobile_number'])    
@@ -84,7 +84,7 @@ def get_facilities_data():
         defaultTime = datetime.strptime('2021-09-01 15:52:50+0530', "%Y-%m-%d %H:%M:%S%z")
         
         ## DB Connection
-        conn = get_db_connection()
+        conn = get_db_connection_read()
         cursor = conn.cursor()  
         
         # Check the request data for JSON
@@ -167,7 +167,7 @@ def get_facilities_data():
         })
     except psycopg2.InterfaceError as e:
         print("get_facilities_data user_token_validation InterfaceError",e)
-        reconnectToDB()
+        reconnectToDBRead()
         response =  json.dumps({
             "message": "Error while retrieving Facility Data.",
             "status": "FAILURE",
@@ -188,7 +188,7 @@ def retrieve_streets(facilityId):
     try:
         streets=[]
         print("Retrieving Street Data.")
-        conn = get_db_connection()
+        conn = get_db_connection_read()
         cursor = conn.cursor()
         query = "SELECT fr.facility_id, fr.institution_gid, fr.facility_name, typ.facility_type_name FROM public.facility_registry fr INNER JOIN public.facility_type_master typ on typ.facility_type_id=fr.facility_type_id WHERE fr.facility_id=%s" 
         value = (facilityId,)
@@ -204,7 +204,7 @@ def retrieve_streets(facilityId):
         return False
     except psycopg2.InterfaceError as e:
         print("get_facilities_data retrieve_streets InterfaceError",e)
-        reconnectToDB()
+        reconnectToDBRead()
         return False
     finally:
         try:

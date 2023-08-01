@@ -11,7 +11,7 @@ def active_mobile_number(mobile_number):
         
         activeUser = True
 
-        conn = get_db_connection()
+        conn = get_db_connection_read()
         cursor = conn.cursor()
         cursor.execute(fetch_query)
         result = cursor.fetchall()
@@ -33,7 +33,7 @@ def active_mobile_number(mobile_number):
         return False, auth_key, activeUser
     except psycopg2.InterfaceError as e:
         print("sendotp active_mobile_number InterfaceError",e)
-        reconnectToDB()
+        reconnectToDBRead()
         return False, auth_key, activeUser
     finally: 
         try:

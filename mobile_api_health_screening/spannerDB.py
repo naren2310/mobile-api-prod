@@ -6,7 +6,7 @@ def fetchLastUpdate(familyId, memberId):
         print("Fetching Last Update Timestamp for memberId %s", str(memberId))
         # This will return the latest value. 15 March 2022.
         # This is done specifically to optimise CPU utilisation. 7 April 2022 (Shankar / Atul).
-        conn = get_db_connection()
+        conn = get_db_connection_read()
         cursor = conn.cursor()
         query = "SELECT MAX (last_update_date) FROM public.health_screening WHERE family_id=%s AND member_id=%s"
         values = (familyId, memberId)
@@ -25,7 +25,7 @@ def fetchLastUpdate(familyId, memberId):
         return None
     except psycopg2.InterfaceError as e:
         print("member_screening_details fetchLastUpdate InterfaceError",e)
-        reconnectToDB()
+        reconnectToDBRead()
         return None 
     finally:
         try:

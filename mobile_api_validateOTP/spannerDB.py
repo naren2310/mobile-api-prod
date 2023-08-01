@@ -4,7 +4,7 @@ import guard
 def fetch_from_spanner(mobile_number):
     try:
         print("Fetching User details.")
-        conn = get_db_connection()
+        conn = get_db_connection_read()
         cursor = conn.cursor()
         select_query = 'SELECT user_id, user_first_name, mobile_number, alt_mobile_number, email, alt_email, employee_id, facility_id, sub_facility_id, role_in_facility, phr_role, active, auth_token FROM public.user_master WHERE mobile_number = {}'.format(mobile_number)
         auth_key=None
@@ -23,7 +23,7 @@ def fetch_from_spanner(mobile_number):
         return auth_key, detail
     except psycopg2.InterfaceError as e:
         print("validateOTP fetch_from_spanner InterfaceError",e)
-        reconnectToDB()
+        reconnectToDBRead()
         return auth_key, detail 
     finally:
         try:
@@ -96,7 +96,7 @@ def session_otp(otp_log_date):
 
 def fetch_from_user_id(mobile):
     try:
-        conn = get_db_connection()
+        conn = get_db_connection_read()
         cursor = conn.cursor()
         query = "SELECT user_id FROM user_master where mobile_number =%s"
         value = (mobile,)
@@ -117,7 +117,7 @@ def fetch_from_user_id(mobile):
 def user_login_time(mobile,userLoginTime):
     try:
         print("Creating and Saving New user login time.")
-        conn = get_db_connection()
+        conn = get_db_connection_read()
         cursor = conn.cursor()
         query = "SELECT mobile_number,in_time FROM user_login_master where mobile_number =%s ORDER BY in_time DESC"
         value = (mobile,)

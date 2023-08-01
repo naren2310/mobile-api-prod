@@ -4,7 +4,7 @@ import guard
 def active_mobile_number(mobile_number):
     try:
         print("Fetching Active Mobile Numbers.")
-        conn = get_db_connection()
+        conn = get_db_connection_read()
         cursor = conn.cursor()
         fetch_query = 'SELECT mobile_number, auth_token, active FROM public.user_master WHERE mobile_number={}'.format(mobile_number)
         auth_key = None
@@ -27,7 +27,7 @@ def active_mobile_number(mobile_number):
         return False, auth_key
     except psycopg2.InterfaceError as e:
         print("resendOTP active_mobile_number InterfaceError",e)
-        reconnectToDB()
+        reconnectToDBRead()
         return False, auth_key
     finally:
         try:

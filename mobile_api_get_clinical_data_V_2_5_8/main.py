@@ -34,7 +34,7 @@ def token_required(request):
             return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token format.'})
         else:        
             data = jwt.decode(token, parameters['JWT_SECRET_KEY'], algorithms=["HS256"])
-            conn = get_db_connection()
+            conn = get_db_connection_read()
             cursor = conn.cursor()
             query = 'SELECT auth_token from public.user_master where mobile_number ={}'.format(data['mobile_number'])
             cursor.execute(query,data['mobile_number'])    
@@ -77,7 +77,7 @@ def get_clinical_data():
         tables=[]
         
         ## DB Connection
-        conn = get_db_connection()
+        conn = get_db_connection_read()
         cursor = conn.cursor()
                         
         # Check the request data for JSON
@@ -198,7 +198,7 @@ def retrieve_data(tables, lastUpdateTS):
     data={}
     try:
         print("Retrieving Vaccination Data.")
-        conn = get_db_connection()
+        conn = get_db_connection_read()
         cursor = conn.cursor()
         for table in tables:
             if(table=="health_vaccination_master"):
@@ -270,7 +270,7 @@ def retrieve_data(tables, lastUpdateTS):
         conn.rollback()
     except psycopg2.InterfaceError as e:
         print("get_clinical_data retrieve_data InterfaceError",e)
-        reconnectToDB()
+        reconnectToDBRead()
     
     finally:
         try:
@@ -328,7 +328,7 @@ def validate_token(token_log_date):
 def fetch_token_userId(userId, req_token):
 
     try:
-        conn = get_db_connection()
+        conn = get_db_connection_read()
         cursor = conn.cursor()
         query = "SELECT auth_token FROM public.user_master WHERE user_id=%s"
         valid = False
@@ -352,7 +352,7 @@ def fetch_token_userId(userId, req_token):
         return valid
     except psycopg2.InterfaceError as e:
         print("get_clinical_data fetch_token_userId InterfaceError",e)
-        reconnectToDB()
+        reconnectToDBRead()
         return valid
     finally:
         try:

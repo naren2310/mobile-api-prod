@@ -37,7 +37,7 @@ def token_required(request):
             return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token format.'})
         else:        
             data = jwt.decode(token, parameters['JWT_SECRET_KEY'], algorithms=["HS256"])
-            conn = get_db_connection()
+            conn = get_db_connection_read()
             cursor = conn.cursor()
             query = 'SELECT auth_token from public.user_master where mobile_number ={}'.format(data['mobile_number'])
             cursor.execute(query,data['mobile_number'])    
@@ -81,7 +81,7 @@ def get_district_list():
         district_list=[]
         
         ## DB Connection
-        conn = get_db_connection()
+        conn = get_db_connection_read()
         cursor = conn.cursor()
         
         if (request.is_json):
@@ -159,7 +159,7 @@ def get_district_list():
                 })
     except psycopg2.InterfaceError as e:
         print("get_district_list InterfaceError",e)
-        reconnectToDB()
+        reconnectToDBRead()
         response =  json.dumps({
                     "message": ("Error while retrieving District data, Please Retry."),
                     "status": "FAILURE",

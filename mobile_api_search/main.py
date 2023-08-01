@@ -45,7 +45,7 @@ def token_required(request):
             return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token format.'})
         else:        
             data = jwt.decode(token, parameters['JWT_SECRET_KEY'], algorithms=["HS256"])
-            conn = get_db_connection()
+            conn = get_db_connection_read()
             cursor = conn.cursor()
             query = 'SELECT auth_token from public.user_master where mobile_number ={}'.format(data['mobile_number'])
             cursor.execute(query,data['mobile_number'])    
@@ -286,7 +286,7 @@ def getResultFormatted(results,cursor):
 def get_details_from(familyIdList, memberIdList):
     try:
         member_list=[]
-        conn = get_db_connection()
+        conn = get_db_connection_read()
         cursor = conn.cursor()
         query = "with Query_1 as (SELECT fmm.family_id ,fmm.member_id, fmm.member_name, fmm.gender, fmm.member_local_name, to_char(fmm.birth_date,'YYYY-MM-DD') AS birth_date, fmm.unique_health_id FROM public.family_member_master fmm WHERE family_id in unnest(%s) AND member_id in unnest(%s)), Query_2 as(SELECT family_id,member_id,MIN(screening_id) as screening_id, MIN(TO_JSONB(outcome)) as outcome, MAX(to_char(last_update_date AT TIME ZONE 'Asia/Calcutta', 'YYYY-MM-DD HH24:MI:SS')) AS last_update_date FROM public.health_screening WHERE family_id in unnest(%s) AND member_id in unnest(%s) AND concat(member_id, to_char(''%Y-%m-%d %H:%M:%S%z', TIMESTAMP(JSON_VALUE(update_register,'$[0].timestamp')), 'Asia/Calcutta) ) in (select concat(member_id, to_char('%Y-%m-%d %H:%M:%S%z', max_time, 'Asia/Calcutta') ) FROM (SELECT member_id,max(TIMESTAMP(JSON_VALUE(update_register,'$[0].timestamp'))) as max_time  FROM public.health_screening WHERE family_id  in  unnest(%s) AND member_id in unnest(%s) group by 1)) group by 1,2) SELECT  Q1.member_id, Q1.member_name, Q1.gender, Q1.member_local_name,to_char(Q1.birth_date,'YYYY-MM-DD') AS birth_date, Q1.unique_health_id, Q1.family_id, Q2.last_update_date, PARSE_JSON(Q2.outcome)as outcome from Query_1 Q1 left join Query_2 Q2 on Q1.family_id= Q2.family_id and Q1.member_id = Q2.member_id"
         value = (familyIdList,memberIdList,familyIdList,memberIdList,familyIdList,memberIdList)
@@ -299,7 +299,7 @@ def get_details_from(familyIdList, memberIdList):
         conn.rollback()
     except psycopg2.InterfaceError as e:
         print("get_search_details get_details_from InterfaceError",e)
-        reconnectToDB()
+        reconnectToDBRead()
     
     finally:
         try:
@@ -316,7 +316,7 @@ def search_by_unique_health_id(unique_health_id):
         family_list =[]
         member_list =[]
 
-        conn = get_db_connection()
+        conn = get_db_connection_read()
         cursor = conn.cursor()
         query = "SELECT fmm.family_id ,fmm.member_id, fmm.member_name, fmm.gender, fmm.member_local_name, to_char(fmm.birth_date,'YYYY-MM-DD') AS birth_date, fmm.unique_health_id,null as last_update_date,null as outcome  FROM public.family_member_master fmm WHERE fmm.unique_health_id=%s"
         value = (unique_health_id,)
@@ -330,7 +330,7 @@ def search_by_unique_health_id(unique_health_id):
         conn.rollback()
     except psycopg2.InterfaceError as e:
         print("get_search_details search_by_unique_health_id InterfaceError",e)
-        reconnectToDB()
+        reconnectToDBRead()
     
     finally:
         try:
@@ -346,7 +346,7 @@ def search_by_mobile_number(mobile_number):
         family_details = []
         family_list =[]
         member_list =[]
-        conn = get_db_connection()
+        conn = get_db_connection_read()
         cursor = conn.cursor()
         query = "SELECT fmm.family_id ,fmm.member_id, fmm.member_name, fmm.gender, fmm.member_local_name, to_char(fmm.birth_date,'YYYY-MM-DD') AS birth_date, fmm.unique_health_id,null as last_update_date,null as outcome FROM public.family_member_master fmm WHERE fmm.mobile_number=%s AND fmm.mobile_number != 0"
         value = (mobile_number,)
@@ -360,7 +360,7 @@ def search_by_mobile_number(mobile_number):
         conn.rollback()
     except psycopg2.InterfaceError as e:
         print("get_search_details search_by_mobile_number InterfaceError",e)
-        reconnectToDB()
+        reconnectToDBRead()
     
     finally:
         try:
@@ -377,7 +377,7 @@ def search_by_smart_card_id(pds_smartcard_id):
         family_details = []
         family_list =[]
         member_list =[]
-        conn = get_db_connection()
+        conn = get_db_connection_read()
         cursor = conn.cursor()
         query = "SELECT fmm.family_id ,fmm.member_id, fmm.member_name, fmm.gender, fmm.member_local_name, to_char(fmm.birth_date,'YYYY-MM-DD') AS birth_date, fmm.unique_health_id,null as last_update_date,null as outcome FROM public.family_member_master fmm WHERE family_id in (SELECT family_id FROM public.family_master fmly WHERE  fmly.pds_smart_card_id not in (333000000000,334000000000,0) AND fmly.pds_smart_card_id=%s)"
         value = (pds_smartcard_id,)
@@ -391,7 +391,7 @@ def search_by_smart_card_id(pds_smartcard_id):
         conn.rollback()
     except psycopg2.InterfaceError as e:
         print("get_search_details search_by_smart_card_id InterfaceError",e)
-        reconnectToDB()
+        reconnectToDBRead()
     
     finally:
         try:
@@ -407,7 +407,7 @@ def search_by_name(member_name, district_id, block_id, village_id, offset):
         print("Search by name.")
         family_details = []
         
-        conn = get_db_connection()
+        conn = get_db_connection_read()
         cursor = conn.cursor()
         
         query = "SELECT  fmm.family_id ,fmm.member_id, fmm.member_name, fmm.gender, fmm.member_local_name, to_char(fmm.birth_date,'YYYY-MM-DD') AS birth_date, fmm.unique_health_id,null as last_update_date,null as outcome FROM public.family_member_master fmm WHERE fmm.district_id=%s"
@@ -433,7 +433,7 @@ def search_by_name(member_name, district_id, block_id, village_id, offset):
         conn.rollback()
     except psycopg2.InterfaceError as e:
         print("get_search_details search_by_name InterfaceError",e)
-        reconnectToDB()
+        reconnectToDBRead()
     
     finally:
         try:

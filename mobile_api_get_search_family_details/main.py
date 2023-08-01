@@ -39,7 +39,7 @@ def token_required(request):
             return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token format.'})
         else:        
             data = jwt.decode(token, parameters['JWT_SECRET_KEY'], algorithms=["HS256"])
-            conn = get_db_connection()
+            conn = get_db_connection_read()
             cursor = conn.cursor()
             query = 'SELECT auth_token from public.user_master where mobile_number ={}'.format(data['mobile_number'])
             cursor.execute(query,data['mobile_number'])    
@@ -226,7 +226,6 @@ def get_family_and_member_details():
                 })
     except psycopg2.InterfaceError as e:
         print("get_family_and_member_details InterfaceError",e)
-        reconnectToDB()
         response =  json.dumps({
                     "message": "Error while retrieving family and member Data.", 
                     "status": "FAILURE",

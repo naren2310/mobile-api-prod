@@ -42,7 +42,7 @@ def token_required(request):
             return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token format.'})
         else:        
             data = jwt.decode(token, parameters['JWT_SECRET_KEY'], algorithms=["HS256"])
-            conn = get_db_connection()
+            conn = get_db_connection_read()
             cursor = conn.cursor()
             query = 'SELECT auth_token from public.user_master where mobile_number ={}'.format(data['mobile_number'])
             cursor.execute(query,data['mobile_number'])    
@@ -86,7 +86,7 @@ def get_village_street():
         villages_list=[]
         
         ## DB Connection
-        conn = get_db_connection()
+        conn = get_db_connection_read()
         cursor = conn.cursor()
         
         # Check the request data for JSON
@@ -161,7 +161,7 @@ def get_village_street():
         conn.rollback()
     except psycopg2.InterfaceError as e:
         print("Village_street InterfaceError",e)
-        reconnectToDB()
+        reconnectToDBRead()
         response =  json.dumps({
                     "message": "Error while retrieving Village_street Data.", 
                     "status": "FAILURE",
@@ -184,7 +184,7 @@ def retrieve_villages_from(countryId, stateId, districtId, hudId, blockId):
         print("Retrieving the Villages from block id : %s", str(blockId))
         villages_list=[]
         address_list=[]
-        conn = get_db_connection()
+        conn = get_db_connection_read()
         cursor = conn.cursor()
         query = "with village as (SELECT village_id,village_gid,village_name,country_id,state_id,district_id,hud_id,block_id FROM public.address_village_master WHERE village_name not like ('Unallocated%%') AND country_id =%s AND state_id =%s AND district_id =%s AND hud_id =%s AND block_id =%s),street as (SELECT v.village_id,v.village_gid,v.village_name,asm.street_id, asm.street_gid, asm.street_name, asm.facility_id FROM village v left join public.address_street_master asm on asm.village_id = v.village_id AND asm.country_id = v.country_id AND asm.state_id = v.state_id AND asm. district_id= v.district_id AND asm.hud_id = v. hud_id AND asm.block_id = v.block_id AND asm.active=true WHERE street_name not like ('Unallocated%%') AND facility_id is not NULL ) SELECT  S.village_id,S.village_gid,S.village_name,S.street_id, S.street_gid, S.street_name, fr.facility_id, fr.institution_gid, fr.facility_name, typ.facility_type_name FROM street s LEFT join public.facility_registry fr on S.facility_id=fr.facility_id LEFT JOIN public.facility_type_master typ on typ.facility_type_id=fr.facility_type_id order by S.village_name"
         value = (countryId,stateId,districtId,hudId,blockId)
@@ -197,7 +197,7 @@ def retrieve_villages_from(countryId, stateId, districtId, hudId, blockId):
         conn.rollback()
     except psycopg2.InterfaceError as e:
         print("Village_street retrieve_villages_from InterfaceError",e)
-        reconnectToDB()
+        reconnectToDBRead()
 
     finally:
         try:

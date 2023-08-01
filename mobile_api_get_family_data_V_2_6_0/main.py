@@ -42,7 +42,7 @@ def token_required(request):
             return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token format.'})
         else:        
             data = jwt.decode(token, parameters['JWT_SECRET_KEY'], algorithms=["HS256"])
-            conn = get_db_connection()
+            conn = get_db_connection_read()
             cursor = conn.cursor()
             query = 'SELECT auth_token from public.user_master where mobile_number ={}'.format(data['mobile_number'])
             cursor.execute(query,data['mobile_number'])    
@@ -168,7 +168,7 @@ def get_address_for(familyId):
     isAddressAvailable = False
     try:
         print('Getting address details from Family Id : %s', str(familyId))
-        conn = get_db_connection()
+        conn = get_db_connection_read()
         cursor = conn.cursor()
         query = "with Street as (SELECT street_id,country_id,state_id,district_id,hud_id,block_id,village_id,rev_village_id,area_id,ward_id,habitation_id,hsc_unit_id FROM public.address_street_master WHERE street_gid = (SELECT street_gid FROM public.address_shop_master WHERE shop_id = (SELECT  shop_id FROM public.family_master WHERE family_id = %s AND street_id is null)))SELECT S.country_id as country_id_new,S.state_id as state_id_new ,S.district_id as district_id_new,S.hud_id as hud_id_new, S.block_id as block_id_new,rev.taluk_id as taluk_id_new ,S.village_id as village_id_new,S.rev_village_id as rev_village_id_new ,S.habitation_id as habitation_id_new,S.area_id as area_id_new,S.ward_id as ward_id_new ,S.street_id as street_id_new ,hhg.hhg_id as hhg_id_new FROM Street S left join public.address_hhg_master HHG on S.street_id=HHG.street_id left join public.address_revenue_village_master REV on hhg.rev_village_id=rev.rev_village_id"
         values = (familyId,)
@@ -197,7 +197,7 @@ def get_address_for(familyId):
         conn.rollback()
     except psycopg2.InterfaceError as e:
         print("get_families_data get_address_for InterfaceError",e)
-        reconnectToDB()
+        reconnectToDBRead()
     finally:
         try:
             cursor.close()
@@ -272,7 +272,7 @@ def get_family_data(userId, defaultTime, content):
         # The above query is commented because it was hitting to entire block level families. We are now suppose to get it for hsc level only. - 20 April 2022.
         # query = "SELECT fmly.family_id,fmly.phr_family_id,fmly.family_head,fmly.family_members_count,fmly.pds_smart_card_id,fmly.pds_old_card_id,fmly.family_insurances,fmly.shop_id,fmly.country_id,fmly.state_id, fmly.district_id,fmly.hud_id,fmly.block_id,fmly.taluk_id,fmly.village_id,fmly.rev_village_id,fmly.habitation_id,fmly.area_id,fmly.ward_id,fmly.street_id,fmly.hhg_id,fmly.pincode,fmly.door_no,fmly.apartment_name,fmly.postal_address,fmly.facility_id, fmly.hsc_unit_id,fmly.reside_status,fmly.latitude,fmly.longitude,seref.social_details,seref.economic_details,fmly.update_register,FORMAT_TIMESTAMP('%Y-%m-%d %H:%M:%S%z', fmly.last_update_date, 'Asia/Calcutta') AS last_update_date FROM family_master@{FORCE_INDEX=FAMILY_FACILITY_ID_IDX} fmly LEFT JOIN family_socio_economic_ref seref ON seref.family_id=fmly.family_id WHERE fmly.facility_id = (SELECT facility_id FROM user_master usr WHERE user_id=@userId) AND fmly.last_update_date>@lastUpdate ORDER BY fmly.phr_family_id LIMIT 3000 OFFSET @offset"
         # The above query is optimised post discussion with Darshak (Spanner SPOC from Google.) - 29 April 2022
-        conn = get_db_connection()
+        conn = get_db_connection_read()
         cursor = conn.cursor()
         query = "SELECT fmly.family_id,fmly.phr_family_id,fmly.family_head,fmly.family_members_count,fmly.pds_smart_card_id,fmly.pds_old_card_id,fmly.family_insurances,fmly.shop_id,fmly.country_id,fmly.state_id, fmly.district_id,fmly.hud_id,fmly.block_id,fmly.taluk_id,fmly.village_id,fmly.rev_village_id,fmly.habitation_id,fmly.area_id,fmly.ward_id,fmly.street_id,fmly.hhg_id,fmly.pincode,fmly.door_no,fmly.apartment_name,fmly.postal_address,fmly.facility_id, fmly.hsc_unit_id,fmly.reside_status,fmly.latitude,fmly.longitude,seref.social_details,seref.economic_details,fmly.update_register,to_char(fmly.last_update_date AT TIME ZONE 'Asia/Calcutta', 'YYYY-MM-DD HH24:MI:SS') AS last_update_date FROM public.family_master fmly left join public.family_socio_economic_ref seref ON seref.family_id=fmly.family_id WHERE fmly.facility_id = (SELECT facility_id FROM public.user_master usr WHERE user_id=%s) AND fmly.last_update_date>%s ORDER BY fmly.phr_family_id LIMIT 3000 OFFSET %s"
         values = (userId,lastUpdateTS, offset)
@@ -285,7 +285,7 @@ def get_family_data(userId, defaultTime, content):
         conn.rollback()
     except psycopg2.InterfaceError as e:
         print("get_families_data get_family_data InterfaceError",e)
-        reconnectToDB()
+        reconnectToDBRead()
         
     finally:
         try:

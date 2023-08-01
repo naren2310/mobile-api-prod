@@ -6,7 +6,7 @@ def get_socioEconomic_data(familyId):
     try:
         print("Getting Socio Economic Data.")
         results=None
-        conn = get_db_connection()
+        conn = get_db_connection_read()
         cursor = conn.cursor()
         query = "SELECT family_socio_economic_id, social_details, economic_details FROM public.family_socio_economic_ref WHERE family_id=%s"
         value = (familyId,)
@@ -22,7 +22,7 @@ def get_socioEconomic_data(familyId):
         conn.rollback()
     except psycopg2.InterfaceError as e:
         print("get_family_and_member_details get_socioEconomic_data InterfaceError",e)
-        reconnectToDB()
+        reconnectToDBRead()
         
     finally:
         try:
@@ -37,7 +37,7 @@ def get_member_socioEconomic_data(familyId, memberId):
     print("Getting Member Socio Economic Data.")
     try:
             results=None
-            conn = get_db_connection()
+            conn = get_db_connection_read()
             cursor = conn.cursor()
             query = "SELECT family_socio_economic_id, social_details, economic_details FROM public.family_member_socio_economic_ref WHERE family_id=%s AND member_id=%s"
             value = (familyId,memberId)
@@ -53,7 +53,7 @@ def get_member_socioEconomic_data(familyId, memberId):
         conn.rollback()
     except psycopg2.InterfaceError as e:
         print("get_family_and_member_details get_member_socioEconomic_data InterfaceError",e)
-        reconnectToDB()
+        reconnectToDBRead()
         
     finally:
         try:
@@ -69,7 +69,7 @@ def get_family_data(familyId):
     # cloud_logger.info("Getting Family Data.")
     try:
             results=None
-            conn = get_db_connection()
+            conn = get_db_connection_read()
             cursor = conn.cursor()
             query = "SELECT family_id,phr_family_id,family_head,family_members_count,pds_smart_card_id,pds_old_card_id,family_insurances,shop_id,country_id,state_id,district_id,hud_id,block_id,taluk_id,village_id,rev_village_id,habitation_id,area_id,ward_id,street_id,pincode,door_no,apartment_name,postal_address,facility_id,latitude,longitude,update_register,to_char(last_update_date AT TIME ZONE 'Asia/Calcutta', 'YYYY-MM-DD HH24:MI:SS') AS last_update_date,hhg_id,hsc_unit_id,reside_status FROM public.family_master WHERE family_id=%s"
             value = (familyId,)
@@ -93,7 +93,7 @@ def get_family_data(familyId):
         conn.rollback()
     except psycopg2.InterfaceError as e:
         print("get_family_and_member_details get_family_data InterfaceError",e)
-        reconnectToDB()
+        reconnectToDBRead()
         
     finally:
         try:
@@ -109,7 +109,7 @@ def get_all_member_data(familyId):
     print("Getting all Member Data.")
     try:
             results=None
-            conn = get_db_connection()
+            conn = get_db_connection_read()
             cursor = conn.cursor()
             query = "SELECT family_id,member_id,unique_health_id,phr_family_id,makkal_number,ndhm_id,member_name,member_local_name,relationshipWith,relationship,to_char(birth_date,'YYYY-MM-DD') AS birth_date,gender,mobile_number,alt_mobile_number,email,alt_email,aadhaar_number,voter_id,insurances,welfare_beneficiary_ids,program_ids,eligible_couple_id,country_id,state_id,district_id,hud_id,block_id,taluk_id,village_id,rev_village_id,habitation_id,ward_id,area_id,street_id,facility_id,resident_status,resident_status_details,update_register,to_char(last_update_date AT TIME ZONE 'Asia/Calcutta', 'YYYY-MM-DD HH24:MI:SS') AS last_update_date,consent_status,consent_details,hims_id,abha_id,abha_address,immunization_status,premature_baby,congenital_defects,blood_group,attended_age,ifa_tablet_provided,sanitary_napkin_provided,anemia_yes_or_no,pregnant_yes_or_no,antenatal_postnatal,prolonged_disease,non_communicable_disease,communicable_disease,Consanguineous_marriage,rch_id FROM public.family_member_master WHERE family_id=%s"
             value = (familyId,)
@@ -122,7 +122,7 @@ def get_all_member_data(familyId):
         conn.rollback()
     except psycopg2.InterfaceError as e:
         print("get_family_and_member_details get_all_member_data InterfaceError",e)
-        reconnectToDB()
+        reconnectToDBRead()
         
     finally:
         try:
@@ -137,7 +137,7 @@ def get_member_familyId(memberId):
     print("Get Member Family ID.")
     try:
             results=None
-            conn = get_db_connection()
+            conn = get_db_connection_read()
             cursor = conn.cursor()
             query = "SELECT family_id FROM public.family_member_master WHERE member_id=%s"
             value = (memberId,)
@@ -151,7 +151,7 @@ def get_member_familyId(memberId):
         conn.rollback()
     except psycopg2.InterfaceError as e:
         print("get_family_and_member_details get_member_familyId InterfaceError",e)
-        reconnectToDB()
+        reconnectToDBRead()
         
     finally:
         try:
@@ -168,7 +168,7 @@ def get_health_screening(familyId,memberId):
     print("Getting Health Screeninng.")
     try:
         results=None
-        conn = get_db_connection()
+        conn = get_db_connection_read()
         cursor = conn.cursor()
         print("familyId",familyId)
         print("memberId",memberId)
@@ -184,7 +184,7 @@ def get_health_screening(familyId,memberId):
         conn.rollback()
     except psycopg2.InterfaceError as e:
         print("get_family_and_member_details get_health_screening InterfaceError",e)
-        reconnectToDB()
+        reconnectToDBRead()
         
     finally:
         try:
@@ -200,7 +200,7 @@ def get_health_history(familyId, memberId):
     print("Getting Health History.")
     try:
         results=None
-        conn = get_db_connection()
+        conn = get_db_connection_read()
         cursor = conn.cursor()
         query = "SELECT member_id,family_id,medical_history_id,past_history,family_history,lifestyle_details,vaccinations,disability,  disability_details,enrollment_date,congenital_anomaly,eligible_couple_id,eligible_couple_status,eligible_couple_details,update_register, to_char(last_update_date AT TIME ZONE 'Asia/Calcutta', 'YYYY-MM-DD HH24:MI:SS') AS last_update_date,welfare_method,mtm_beneficiary FROM public.health_history WHERE family_id=%s and member_id=%s"
         value = (familyId,memberId)
@@ -217,7 +217,7 @@ def get_health_history(familyId, memberId):
         conn.rollback()
     except psycopg2.InterfaceError as e:
         print("get_family_and_member_details get_health_history InterfaceError",e)
-        reconnectToDB()
+        reconnectToDBRead()
     finally:
         try:
             cursor.close()
@@ -231,7 +231,7 @@ def get_address_data(familyId):
     print("Getting Address Data.")
     try:
         results=None
-        conn = get_db_connection()
+        conn = get_db_connection_read()
         cursor = conn.cursor()
         query = "SELECT fmly.facility_id, fr.facility_name, fr.institution_gid, ftm.facility_type_name, fmly.village_id, vill.village_gid, vill.village_name, fmly.street_id, strt.street_gid, strt.street_name FROM public.family_master fmly LEFT JOIN public.facility_registry fr USING(facility_id) LEFT JOIN public.address_village_master vill on vill.village_id=fmly.village_id LEFT JOIN public.address_street_master strt on strt.street_id=fmly.street_id LEFT JOIN public.facility_type_master ftm on fr.facility_type_id=ftm.facility_type_id WHERE family_id=%s"
         value = (familyId,)
@@ -261,7 +261,7 @@ def get_address_data(familyId):
         conn.rollback()
     except psycopg2.InterfaceError as e:
         print("get_family_and_member_details get_address_data InterfaceError",e)
-        reconnectToDB()
+        reconnectToDBRead()
     
     finally:
         try:

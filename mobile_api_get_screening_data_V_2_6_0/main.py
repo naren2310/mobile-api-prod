@@ -42,7 +42,7 @@ def token_required(request):
             return False, json.dumps({'status':'FAILURE',"status_code":"401",'message' : 'Invalid Token format.'})
         else:        
             data = jwt.decode(token, parameters['JWT_SECRET_KEY'], algorithms=["HS256"])
-            conn = get_db_connection()
+            conn = get_db_connection_read()
             cursor = conn.cursor()
             query = 'SELECT auth_token from public.user_master where mobile_number ={}'.format(data['mobile_number'])
             cursor.execute(query,data['mobile_number'])    
@@ -87,7 +87,7 @@ def get_screening_data():
         defaultTime = datetime.strptime('2021-09-01 15:52:50+0530', "%Y-%m-%d %H:%M:%S%z")
         
         ## DB Connection
-        conn = get_db_connection()
+        conn = get_db_connection_read()
         cursor = conn.cursor()
         
         if request.is_json and isinstance(request.get_json(), dict):
@@ -177,7 +177,7 @@ def get_screening_data():
                 })
     except psycopg2.InterfaceError as e:
         print("get_screening_data user_token_validation InterfaceError",e)
-        reconnectToDB()
+        reconnectToDBRead()
         response =  json.dumps({
                     "message": "Error while retrieving Screening Data, Please Retry.", 
                     "status": "FAILURE",

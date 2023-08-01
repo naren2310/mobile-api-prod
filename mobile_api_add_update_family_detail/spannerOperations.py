@@ -683,7 +683,7 @@ def getUpdateRegisterForFamilySocioRef(familyId, updateRegister):
     print("getUpdateRegisterForFamilySocioRef")
     try:
         update_register = None
-        conn = get_db_connection()
+        conn = get_db_connection_read()
         cursor = conn.cursor()
         query = "SELECT update_register FROM public.family_socio_economic_ref WHERE family_id=%s"
         value = (familyId,) 
@@ -706,7 +706,7 @@ def getUpdateRegisterForFamilySocioRef(familyId, updateRegister):
         conn.rollback()
     except psycopg2.InterfaceError as e:
         print("add_update_family_details getUpdateRegisterForFamilySocioRef InterfaceError",e)
-        reconnectToDB() 
+        reconnectToDBRead() 
     finally:
         try:
             cursor.close()
